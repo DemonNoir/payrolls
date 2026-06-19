@@ -1,675 +1,698 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ปฏิทิน OT V2</title>
-<style>
-:root{
-  --ink:#172033;--muted:#61708a;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
-  --nav:#18233a;--orange:#d98f2b;--blue:#3b6fd1;--purple:#7a4fc7;--red:#d64b45;
-  --green:#22865f;--teal:#087a89;--yellow:#f1c40f;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;justify-content:center;padding:14px 8px}
-button,input,select{font:inherit}
-.app{width:100%;max-width:480px}
-.top{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.top h1{flex:1;text-align:center;font-size:15px;margin:0;min-width:0}
-.icon{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:16px;cursor:pointer;display:grid;place-items:center}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 10px}
-.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:9px 4px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer}
-.tabs button.on{background:var(--nav);border-color:var(--nav);color:#fff}
-.mini{font-size:11px;color:var(--muted);text-align:center;margin:0 0 10px;line-height:1.5;cursor:pointer}
-.section{display:none}
-.section.on{display:block}
-.hero{background:var(--nav);color:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
-.hero .big{font-size:30px;font-weight:900}
-.hero .side{margin-left:auto;text-align:right;font-size:12px;opacity:.9}
-.hero .side b{display:block;font-size:14px}
-.strip{background:#dcecff;color:#1b4e9a;border-radius:8px;padding:9px 12px;font-size:13px;text-align:center;margin-bottom:8px;font-weight:800}
-.strip.warn{background:#ffe8dc;color:#9d451c}
-.weekdays,.grid{display:grid;grid-template-columns:repeat(7,1fr)}
-.weekdays{text-align:center;font-size:11px;color:var(--muted);margin:10px 0 4px}
-.grid{gap:5px}
-.cell{aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.cell.empty{visibility:hidden;cursor:default}
-.cell .num{font-size:12px;color:var(--muted)}
-.cell.money{background:#fbe8cc;border-color:#e9c58f}
-.cell.leave{background:#dcecff;border-color:#aecaf1}
-.cell.use{background:#e7defa;border-color:#c8b2ef}
-.cell.holiday{background:#ffe1df;border-color:#efaaa5}
-.cell.today{outline:2px solid var(--nav)}
-.cell .badge{font-size:9px;font-weight:900;background:var(--orange);color:#fff;border-radius:6px;padding:1px 4px;margin-top:2px;max-width:94%;white-space:nowrap}
-.cell .badge.leave{background:var(--blue)}
-.cell .badge.use{background:var(--purple)}
-.cell .badge.m2{box-shadow:0 0 0 2px var(--yellow)}
-.cell .badge.m3{box-shadow:0 0 0 2px var(--red)}
-.cell .holidayMark{position:absolute;top:2px;right:3px;font-size:9px;color:var(--red);font-weight:900}
-.legend{text-align:center;color:var(--muted);font-size:10px;line-height:1.6;margin:8px 0 0}
-.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 12px;min-height:78px}
-.card.wide{grid-column:1/-1}
-.card .label{font-size:11px;color:var(--muted);font-weight:800;margin-bottom:5px}
-.card .value{font-size:18px;font-weight:900;line-height:1.15}
-.card .sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
-.weeklyNav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.weeklyNav button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-weight:900}
-.weeklyNav div{flex:1;text-align:center;font-size:13px;font-weight:900}
-.summaryList{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px}
-.row{display:flex;gap:8px;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #edf0f5;font-size:13px}
-.row:last-child{border-bottom:0}
-.row b{text-align:right}
-.canvasWrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px}
-.canvasWrap h3{font-size:13px;margin:0 0 8px}
-canvas{width:100%;height:150px;display:block}
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.48);display:none;align-items:flex-end;justify-content:center;z-index:20}
-.overlay.show{display:flex}
-.sheet{background:var(--panel);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:18px;max-height:90vh;overflow:auto}
-.sheet h2{font-size:16px;margin:0 0 12px}
-.group{margin-bottom:11px}
-.group label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
-.group input{width:100%;border:1px solid var(--line);border-radius:7px;padding:10px;text-align:center;background:#fff}
-.choice{display:flex;gap:5px}
-.choice label{flex:1;border:1px solid var(--line);border-radius:7px;text-align:center;padding:8px 4px;font-size:12px;color:var(--muted);font-weight:800}
-.choice input{width:auto;margin:0 4px 0 0}
-.check{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:10px;color:var(--ink);font-weight:800}
-.check input{width:auto}
-.preview{text-align:center;font-weight:900;color:var(--orange);margin:8px 0 14px;min-height:22px}
-.actions{display:flex;gap:8px;margin-top:8px}
-.btn{flex:1;border:0;border-radius:8px;padding:11px 8px;font-size:13px;font-weight:900;cursor:pointer}
-.primary{background:var(--nav);color:#fff}
-.danger{background:#fbe3df;color:#b5332d}
-.soft{background:#e7edf5;color:var(--ink)}
-.ghost{width:100%;border:0;background:transparent;color:var(--muted);padding:9px;margin-top:5px;cursor:pointer}
-.settingsGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.settingsGrid .group{margin-bottom:0}
-.subhead{font-size:13px;font-weight:900;margin:16px 0 8px;border-top:1px solid #edf0f5;padding-top:12px}
-.holidayList{margin:8px 0 0}
-.holidayItem{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:6px;font-size:12px}
-.holidayItem span{min-width:0}
-.holidayItem button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 8px;font-size:12px}
-.hide{display:none}
-@media (min-width:700px){
-  body{padding:22px 12px}
-  .app,.sheet{max-width:640px}
-  .calendarDesk{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:12px;align-items:start}
-  .desktopSide{display:block}
-}
-@media (max-width:380px){
-  body{padding-left:6px;padding-right:6px}
-  .top{gap:4px}
-  .icon{width:31px;height:31px;flex-basis:31px}
-  .tabs button{font-size:11px;padding:8px 2px}
-  .hero .big{font-size:27px}
-  .settingsGrid{grid-template-columns:1fr}
-}
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ปฏิทิน OT</title><style>
+body{margin:0;background:#eef1f5;color:#16233d;font-family:sans-serif;display:flex;justify-content:center;padding:16px 10px}
+.app{width:100%;max-width:400px}
+.tb{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.tb h1{flex:1;text-align:center;font-size:14px;margin:0}
+.nb{width:32px;height:32px;flex-shrink:0;border-radius:50%;border:1px solid #ddd;background:#fff;font-size:16px;cursor:pointer}
+#rd{text-align:center;font-size:11px;color:#5b6b85;margin-bottom:10px;cursor:pointer}
+.sm{background:#16233d;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:8px}
+.sm-top{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.sm .mn{font-size:28px;font-weight:800}
+.sm .sb{margin-left:auto;text-align:right;font-size:12px;opacity:.85}
+.sm .sb b{display:block;font-size:14px}
+.sm-deduct{border-top:1px solid rgba(255,255,255,.18);margin-top:8px;padding-top:8px;font-size:12px}
+.sm-deduct-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;opacity:.85}
+.sm-deduct-row.net{opacity:1;font-weight:700;font-size:13px;border-top:1px solid rgba(255,255,255,.25);padding-top:6px;margin-top:4px}
+.bk{background:#dbe9ff;color:#1d4ea3;border-radius:10px;padding:8px 14px;font-size:13px;text-align:center;margin-bottom:12px;font-weight:700}
+.wd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:#5b6b85;margin-bottom:4px}
+.gr{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.c{aspect-ratio:1;background:#fff;border-radius:8px;border:1px solid #ddd;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.c.e{visibility:hidden;cursor:default}
+.c .n{font-size:12px;color:#5b6b85}
+.c.h{background:#fbe8cc;border-color:#eccb91}
+.c.lv{background:#dbe9ff;border-color:#aac9f5}
+.c.us{background:#e7defa;border-color:#c6acf5}
+.c.ph{background:#ffeef0;border-color:#f5aab5}
+.c.h .n,.c.lv .n,.c.us .n,.c.ph .n{color:#16233d}
+.c.t{outline:2px solid #16233d}
+.c .b{font-size:9px;font-weight:700;background:#d98f2b;color:#fff;border-radius:6px;padding:1px 4px;margin-top:2px;box-shadow:0 0 0 0 transparent}
+.c .b.lv{background:#3b6fd1}
+.c .b.us{background:#7a4fc7}
+.c .b.ph{background:#e05370}
+.c .b.b2{box-shadow:0 0 0 2px #f1c40f}
+.c .b.b3{box-shadow:0 0 0 2px #e74c3c}
+.legend{font-size:10px;color:#5b6b85;text-align:center;margin-top:8px;line-height:1.6}
+.sum-tabs{display:flex;gap:6px;margin-bottom:12px;margin-top:4px}
+.sum-tab{flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:11px;color:#5b6b85;cursor:pointer;text-align:center}
+.sum-tab.active{background:#16233d;color:#fff;border-color:#16233d;font-weight:700}
+.hist-panel{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;display:none}
+.hist-panel.show{display:block}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eef1f5;font-size:12px}
+.hist-row:last-child{border-bottom:none}
+.hist-row .hr-label{color:#5b6b85}
+.hist-row .hr-val{font-weight:700}
+.hist-row .hr-val.pos{color:#1d4ea3}
+.wdrow{background:#fff;border-radius:10px;padding:8px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
+.wdrow label{color:#5b6b85;font-size:12px}
+.wdrow input{width:52px;padding:5px;font-size:14px;border:1px solid #ddd;border-radius:6px;text-align:center}
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.ov.s{display:flex}
+.sh{background:#fff;width:100%;max-width:400px;border-radius:16px 16px 0 0;padding:18px;max-height:88vh;overflow-y:auto}
+.sh h3{margin:0 0 12px;font-size:15px}
+.g{margin-bottom:10px;text-align:left}
+.g label{font-size:12px;color:#5b6b85;display:block;margin-bottom:4px}
+.g input{width:100%;padding:9px;font-size:15px;border:1px solid #ddd;border-radius:7px;box-sizing:border-box;text-align:center}
+.r{display:flex;gap:5px}
+.r label{flex:1;text-align:center;padding:7px 0;border:1px solid #ddd;border-radius:7px;font-size:12px;color:#5b6b85}
+.r input{margin-right:3px}
+.pv{text-align:center;font-weight:700;color:#d98f2b;margin:8px 0 14px}
+.ac{display:flex;gap:8px}
+button.a{flex:1;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.bc{background:#16233d;color:#fff}
+.bd{background:#fbe4e1;color:#c0392b}
+.bt{background:#eef1f5;color:#16233d}
+.gh{width:100%;margin-top:8px;background:none;border:none;color:#5b6b85;padding:6px;cursor:pointer}
+.cdlg{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:20}
+.cdlg.s{display:flex}
+.cdlg-box{background:#fff;border-radius:14px;padding:22px 20px;max-width:300px;width:90%;text-align:center}
+.cdlg-box h4{margin:0 0 8px;font-size:15px}
+.cdlg-box p{margin:0 0 18px;font-size:13px;color:#5b6b85;white-space:pre-line}
+.cdlg-btns{display:flex;gap:8px}
 @media print{
-  body{background:#fff;display:block;padding:0}
-  .top,.tabs,.weekdays,.grid,.legend,.overlay,.mini,.noPrint{display:none!important}
-  .app{max-width:none;padding:18px}
-  .section{display:block!important}
-  .section:not(#dashboardPage){display:none!important}
-  .card,.summaryList,.canvasWrap{break-inside:avoid}
+  body{background:#fff;padding:0}
+  .no-print{display:none!important}
+  .print-only{display:block!important}
+  .app{max-width:100%}
 }
-</style>
-</head>
-<body>
-<main class="app">
-  <div class="top">
-    <button class="icon" id="prevBtn" title="ก่อนหน้า">‹</button>
-    <h1 id="monthLabel"></h1>
-    <button class="icon" id="nextBtn" title="ถัดไป">›</button>
-    <button class="icon" id="settingsBtn" title="ตั้งค่า">⚙</button>
+.print-only{display:none}
+.deduct-set-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.deduct-set-row label{flex:1;font-size:13px;color:#16233d}
+.deduct-set-row input{width:90px;padding:7px;font-size:14px;border:1px solid #ddd;border-radius:7px;text-align:right}
+</style></head><body>
+<div class="app">
+<div class="tb no-print"><button class="nb" id="pv">‹</button><h1 id="ml"></h1><button class="nb" id="nx">›</button><button class="nb" id="gearBtn">⚙️</button></div>
+<div id="rd" class="no-print"></div>
+
+<div class="sm no-print">
+  <div class="sm-top">
+    <div><span class="mn" id="th">0</span> ชม. OT</div>
+    <div class="sb">รวม OT เงิน<b id="tp">0.00 บาท</b></div>
   </div>
-  <div class="tabs noPrint">
-    <button id="tabCalendar" class="on">ปฏิทิน</button>
-    <button id="tabDashboard">แดชบอร์ด</button>
-    <button id="tabWeekly">รายสัปดาห์</button>
+  <div class="sm-deduct" id="deductSection">
+    <div class="sm-deduct-row"><span>ประกันสังคม</span><span id="dispSSO">-750.00</span></div>
+    <div class="sm-deduct-row"><span>ภาษีหัก ณ ที่จ่าย</span><span id="dispTax">-0.00</span></div>
+    <div class="sm-deduct-row"><span>รายการหักอื่นๆ</span><span id="dispOther">-0.00</span></div>
+    <div class="sm-deduct-row net"><span>ยอดสุทธิ</span><span id="dispNet">0.00 บาท</span></div>
   </div>
-  <div id="rateInfo" class="mini"></div>
+</div>
 
-  <section id="calendarPage" class="section on">
-    <div class="hero">
-      <div><span id="totalHours" class="big">0</span> ชม. OT</div>
-      <div class="side">รวมเงิน OT<b id="totalPay">0.00 บาท</b></div>
-    </div>
-    <div class="strip" id="bankBox">วันหยุดสะสม: 0 ชม.</div>
-    <div class="strip" id="deductionBox">รายการหัก: 0.00 บาท · สุทธิ: 0.00 บาท</div>
-    <div class="strip warn" id="paydayBox">เงินออกอีก 0 วัน</div>
-    <div class="calendarDesk">
-      <div>
-        <div class="weekdays"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
-        <div class="grid" id="calendarGrid"></div>
-      </div>
-      <div class="desktopSide hide">
-        <div class="card">
-          <div class="label">รายได้สุทธิโดยประมาณ</div>
-          <div class="value" id="sideNet">0.00</div>
-          <div class="sub">รวมฐานเงินเดือน OT สวัสดิการ KPI แล้วหักรายการหัก</div>
-        </div>
-      </div>
-    </div>
-    <div class="legend">🟧 OT-เงิน &nbsp; 🟦 OT-สะสมวันหยุด &nbsp; 🟪 ใช้วันหยุด<br>ขอบเหลือง = 2x &nbsp; ขอบแดง = 3x &nbsp; สีแดง = วันหยุด</div>
-  </section>
+<div class="bk no-print" id="bk">วันหยุดสะสม: 0 ชม.</div>
 
-  <section id="dashboardPage" class="section">
-    <div class="cards">
-      <div class="card"><div class="label">OT รอบนี้</div><div class="value" id="dashOt">0 ชม.</div><div class="sub" id="dashOtPay">0.00 บาท</div></div>
-      <div class="card"><div class="label">วันหยุดสะสม</div><div class="value" id="dashBank">0 ชม.</div><div class="sub">ชั่วโมงคงเหลือ</div></div>
-      <div class="card"><div class="label">KPI</div><div class="value" id="dashKpi">0%</div><div class="sub" id="dashKpiAmt">0.00 บาท</div></div>
-      <div class="card"><div class="label">นับถอยหลังเงินออก</div><div class="value" id="dashPayday">0 วัน</div><div class="sub">จนถึงวันเงินออก</div></div>
-      <div class="card wide"><div class="label">รายได้สุทธิโดยประมาณ</div><div class="value" id="dashNet">0.00 บาท</div><div class="sub" id="dashNetSub"></div></div>
-    </div>
-    <div class="canvasWrap"><h3>ชั่วโมง OT รายเดือน</h3><canvas id="hoursChart" width="600" height="220"></canvas></div>
-    <div class="canvasWrap"><h3>รายได้รายเดือน</h3><canvas id="incomeChart" width="600" height="220"></canvas></div>
-    <div class="actions noPrint"><button class="btn primary" id="pdfBtn">📄 ส่งออก PDF</button></div>
-  </section>
+<div class="wdrow no-print">
+  <label>จำนวนวันทำงาน (วัน)</label>
+  <input type="number" id="sumWorkDays" min="0" max="31" value="0">
+</div>
 
-  <section id="weeklyPage" class="section">
-    <div class="weeklyNav">
-      <button id="weekPrev">‹</button>
-      <div id="weekLabel"></div>
-      <button id="weekNext">›</button>
-    </div>
-    <div class="summaryList" id="weeklySummary"></div>
-  </section>
-</main>
+<div class="wdrow no-print">
+  <label>KPI Bonus เดือนนี้ (%)</label>
+  <input type="number" id="kpiBonusInput" min="0" step="0.1" value="0">
+</div>
+<div id="kpiWarnBanner" class="no-print" style="display:none;background:#fff3cd;border:1px solid #f0c060;border-radius:10px;padding:8px 12px;font-size:12px;color:#8a6d1d;margin-bottom:8px">⚠️ กรุณากรอก KPI Bonus ก่อนเริ่มบันทึก OT ของรอบบิลนี้ เพื่อให้คำนวณค่าแรงต่อชั่วโมงถูกต้อง</div>
+<div id="kpiInfoRow" class="no-print" style="background:#fff;border-radius:10px;padding:8px 14px;margin-bottom:8px;font-size:11px;color:#5b6b85"></div>
 
-<div class="overlay" id="entryOverlay"><div class="sheet">
-  <h2 id="entryTitle"></h2>
-  <div class="group"><div class="choice">
-    <label><input type="radio" name="entryKind" value="ot" checked> ทำ OT</label>
-    <label><input type="radio" name="entryKind" value="use"> ใช้วันหยุดสะสม</label>
+<div class="sum-tabs no-print">
+  <button class="sum-tab active" id="tabCal" onclick="switchTab('cal')">📅 ปฏิทิน</button>
+  <button class="sum-tab" id="tabHist" onclick="switchTab('hist')">📊 ประวัติ</button>
+</div>
+
+<div id="calView">
+  <div class="wd"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
+  <div class="gr" id="gr"></div>
+  <div class="legend">🟧 OT-เงิน &nbsp; 🟦 OT-สะสมวันหยุด &nbsp; 🟪 ใช้วันหยุด &nbsp; 🟥 วันหยุดนักขัตฤกษ์<br>ขอบป้ายสีเหลือง = เรท 2x &nbsp; ขอบป้ายสีแดง = เรท 3x</div>
+</div>
+
+<div id="histView" class="hist-panel">
+  <div id="histContent"></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:10px" class="no-print">
+  <button class="a bt" style="font-size:12px" onclick="printPayslip()">🖨️ พิมพ์/บันทึก PDF</button>
+  <button class="a bt" style="font-size:12px" onclick="remindBackup()">💾 Backup ข้อมูล</button>
+</div>
+
+</div>
+
+<div class="ov no-print" id="ov"><div class="sh">
+<h3 id="sd"></h3>
+<div class="g">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <input type="checkbox" id="phCheck" style="width:auto">
+    <label for="phCheck" style="font-size:13px;color:#e05370;font-weight:700;margin:0">🏖️ ทำเครื่องหมายเป็นวันหยุดนักขัตฤกษ์</label>
+  </div>
+  <div id="phNote" style="display:none;background:#ffeef0;border-radius:8px;padding:8px 10px;font-size:12px;color:#e05370;margin-bottom:8px">วันนี้ถูกทำเครื่องหมายเป็นวันหยุดนักขัตฤกษ์ — ระบบจะไม่นับเป็น OT โดยอัตโนมัติ</div>
+  <div class="r">
+    <label><input type="radio" name="k" value="ot" checked> ทำ OT</label>
+    <label><input type="radio" name="k" value="use"> ใช้วันหยุดสะสม</label>
+  </div>
+</div>
+<div id="otB">
+  <div class="g"><label>ชม. OT</label><input type="number" id="hr" step="0.1"></div>
+  <div class="g"><div class="r">
+    <label><input type="radio" name="m" value="1.5" checked> 1.5x</label>
+    <label><input type="radio" name="m" value="2.0"> 2.0x</label>
+    <label><input type="radio" name="m" value="3.0"> 3.0x</label>
   </div></div>
-  <div id="otFields">
-    <div class="group"><label>ชม. OT</label><input type="number" id="entryHours" step="0.1" inputmode="decimal"></div>
-    <div class="group"><div class="choice">
-      <label><input type="radio" name="multiplier" value="1.5" checked> 1.5x</label>
-      <label><input type="radio" name="multiplier" value="2"> 2.0x</label>
-      <label><input type="radio" name="multiplier" value="3"> 3.0x</label>
-    </div></div>
-    <div class="group"><label>รับเป็น</label><div class="choice">
-      <label><input type="radio" name="payType" value="money" checked> เงิน</label>
-      <label><input type="radio" name="payType" value="leave"> วันหยุด</label>
-    </div></div>
-  </div>
-  <div id="useFields" class="hide">
-    <div class="group"><label>ชม. ที่ใช้สิทธิ (มีอยู่ <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.1" inputmode="decimal"></div>
-  </div>
-  <div class="preview" id="entryPreview"></div>
-  <div class="actions"><button class="btn danger" id="deleteEntryBtn">ลบ</button><button class="btn primary" id="saveEntryBtn">บันทึก</button></div>
-  <button class="ghost" id="closeEntryBtn">ปิด</button>
+  <div class="g"><label>รับเป็น</label><div class="r">
+    <label><input type="radio" name="pt" value="money" checked> เงิน</label>
+    <label><input type="radio" name="pt" value="leave"> วันหยุด</label>
+  </div></div>
+</div>
+<div id="usB" style="display:none">
+  <div class="g"><label>ชม. ที่ใช้สิทธิ (มีอยู่ <span id="av">0</span> ชม.)</label><input type="number" id="uh" step="0.1"></div>
+</div>
+<div class="pv" id="pw"></div>
+<div class="ac"><button class="a bd" id="db">ลบ</button><button class="a bc" id="svBtn">บันทึก</button></div>
+<button class="gh" id="cb">ปิด</button>
 </div></div>
 
-<div class="overlay" id="settingsOverlay"><div class="sheet">
-  <h2>ตั้งค่า</h2>
-  <div class="settingsGrid">
-    <div class="group"><label>ค่าแรงปกติ (บาท/ชม.)</label><input type="number" id="setRate" inputmode="decimal"></div>
-    <div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
-    <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
-    <div class="group"><label>ยอดวันหยุดสะสม</label><input type="number" id="setBank" step="0.1" inputmode="decimal"></div>
-  </div>
+<div class="ov no-print" id="setOv"><div class="sh">
+<h3>⚙️ ตั้งค่า</h3>
+<div class="g"><label>เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalary"></div>
+<div class="g"><label>KPI Daily ประจำ (%)</label><input type="number" id="setKpiDaily" step="0.1" min="0"></div>
+<div id="hourlyRatePreview" style="background:#eef1f5;border-radius:8px;padding:8px 10px;font-size:12px;color:#5b6b85;margin-bottom:10px;text-align:center"></div>
+<div class="g"><label>วันตัดรอบ (1-31, เว้นว่าง = ตามเดือนปฏิทิน)</label><input type="number" id="setCutoff" min="1" max="31"></div>
+<div class="g"><label>ยอดวันหยุดสะสม (แก้ไขตรงนี้ได้)</label><input type="number" id="setBank" step="0.1"></div>
 
-  <div class="subhead">รายได้ประจำ</div>
-  <div class="settingsGrid">
-    <div class="group"><label>เงินเดือน</label><input type="number" id="setSalary" inputmode="decimal"></div>
-    <div class="group"><label>ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
-    <div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
-    <div class="group"><label>KPI (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
-  </div>
-  <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setDiligenceEnabled"> ได้เบี้ยขยัน</label></div>
+<div style="margin-bottom:10px">
+  <div style="font-size:12px;color:#5b6b85;margin-bottom:8px;font-weight:700">รายการหักเงิน</div>
+  <div class="deduct-set-row"><label>ประกันสังคม (บาท/เดือน)</label><input type="number" id="setSSO" value="750" min="0"></div>
+  <div class="deduct-set-row"><label>ภาษีหัก ณ ที่จ่าย (บาท/เดือน)</label><input type="number" id="setTax" value="0" min="0"></div>
+  <div class="deduct-set-row"><label>รายการหักอื่นๆ (บาท/เดือน)</label><input type="number" id="setOtherDeduct" value="0" min="0"></div>
+</div>
 
-  <div class="subhead">สวัสดิการ</div>
-  <div class="settingsGrid">
-    <div class="group"><label>ค่าเดินทาง (บาท/วัน)</label><input type="number" id="setTransport" inputmode="decimal"></div>
-    <div class="group"><label>ค่าอาหาร (บาท/วัน)</label><input type="number" id="setFood" inputmode="decimal"></div>
-    <div class="group"><label>ค่าอาหาร OT (บาท/วัน)</label><input type="number" id="setOtFood" inputmode="decimal"></div>
-    <div class="group"><label>ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
-  </div>
-  <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setNightEnabled"> สัปดาห์นี้เข้ากะดึก</label></div>
-
-  <div class="subhead">การลา</div>
-  <div class="settingsGrid">
-    <div class="group"><label>ลาป่วย</label><input type="number" id="setSick" step="0.5" inputmode="decimal"></div>
-    <div class="group"><label>ลากิจ</label><input type="number" id="setPersonal" step="0.5" inputmode="decimal"></div>
-    <div class="group"><label>ขาดงาน</label><input type="number" id="setAbsent" step="0.5" inputmode="decimal"></div>
-    <div class="group"><label>รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
-  </div>
-
-  <div class="subhead">รายการหัก</div>
-  <div class="settingsGrid">
-    <div class="group"><label>ประกันสังคม</label><input type="number" id="setSocial" inputmode="decimal"></div>
-    <div class="group"><label>ภาษี</label><input type="number" id="setTax" inputmode="decimal"></div>
-    <div class="group"><label>หักอื่นๆ</label><input type="number" id="setOther" inputmode="decimal"></div>
-  </div>
-
-  <div class="subhead">จัดการวันหยุด</div>
-  <div class="settingsGrid">
-    <div class="group"><label>วันที่</label><input type="date" id="holidayDate"></div>
-    <div class="group"><label>ชื่อวันหยุด</label><input type="text" id="holidayName"></div>
-  </div>
-  <div class="actions"><button class="btn soft" id="clearHolidayBtn">ล้างฟอร์ม</button><button class="btn primary" id="saveHolidayBtn">บันทึกวันหยุด</button></div>
-  <div class="holidayList" id="holidayList"></div>
-
-  <div class="actions">
-    <button class="btn primary" id="exportBtn">📤 สำรองข้อมูล</button>
-    <button class="btn primary" id="importBtn">📥 กู้คืนข้อมูล</button>
-  </div>
-  <input type="file" id="importFile" accept="application/json,.json" class="hide">
-  <div class="actions"><button class="btn primary" id="saveSettingsBtn">บันทึก</button></div>
-  <button class="ghost" id="closeSettingsBtn">ปิด</button>
+<div class="ac">
+  <button class="a bc" id="expBtn">📤 สำรองข้อมูล</button>
+  <button class="a bc" id="impBtnShow">📥 กู้คืนข้อมูล</button>
+</div>
+<input type="file" id="impFile" accept="application/json,.json" style="display:none">
+<div class="ac" style="margin-top:10px"><button class="a bc" id="setSaveBtn">บันทึก</button></div>
+<button class="gh" id="setCloseBtn">ปิด</button>
 </div></div>
+
+<div class="cdlg no-print" id="cdlg">
+  <div class="cdlg-box">
+    <h4 id="cdlg-title">ยืนยัน</h4>
+    <p id="cdlg-msg"></p>
+    <div class="cdlg-btns">
+      <button class="a bt" id="cdlg-cancel">ยกเลิก</button>
+      <button class="a bd" id="cdlg-confirm">ลบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="print-only" id="printSlip" style="display:none;padding:20px;font-family:sans-serif"></div>
 
 <script>
 var MN=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 var MS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-var today=new Date(), currentPeriod=periodFor(today), currentWeek=weekStart(today), activeKey=null, editingHoliday=-1;
+var t=new Date(), ak=null;
+var activeTab='cal';
 
-function $(id){return document.getElementById(id)}
-function num(v){return Number(v)||0}
-function pad(n){return n<10?'0'+n:''+n}
-function keyOf(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d)}
-function dateKey(dt){return keyOf(dt.getFullYear(),dt.getMonth(),dt.getDate())}
-function parseDateKey(k){var p=String(k).split('-');return new Date(num(p[0]),num(p[1])-1,num(p[2]))}
-function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)}
+function pd(n){return n<10?'0'+n:''+n}
+function keyOf(y,m,d){return y+'-'+pd(m+1)+'-'+pd(d)}
+function tk(){return keyOf(t.getFullYear(),t.getMonth(),t.getDate())}
+function gd(){return JSON.parse(localStorage.getItem('ot_cal')||'{}')}
+function sd_(d){localStorage.setItem('ot_cal',JSON.stringify(d))}
+function radVal(n){var rs=document.getElementsByName(n);for(var i=0;i<rs.length;i++)if(rs[i].checked)return rs[i].value;return null}
+function setRad(n,v){var rs=document.getElementsByName(n);for(var i=0;i<rs.length;i++)rs[i].checked=(rs[i].value==v)}
+function mult(){return parseFloat(radVal('m'))}
+function getSalary(){var v=parseFloat(localStorage.getItem('ot_salary'));return isNaN(v)?0:v}
+function getKpiDaily(){var v=parseFloat(localStorage.getItem('ot_kpi_daily'));return isNaN(v)?0:v}
+function getCutoff(){var v=parseInt(localStorage.getItem('ot_cutoff'));return (isNaN(v)||v<1||v>31)?0:v}
+function getBankAdj(){var v=parseFloat(localStorage.getItem('ot_bank_adj'));return isNaN(v)?0:v}
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
-function money(v){return num(v).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท'}
-function hours(v){return num(v).toLocaleString('th-TH',{maximumFractionDigits:1})}
-function getLS(k){return localStorage.getItem(k)}
-function setLS(k,v){localStorage.setItem(k,String(v))}
-function getNum(k,fb,def){
-  var v=getLS(k);
-  if((v===null||v==='')&&fb)v=getLS(fb);
-  if(v===null||v==='')return num(def);
-  return num(v);
-}
-function getBool(k,def){var v=getLS(k);if(v===null)return !!def;return v==='1'||v==='true'}
-function setBool(k,v){setLS(k,v?'1':'0')}
-function getCal(){try{return JSON.parse(getLS('ot_cal')||'{}')||{}}catch(e){return {}}}
-function setCal(d){localStorage.setItem('ot_cal',JSON.stringify(d||{}))}
-function getHolidays(){try{var h=JSON.parse(getLS('holidays')||'[]');return Array.isArray(h)?h:[]}catch(e){return []}}
-function setHolidays(h){localStorage.setItem('holidays',JSON.stringify((h||[]).sort(function(a,b){return String(a.date).localeCompare(String(b.date))})))}
-function radVal(n){var r=document.getElementsByName(n);for(var i=0;i<r.length;i++)if(r[i].checked)return r[i].value;return null}
-function setRad(n,v){var r=document.getElementsByName(n);for(var i=0;i<r.length;i++)r[i].checked=String(r[i].value)===String(v)}
-function isHolidayKey(k){return getHolidays().some(function(h){return h.date===k})}
-function holidayName(k){var h=getHolidays().find(function(x){return x.date===k});return h?h.name:''}
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)}
 
-function settings(){
+function getDeductions(){
   return {
-    rate:getNum('ot_rate',null,0),
-    cutoff:getValidDay(getLS('ot_cutoff')||getLS('cutoff_day')),
-    payday:getValidDay(getLS('payday'))||getValidDay(getLS('cutoff_day'))||getValidDay(getLS('ot_cutoff')),
-    bankAdj:getNum('ot_bank_adj',null,0),
-    salary:getNum('salary',null,0),
-    housing:getNum('housing',null,0),
-    diligence:getNum('diligence',null,0),
-    diligenceEnabled:getBool('diligence_enabled',true),
-    kpiPercent:getNum('kpi_percent',null,0),
-    transport:getNum('transport_rate',null,30),
-    food:getNum('food_rate',null,40),
-    otFood:getNum('ot_food_rate',null,0),
-    nightRate:getNum('night_shift_rate',null,0),
-    nightEnabled:getBool('night_shift_enabled',false),
-    sick:getNum('sick_leave',null,0),
-    personal:getNum('personal_leave',null,0),
-    absent:getNum('absent_days',null,0),
-    social:getNum('social_security','ot_ss',0),
-    tax:getNum('tax','ot_tax',0),
-    other:getNum('other_deduction','ot_other',0),
-    serviceAward:getNum('service_award',null,0)
+    sso:   parseFloat(localStorage.getItem('ot_sso')||'750'),
+    tax:   parseFloat(localStorage.getItem('ot_tax')||'0'),
+    other: parseFloat(localStorage.getItem('ot_other_deduct')||'0')
   };
 }
-function getValidDay(v){v=parseInt(v,10);return (v>=1&&v<=31)?v:0}
-function periodFor(ref){
-  var s=settings(), cutoff=s.cutoff;
-  if(!cutoff){return {start:new Date(ref.getFullYear(),ref.getMonth(),1),end:new Date(ref.getFullYear(),ref.getMonth()+1,0)}}
-  var y=ref.getFullYear(),m=ref.getMonth(),d=ref.getDate(),ey=y,em=m;
-  if(d>Math.min(cutoff,daysInMonth(y,m))){em++;if(em>11){em=0;ey++}}
-  var ed=Math.min(cutoff,daysInMonth(ey,em)), end=new Date(ey,em,ed);
-  var pm=em-1,py=ey;if(pm<0){pm=11;py--}
-  var pd=Math.min(cutoff,daysInMonth(py,pm));
-  return {start:new Date(py,pm,pd+1),end:end};
-}
-function periodLabel(p){return settings().cutoff?p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543):MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543)}
-function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
-function inRangeDate(dt,start,end){return dt>=start&&dt<=end}
 
-function entryContribution(en){
-  if(!en)return 0;
-  if(en.kind==='ot'&&en.payType==='leave')return num(en.credit);
-  if(en.kind==='use')return -num(en.hours);
+function getHolidays(){return JSON.parse(localStorage.getItem('ot_holidays')||'[]');}
+function saveHolidays(arr){localStorage.setItem('ot_holidays',JSON.stringify(arr));}
+function isHoliday(k){return getHolidays().indexOf(k)>=0;}
+function toggleHolidayIfNeeded(k, shouldBe){
+  var arr=getHolidays();
+  var idx=arr.indexOf(k);
+  var cur=idx>=0;
+  if(cur!==shouldBe){
+    if(shouldBe) arr.push(k); else arr.splice(idx,1);
+    saveHolidays(arr);
+  }
+}
+
+function getWorkDays(label){
+  var v=parseInt(localStorage.getItem('ot_wd_'+label));
+  return isNaN(v)?0:v;
+}
+function saveWorkDays(label,val){localStorage.setItem('ot_wd_'+label,val);}
+
+/* KPI Bonus % — stored per period label, default 0 if not entered */
+function getKpiBonusPct(label){
+  var v=parseFloat(localStorage.getItem('ot_kpi_bonus_'+label));
+  return isNaN(v)?0:v;
+}
+function saveKpiBonusPct(label,val){
+  var v=parseFloat(val); if(isNaN(v)||v<0) v=0;
+  localStorage.setItem('ot_kpi_bonus_'+label, v);
+}
+
+/* Hourly rate = (เงินเดือน + KPI รวม) / 30 / 8, calculated fresh for a given period */
+function getHourlyRate(periodObj){
+  var p = periodObj || curP;
+  var label = periodLabel(p);
+  var salary = getSalary();
+  var kpiDaily = getKpiDaily();
+  var kpiBonus = getKpiBonusPct(label);
+  var kpiTotalPct = kpiDaily + kpiBonus;
+  var kpiAmount = salary * (kpiTotalPct / 100);
+  var base = salary + kpiAmount;
+  var hourly = base / 30 / 8;
+  return {
+    salary: salary, kpiDaily: kpiDaily, kpiBonus: kpiBonus,
+    kpiTotalPct: kpiTotalPct, kpiAmount: kpiAmount, base: base, hourly: hourly
+  };
+}
+
+function contrib(en){
+  if(!en) return 0;
+  if(en.kind=='ot' && en.payType=='leave') return en.credit;
+  if(en.kind=='use') return -en.hours;
   return 0;
 }
-function totalBank(excludeKey){
-  var data=getCal(), b=settings().bankAdj;
-  Object.keys(data).forEach(function(k){if(k!==excludeKey)b+=entryContribution(data[k])});
-  return b;
-}
-function periodStats(p){
-  var data=getCal(), st=settings(), th=0,tp=0,otDays=0,leaveUse=0,byDay={}, start=p.start,end=p.end;
-  Object.keys(data).forEach(function(k){
-    var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
-    byDay[k]=en;
-    if(en.kind==='ot'){th+=num(en.hours);otDays++;if(en.payType==='money')tp+=num(en.total)}
-    if(en.kind==='use')leaveUse+=num(en.hours)/8;
-  });
-  var autoDays=0, cur=new Date(start);
-  while(cur<=end){
-    var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
-    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt))autoDays++;
-    cur=addDays(cur,1);
-  }
-  var leaveDays=st.sick+st.personal+st.absent+leaveUse;
-  var actual=Math.max(0,autoDays-leaveDays);
-  var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otDays,night:st.nightEnabled?st.nightRate*actual:0};
-  welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
-  var kpi=st.salary*(st.kpiPercent/100);
-  var diligence=st.diligenceEnabled?st.diligence:0;
-  var base=st.salary+st.housing+diligence+kpi;
-  var deductions={social:st.social,tax:st.tax,other:st.other,total:st.social+st.tax+st.other};
-  var gross=base+tp+welfare.total;
-  return {otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,welfare:welfare,kpi:kpi,diligence:diligence,base:base,gross:gross,deductions:deductions,net:gross-deductions.total};
-}
-function paydayCountdown(){
-  var day=settings().payday||25, now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  var target=new Date(now.getFullYear(),now.getMonth(),Math.min(day,daysInMonth(now.getFullYear(),now.getMonth())));
-  if(target<now){var nm=now.getMonth()+1,ny=now.getFullYear();if(nm>11){nm=0;ny++}target=new Date(ny,nm,Math.min(day,daysInMonth(ny,nm)))}
-  return Math.ceil((target-now)/86400000);
-}
-function monthStats(y,m){
-  return periodStats({start:new Date(y,m,1),end:new Date(y,m+1,0)});
-}
+function totalBank(){ var data=gd(); var b=getBankAdj(); for(var k in data) b+=contrib(data[k]); return b; }
 
-function showPage(name){
-  ['calendar','dashboard','weekly'].forEach(function(p){
-    $(p+'Page').classList.toggle('on',p===name);
-    $('tab'+p.charAt(0).toUpperCase()+p.slice(1)).classList.toggle('on',p===name);
-  });
-  renderAll();
+function periodFor(ref){
+  var cutoff=getCutoff();
+  if(!cutoff){
+    var y=ref.getFullYear(), m=ref.getMonth();
+    return {start:new Date(y,m,1), end:new Date(y,m+1,0)};
+  }
+  var y=ref.getFullYear(), m=ref.getMonth(), d=ref.getDate();
+  var endY=y, endM=m;
+  if(d>Math.min(cutoff,daysInMonth(y,m))){ endM++; if(endM>11){endM=0;endY++;} }
+  var endDay=Math.min(cutoff,daysInMonth(endY,endM));
+  var end=new Date(endY,endM,endDay);
+  var prevM=endM-1, prevY=endY; if(prevM<0){prevM=11;prevY--;}
+  var prevDay=Math.min(cutoff,daysInMonth(prevY,prevM));
+  var start=new Date(prevY,prevM,prevDay+1);
+  return {start:start, end:end};
 }
+var curP=periodFor(new Date());
+
+function periodLabel(p){
+  if(!getCutoff()) return MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543);
+  return p.start.getDate()+' '+MS[p.start.getMonth()]+' – '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543);
+}
+function prevPeriod(){ curP=periodFor(addDays(curP.start,-1)); render(); }
+function nextPeriod(){ curP=periodFor(addDays(curP.end,1)); render(); }
+
 function renderInfo(){
-  var st=settings(), rate=st.rate?('ค่าแรง '+st.rate.toLocaleString('th-TH')+' บาท/ชม.'):'ยังไม่ตั้งค่าแรง';
-  var cutoff=st.cutoff?('ตัดรอบวันที่ '+st.cutoff):'ตามเดือนปฏิทิน';
-  $('rateInfo').innerText=rate+' · '+cutoff+' · แตะเพื่อตั้งค่า';
+  var salary=getSalary(), c=getCutoff();
+  var salaryTxt = salary>0 ? ('เงินเดือน '+salary.toLocaleString('th-TH')+' บาท') : 'ยังไม่ตั้งเงินเดือน';
+  var cutTxt = c ? ('ตัดรอบวันที่ '+c) : 'ตามเดือนปฏิทิน';
+  document.getElementById('rd').innerText = salaryTxt+' · '+cutTxt+' · แตะเพื่อตั้งค่า';
 }
-function renderCalendar(){
-  $('monthLabel').innerText=periodLabel(currentPeriod);
-  var data=getCal(), grid=$('calendarGrid'); grid.innerHTML='';
-  for(var i=0;i<currentPeriod.start.getDay();i++){var blank=document.createElement('div');blank.className='cell empty';grid.appendChild(blank)}
-  var cur=new Date(currentPeriod.start), st=periodStats(currentPeriod);
-  while(cur<=currentPeriod.end){
-    var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k);
-    if(hname)cls+=' holiday';
-    if(en&&en.kind==='ot'){
-      cls+=' '+(en.payType==='leave'?'leave':'money');
-      var multCls=num(en.multiplier)===2?' m2':(num(en.multiplier)===3?' m3':'');
-      badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
-    }else if(en&&en.kind==='use'){
-      cls+=' use'; badge='<span class="badge use">ใช้ '+hours(en.hours)+'h</span>';
+
+function renderDeductions(tp){
+  var d=getDeductions();
+  var net=tp - d.sso - d.tax - d.other;
+  document.getElementById('dispSSO').innerText = '-'+d.sso.toLocaleString('th-TH',{minimumFractionDigits:2});
+  document.getElementById('dispTax').innerText = '-'+d.tax.toLocaleString('th-TH',{minimumFractionDigits:2});
+  document.getElementById('dispOther').innerText = '-'+d.other.toLocaleString('th-TH',{minimumFractionDigits:2});
+  document.getElementById('dispNet').innerText = net.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท';
+}
+
+function render(){
+  var label=periodLabel(curP);
+  document.getElementById('ml').innerText = label;
+  var data=gd(), g=document.getElementById('gr');
+  g.innerHTML='';
+  var lead=curP.start.getDay();
+  for(var i=0;i<lead;i++){var e=document.createElement('div');e.className='c e';g.appendChild(e);}
+  var th=0, tp=0, cur=new Date(curP.start);
+  while(cur<=curP.end){
+    var k=keyOf(cur.getFullYear(),cur.getMonth(),cur.getDate());
+    var en=data[k], cls='', badge='';
+    var ph=isHoliday(k);
+    if(ph && !en){
+      cls='ph'; badge='<span class="b ph">หยุด</span>';
+    } else if(en){
+      if(en.kind=='ot'){
+        cls = en.payType=='leave' ? 'lv':'h';
+        var mc = en.multiplier==2 ? ' b2' : (en.multiplier==3 ? ' b3':'');
+        badge='<span class="b'+(cls=='h'?'':' '+cls)+mc+'">'+en.hours+'h</span>';
+        th+=parseFloat(en.hours); if(en.payType=='money') tp+=parseFloat(en.total);
+      } else {
+        cls='us'; badge='<span class="b us">ใช้'+en.hours+'h</span>';
+      }
     }
-    var cell=document.createElement('div');
-    cell.className='cell'+cls+(k===dateKey(today)?' today':'');
-    cell.title=hname||'';
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+'<span class="num">'+cur.getDate()+'</span>'+badge;
-    cell.onclick=(function(key){return function(){openEntry(key)}})(k);
-    grid.appendChild(cell);
-    cur=addDays(cur,1);
+    var c=document.createElement('div');
+    c.className='c'+(cls?' '+cls:'')+(k===tk()?' t':'');
+    c.innerHTML='<span class="n">'+cur.getDate()+'</span>'+badge;
+    c.onclick=(function(kk){return function(){open_(kk)}})(k);
+    g.appendChild(c);
+    cur.setDate(cur.getDate()+1);
   }
-  $('totalHours').innerText=hours(st.otHours);
-  $('totalPay').innerText=money(st.otPay);
-  $('bankBox').innerText='วันหยุดสะสม: '+hours(totalBank())+' ชม.';
-  $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
-  $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
-  $('sideNet').innerText=money(st.net);
-}
-function renderDashboard(){
-  var st=periodStats(currentPeriod), s=settings();
-  $('dashOt').innerText=hours(st.otHours)+' ชม.';
-  $('dashOtPay').innerText=money(st.otPay);
-  $('dashBank').innerText=hours(totalBank())+' ชม.';
-  $('dashKpi').innerText=hours(s.kpiPercent)+'%';
-  $('dashKpiAmt').innerText=money(st.kpi);
-  $('dashPayday').innerText=paydayCountdown()+' วัน';
-  $('dashNet').innerText=money(st.net);
-  $('dashNetSub').innerText='รายได้ประจำ '+money(st.base)+' + OT '+money(st.otPay)+' + สวัสดิการ '+money(st.welfare.total)+' - รายการหัก '+money(st.deductions.total);
-  drawCharts();
-}
-function renderWeekly(){
-  var end=addDays(currentWeek,6);
-  $('weekLabel').innerText=currentWeek.getDate()+' '+MS[currentWeek.getMonth()]+' - '+end.getDate()+' '+MS[end.getMonth()]+' '+(end.getFullYear()+543);
-  var st=periodStats({start:currentWeek,end:end});
-  var rows=[
-    ['วันทำงานจริง',hours(st.actualDays)+' วัน'],
-    ['วันลา/ใช้สิทธิ',hours(st.leaveDays)+' วัน'],
-    ['วันที่ทำ OT',st.otDays+' วัน'],
-    ['ชั่วโมง OT',hours(st.otHours)+' ชม.'],
-    ['รายได้ OT',money(st.otPay)],
-    ['ค่าเดินทาง',money(st.welfare.transport)],
-    ['ค่าอาหาร',money(st.welfare.food)],
-    ['ค่าอาหาร OT',money(st.welfare.otFood)],
-    ['ค่ากะดึก',money(st.welfare.night)],
-    ['KPI',money(st.kpi)],
-    ['เบี้ยขยัน',money(st.diligence)],
-    ['ประกันสังคม',money(st.deductions.social)],
-    ['ภาษี',money(st.deductions.tax)],
-    ['หักอื่นๆ',money(st.deductions.other)],
-    ['รายได้สุทธิ',money(st.net)]
-  ];
-  $('weeklySummary').innerHTML=rows.map(function(r){return '<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join('');
-}
-function renderHolidayList(){
-  var h=getHolidays(), box=$('holidayList');
-  box.innerHTML=h.length?h.map(function(x,i){
-    return '<div class="holidayItem"><span><b>'+x.date+'</b><br>'+escapeHtml(x.name)+'</span><button data-edit="'+i+'">แก้ไข</button><button data-del="'+i+'">ลบ</button></div>';
-  }).join(''):'<div class="mini">ยังไม่มีวันหยุด</div>';
-  Array.prototype.forEach.call(box.querySelectorAll('[data-edit]'),function(b){b.onclick=function(){editHoliday(num(b.getAttribute('data-edit')))}});
-  Array.prototype.forEach.call(box.querySelectorAll('[data-del]'),function(b){b.onclick=function(){deleteHoliday(num(b.getAttribute('data-del')))}});
-}
-function renderAll(){renderInfo();renderCalendar();renderDashboard();renderWeekly();renderHolidayList();refreshHistory()}
+  document.getElementById('th').innerText=th.toLocaleString('th-TH',{maximumFractionDigits:1});
+  document.getElementById('tp').innerText=tp.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท';
+  document.getElementById('bk').innerText='วันหยุดสะสม: '+totalBank().toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม.';
+  renderDeductions(tp);
 
-function drawCharts(){
-  var labels=[],hVals=[],iVals=[],base=new Date(currentPeriod.start.getFullYear(),currentPeriod.start.getMonth(),1);
-  for(var i=5;i>=0;i--){var d=new Date(base.getFullYear(),base.getMonth()-i,1), st=monthStats(d.getFullYear(),d.getMonth());labels.push(MS[d.getMonth()]);hVals.push(st.otHours);iVals.push(st.net)}
-  drawBar($('hoursChart'),labels,hVals,varColor('--blue'),false);
-  drawBar($('incomeChart'),labels,iVals,varColor('--green'),true);
-}
-function varColor(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()}
-function drawBar(canvas,labels,values,color,isMoney){
-  var ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
-  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
-  var max=Math.max.apply(null,values.concat([1])),pad=34,bw=(w-pad*2)/values.length*.58,gap=(w-pad*2)/values.length;
-  ctx.strokeStyle='#d9dee8';ctx.beginPath();ctx.moveTo(pad,14);ctx.lineTo(pad,h-pad);ctx.lineTo(w-12,h-pad);ctx.stroke();
-  ctx.font='22px sans-serif';ctx.textAlign='center';
-  values.forEach(function(v,i){
-    var x=pad+i*gap+gap/2, bh=(h-pad-20)*(v/max);
-    ctx.fillStyle=color;ctx.fillRect(x-bw/2,h-pad-bh,bw,bh);
-    ctx.fillStyle='#61708a';ctx.fillText(labels[i],x,h-8);
-    ctx.fillText(isMoney?Math.round(v/1000)+'พัน':String(Math.round(v*10)/10),x,h-pad-bh-7);
+  var wdEl=document.getElementById('sumWorkDays');
+  wdEl.value=getWorkDays(label)||'';
+
+  var kpiBonusInput=document.getElementById('kpiBonusInput');
+  var kpiBonusVal=getKpiBonusPct(label);
+  kpiBonusInput.value=kpiBonusVal||'';
+
+  var rateInfo=getHourlyRate(curP);
+  document.getElementById('kpiInfoRow').innerHTML=
+    'KPI Daily '+rateInfo.kpiDaily.toLocaleString('th-TH',{maximumFractionDigits:1})+'% + KPI Bonus '+rateInfo.kpiBonus.toLocaleString('th-TH',{maximumFractionDigits:1})+'% = รวม '+rateInfo.kpiTotalPct.toLocaleString('th-TH',{maximumFractionDigits:1})+'%'+
+    ' (+'+rateInfo.kpiAmount.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท)<br>ค่าแรงต่อชั่วโมง (auto): <b>'+rateInfo.hourly.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท/ชม.</b>';
+
+  /* Warn if KPI Bonus not yet entered for this period and salary exists */
+  var hasEntriesThisPeriod = Object.keys(data).some(function(k){
+    return k>=keyOf(curP.start.getFullYear(),curP.start.getMonth(),curP.start.getDate()) && k<=keyOf(curP.end.getFullYear(),curP.end.getMonth(),curP.end.getDate());
   });
+  document.getElementById('kpiWarnBanner').style.display = (kpiBonusVal===0 && !hasEntriesThisPeriod && getSalary()>0) ? 'block' : 'none';
+
+  if(activeTab==='hist') renderHistory();
 }
 
-function openEntry(k){
-  activeKey=k;
-  if(settings().rate<=0){alert('กรุณาตั้งค่าแรงก่อนในเมนูตั้งค่า');openSettings();return}
-  var d=parseDateKey(k), W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-  $('entryTitle').innerText='วัน'+W[d.getDay()]+' ที่ '+d.getDate()+' '+MN[d.getMonth()]+' '+(d.getFullYear()+543)+(holidayName(k)?' · '+holidayName(k):'');
-  var en=getCal()[k], kind=en?en.kind:'ot';
-  setRad('entryKind',kind);toggleEntryFields();
-  if(en&&en.kind==='ot'){
-    $('entryHours').value=en.hours;setRad('multiplier',num(en.multiplier));setRad('payType',en.payType||'money');
-  }else{
-    $('entryHours').value='';setRad('multiplier',isHolidayKey(k)?3:1.5);setRad('payType','money');
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tabCal').className='sum-tab'+(tab==='cal'?' active':'');
+  document.getElementById('tabHist').className='sum-tab'+(tab==='hist'?' active':'');
+  document.getElementById('calView').style.display=tab==='cal'?'block':'none';
+  document.getElementById('histView').className='hist-panel'+(tab==='hist'?' show':'');
+  if(tab==='hist') renderHistory();
+}
+
+function renderHistory(){
+  var data=gd();
+  var rows=[];
+  var ref=new Date(curP.end);
+  for(var i=0;i<4;i++){
+    var p=periodFor(ref);
+    var label=periodLabel(p);
+    var th=0,tp=0,lv=0;
+    var cur2=new Date(p.start);
+    while(cur2<=p.end){
+      var k=keyOf(cur2.getFullYear(),cur2.getMonth(),cur2.getDate());
+      var en=data[k];
+      if(en&&en.kind=='ot'){th+=parseFloat(en.hours);if(en.payType=='money')tp+=parseFloat(en.total);else lv+=parseFloat(en.credit);}
+      cur2.setDate(cur2.getDate()+1);
+    }
+    rows.push({label:label,th:th,tp:tp,lv:lv});
+    ref=addDays(p.start,-1);
   }
-  $('useHours').value=(en&&en.kind==='use')?en.hours:'';
-  $('availableBank').innerText=hours(totalBank(k));
-  $('deleteEntryBtn').style.display=en?'block':'none';
-  previewEntry();
-  $('entryOverlay').classList.add('show');
+  var html='<div style="font-size:12px;font-weight:700;color:#5b6b85;margin-bottom:8px">สรุป 4 รอบบิลล่าสุด</div>';
+  var grandOT=0, grandPay=0;
+  for(var j=0;j<rows.length;j++){
+    var r=rows[j];
+    grandOT+=r.th; grandPay+=r.tp;
+    html+='<div class="hist-row"><span class="hr-label">'+r.label+'</span><span class="hr-val pos">'+r.th.toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม. / '+r.tp.toLocaleString('th-TH',{minimumFractionDigits:0})+' บาท</span></div>';
+  }
+  var d=getDeductions();
+  html+='<div class="hist-row" style="margin-top:6px;border-top:2px solid #eef1f5;padding-top:8px"><span class="hr-label" style="font-weight:700">รวม 4 รอบ</span><span class="hr-val pos">'+grandOT.toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม. / '+grandPay.toLocaleString('th-TH',{minimumFractionDigits:0})+' บาท</span></div>';
+  var netTotal=grandPay-(d.sso+d.tax+d.other)*rows.length;
+  html+='<div class="hist-row"><span class="hr-label">ยอดสุทธิ (หลังหัก × 4 รอบ)</span><span class="hr-val" style="color:#16233d">'+netTotal.toLocaleString('th-TH',{minimumFractionDigits:0})+' บาท</span></div>';
+  document.getElementById('histContent').innerHTML=html;
 }
-function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
-function toggleEntryFields(){
-  var isOt=radVal('entryKind')==='ot';
-  $('otFields').classList.toggle('hide',!isOt);
-  $('useFields').classList.toggle('hide',isOt);
+
+function showBlocks(kind){
+  document.getElementById('otB').style.display = kind=='ot' ? 'block':'none';
+  document.getElementById('usB').style.display = kind=='use' ? 'block':'none';
 }
-function previewEntry(){
-  if(radVal('entryKind')==='ot'){
-    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
-    $('entryPreview').innerText=pt==='money'?'= '+money(settings().rate*h*m):'= '+hours(h*m)+' ชม. สะสม';
-  }else{
-    $('entryPreview').innerText='ใช้ '+hours($('useHours').value)+' ชม.';
+function open_(k){
+  ak=k;
+  if(getSalary()<=0){ alert('กรุณาตั้งเงินเดือนก่อนในเมนูตั้งค่า (⚙️)'); openSettings(); return; }
+  var p=k.split('-'),wd=new Date(+p[0],+p[1]-1,+p[2]).getDay(),W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  document.getElementById('sd').innerText='วัน'+W[wd]+' ที่ '+(+p[2])+' '+MN[+p[1]-1]+' '+(+p[0]+543);
+  var data=gd(), en=data[k];
+  var ph=isHoliday(k);
+  document.getElementById('phCheck').checked=ph;
+  document.getElementById('phNote').style.display=ph?'block':'none';
+  var kind = en ? en.kind : 'ot';
+  setRad('k', kind); showBlocks(kind);
+  if(en && en.kind=='ot'){
+    document.getElementById('hr').value=en.hours;
+    setRad('m', en.multiplier);
+    setRad('pt', en.payType);
+  } else {
+    document.getElementById('hr').value='';
+    setRad('m','1.5'); setRad('pt','money');
+  }
+  document.getElementById('uh').value = (en && en.kind=='use') ? en.hours : '';
+  var avail = totalBank() - contrib(en);
+  document.getElementById('av').innerText = avail.toLocaleString('th-TH',{maximumFractionDigits:1});
+  document.getElementById('db').style.display = en ? 'block':'none';
+  prev_();
+  document.getElementById('ov').classList.add('s');
+}
+function close_(){document.getElementById('ov').classList.remove('s'); ak=null}
+function prev_(){
+  var kind=radVal('k');
+  if(kind=='ot'){
+    var h=parseFloat(document.getElementById('hr').value); if(isNaN(h))h=0;
+    var m=mult(), pt=radVal('pt');
+    if(pt=='money'){
+      var r=getHourlyRate(curP).hourly;
+      document.getElementById('pw').innerText='= '+(r*h*m).toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท';
+    } else {
+      document.getElementById('pw').innerText='= '+(h*m).toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม. สะสม';
+    }
+  } else {
+    var h=parseFloat(document.getElementById('uh').value); if(isNaN(h))h=0;
+    document.getElementById('pw').innerText='ใช้ '+h.toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม.';
   }
 }
-function saveEntry(){
-  var data=getCal(), old=data[activeKey], kind=radVal('entryKind');
-  if(kind==='ot'){
-    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
-    if(h<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
-    data[activeKey]=pt==='money'?{kind:'ot',payType:'money',rate:settings().rate,hours:h,multiplier:m,total:settings().rate*h*m}:{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h*m};
-  }else{
-    var uh=num($('useHours').value), avail=totalBank(activeKey);
-    if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
-    if(uh>avail){alert('วันหยุดสะสมไม่พอ (มีอยู่ '+hours(avail)+' ชม.)');return}
-    data[activeKey]={kind:'use',hours:uh};
+function save_(){
+  var kind=radVal('k'), data=gd(), old=data[ak];
+  toggleHolidayIfNeeded(ak, document.getElementById('phCheck').checked);
+  if(kind=='ot'){
+    var h=parseFloat(document.getElementById('hr').value), m=mult(), pt=radVal('pt');
+    if(isNaN(h)||h<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
+    if(pt=='money'){
+      var r=getHourlyRate(curP).hourly;
+      data[ak]={kind:'ot',payType:'money',rate:r,hours:h,multiplier:m,total:r*h*m};
+    } else {
+      data[ak]={kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h*m};
+    }
+  } else {
+    var h=parseFloat(document.getElementById('uh').value);
+    if(isNaN(h)||h<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
+    var avail=totalBank()-contrib(old);
+    if(h>avail){ alert('วันหยุดสะสมไม่พอ (มีอยู่ '+avail.toLocaleString('th-TH',{maximumFractionDigits:1})+' ชม.)'); return }
+    data[ak]={kind:'use',hours:h};
   }
-  setCal(data);closeEntry();renderAll();
+  sd_(data);
+  close_(); render();
 }
-function deleteEntry(){
-  if(!confirm('ลบข้อมูลวันนี้?'))return;
-  var data=getCal();delete data[activeKey];setCal(data);closeEntry();renderAll();
+
+var _pendingDelCb=null;
+function showConfirm(title, msg, confirmLabel, cb){
+  document.getElementById('cdlg-title').innerText=title;
+  document.getElementById('cdlg-msg').innerText=msg;
+  document.getElementById('cdlg-confirm').innerText=confirmLabel;
+  _pendingDelCb=cb;
+  document.getElementById('cdlg').classList.add('s');
+}
+function hideConfirm(){ document.getElementById('cdlg').classList.remove('s'); _pendingDelCb=null; }
+document.getElementById('cdlg-cancel').onclick=hideConfirm;
+document.getElementById('cdlg-confirm').onclick=function(){ if(_pendingDelCb) _pendingDelCb(); hideConfirm(); };
+
+function del_(){
+  if(!ak) return;
+  showConfirm('ลบข้อมูล','ยืนยันลบข้อมูลวันนี้?\nไม่สามารถย้อนกลับได้','ลบ', function(){
+    var data=gd(); delete data[ak]; sd_(data);
+    toggleHolidayIfNeeded(ak, false);
+    close_(); render();
+  });
 }
 
 function openSettings(){
-  var st=settings();
-  $('setRate').value=st.rate||'';$('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
-  $('setSalary').value=st.salary||'';$('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
-  $('setDiligenceEnabled').checked=st.diligenceEnabled;
-  $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
-  $('setNightEnabled').checked=st.nightEnabled;
-  $('setSick').value=st.sick||'';$('setPersonal').value=st.personal||'';$('setAbsent').value=st.absent||'';$('setServiceAward').value=st.serviceAward||'';
-  $('setSocial').value=st.social||'';$('setTax').value=st.tax||'';$('setOther').value=st.other||'';
-  clearHolidayForm();renderHolidayList();$('settingsOverlay').classList.add('show');
-}
-function closeSettings(){$('settingsOverlay').classList.remove('show')}
-function saveSettings(){
-  var entriesSum=totalBank()-settings().bankAdj, bankInput=num($('setBank').value);
-  setLS('ot_rate',num($('setRate').value));
-  var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
-  var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
-  setLS('ot_bank_adj',bankInput-entriesSum);
-  setLS('salary',num($('setSalary').value));setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));setBool('diligence_enabled',$('setDiligenceEnabled').checked);
-  setLS('kpi_percent',num($('setKpi').value));
-  setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
-  setLS('sick_leave',num($('setSick').value));setLS('personal_leave',num($('setPersonal').value));setLS('absent_days',num($('setAbsent').value));setLS('service_award',num($('setServiceAward').value));
-  setLS('social_security',num($('setSocial').value));setLS('tax',num($('setTax').value));setLS('other_deduction',num($('setOther').value));
-  setLS('ot_ss',num($('setSocial').value));setLS('ot_tax',num($('setTax').value));setLS('ot_other',num($('setOther').value));
-  closeSettings();currentPeriod=periodFor(today);renderAll();
-}
-function clearHolidayForm(){editingHoliday=-1;$('holidayDate').value='';$('holidayName').value=''}
-function editHoliday(i){var h=getHolidays()[i];if(!h)return;editingHoliday=i;$('holidayDate').value=h.date;$('holidayName').value=h.name}
-function saveHoliday(){
-  var date=$('holidayDate').value, name=$('holidayName').value.trim();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!name){alert('กรอกวันและชื่อวันหยุดให้ครบ');return}
-  var h=getHolidays();
-  if(editingHoliday>=0)h[editingHoliday]={date:date,name:name};else{
-    if(h.some(function(x){return x.date===date})){alert('มีวันหยุดวันนี้แล้ว');return}
-    h.push({date:date,name:name});
+  document.getElementById('setSalary').value=getSalary()||'';
+  document.getElementById('setKpiDaily').value=getKpiDaily()||'';
+  document.getElementById('setCutoff').value=getCutoff()||'';
+  document.getElementById('setBank').value=totalBank();
+  var d=getDeductions();
+  document.getElementById('setSSO').value=d.sso;
+  document.getElementById('setTax').value=d.tax;
+  document.getElementById('setOtherDeduct').value=d.other;
+  updateHourlyPreview();
+  /* Migration notice: old ot_rate key existed but no salary set yet */
+  var oldRate=parseFloat(localStorage.getItem('ot_rate'));
+  if(!isNaN(oldRate) && oldRate>0 && getSalary()<=0){
+    document.getElementById('hourlyRatePreview').innerHTML='⚠️ ระบบเปลี่ยนวิธีคำนวณค่าแรง กรุณากรอกเงินเดือนใหม่ (ค่าแรงเดิม '+oldRate.toLocaleString('th-TH')+' บาท/ชม. จะไม่ถูกใช้อีกต่อไป)';
   }
-  setHolidays(h);clearHolidayForm();renderHolidayList();renderAll();
+  document.getElementById('setOv').classList.add('s');
 }
-function deleteHoliday(i){
-  if(!confirm('ลบวันหยุดนี้?'))return;
-  var h=getHolidays();h.splice(i,1);setHolidays(h);clearHolidayForm();renderAll();
+function updateHourlyPreview(){
+  var salary=parseFloat(document.getElementById('setSalary').value)||0;
+  var kpiDaily=parseFloat(document.getElementById('setKpiDaily').value)||0;
+  var label=periodLabel(curP);
+  var kpiBonus=getKpiBonusPct(label);
+  var kpiTotal=kpiDaily+kpiBonus;
+  var base=salary*(1+kpiTotal/100);
+  var hourly=base/30/8;
+  document.getElementById('hourlyRatePreview').innerHTML='ค่าแรงต่อชั่วโมง (auto) = '+hourly.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท/ชม.<br>(เงินเดือน + KPI Daily '+kpiDaily+'% + KPI Bonus '+kpiBonus+'% ของรอบนี้)';
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function closeSettings(){document.getElementById('setOv').classList.remove('s')}
+function saveSettings(){
+  var entriesSum = totalBank() - getBankAdj();
+  var sal=parseFloat(document.getElementById('setSalary').value);
+  if(!isNaN(sal)&&sal>0) localStorage.setItem('ot_salary', sal);
+  var kpiD=parseFloat(document.getElementById('setKpiDaily').value);
+  if(!isNaN(kpiD)&&kpiD>=0) localStorage.setItem('ot_kpi_daily', kpiD); else localStorage.setItem('ot_kpi_daily', 0);
+  var c=parseInt(document.getElementById('setCutoff').value);
+  if(isNaN(c)||c<1||c>31){ localStorage.removeItem('ot_cutoff'); } else { localStorage.setItem('ot_cutoff', c); }
+  var bInput=parseFloat(document.getElementById('setBank').value);
+  if(!isNaN(bInput)) localStorage.setItem('ot_bank_adj', bInput-entriesSum);
+  var sso=parseFloat(document.getElementById('setSSO').value); if(!isNaN(sso)) localStorage.setItem('ot_sso',sso);
+  var tax=parseFloat(document.getElementById('setTax').value); if(!isNaN(tax)) localStorage.setItem('ot_tax',tax);
+  var other=parseFloat(document.getElementById('setOtherDeduct').value); if(!isNaN(other)) localStorage.setItem('ot_other_deduct',other);
+  closeSettings();
+  curP=periodFor(new Date());
+  renderInfo(); render();
+}
 
 function exportData(){
-  var keys=['ot_cal','ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
-  var payload={version:2,exported_at:new Date().toISOString(),data:{}};
-  keys.forEach(function(k){payload.data[k]=getLS(k)});
-  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='ot-calendar-v2-'+dateKey(today)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-}
-function validateCal(cal){
-  if(!cal||typeof cal!=='object'||Array.isArray(cal))return 'ot_cal ต้องเป็น object';
-  for(var k in cal){
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return 'พบวันที่ไม่ถูกต้อง: '+k;
-    var e=cal[k]; if(!e||typeof e!=='object')return 'ข้อมูลวันที่ '+k+' ไม่ถูกต้อง';
-    if(e.kind==='ot'){
-      if(num(e.hours)<=0)return 'ชั่วโมง OT ของ '+k+' ไม่ถูกต้อง';
-      if(['money','leave'].indexOf(e.payType)<0)return 'ประเภท OT ของ '+k+' ไม่ถูกต้อง';
-      if([1.5,2,3].indexOf(num(e.multiplier))<0)return 'เรท OT ของ '+k+' ไม่ถูกต้อง';
-    }else if(e.kind==='use'){
-      if(num(e.hours)<=0)return 'ชั่วโมงใช้วันหยุดของ '+k+' ไม่ถูกต้อง';
-    }else return 'kind ของ '+k+' ไม่ถูกต้อง';
+  var kpiBonusMap={};
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf('ot_kpi_bonus_')===0) kpiBonusMap[key]=localStorage.getItem(key);
   }
-  return '';
-}
-function validateHolidays(h){
-  if(!Array.isArray(h))return 'holidays ต้องเป็น array';
-  for(var i=0;i<h.length;i++){
-    if(!h[i]||!/^\d{4}-\d{2}-\d{2}$/.test(String(h[i].date))||!String(h[i].name||'').trim())return 'ข้อมูลวันหยุดลำดับ '+(i+1)+' ไม่ถูกต้อง';
+  var workDaysMap={};
+  for(var j=0;j<localStorage.length;j++){
+    var key2=localStorage.key(j);
+    if(key2.indexOf('ot_wd_')===0) workDaysMap[key2]=localStorage.getItem(key2);
   }
-  return '';
+  var payload={
+    cal:gd(), salary:getSalary(), kpiDaily:getKpiDaily(), cutoff:getCutoff(), bankAdj:getBankAdj(),
+    sso:getDeductions().sso, tax:getDeductions().tax, other:getDeductions().other,
+    holidays:getHolidays(), kpiBonusMap:kpiBonusMap, workDaysMap:workDaysMap
+  };
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='ot-backup-'+tk()+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 function importFile(ev){
-  var f=ev.target.files[0]; if(!f)return;
+  var f=ev.target.files[0]; if(!f) return;
   var reader=new FileReader();
   reader.onload=function(e){
     try{
-      var obj=JSON.parse(e.target.result), incoming={}, cal=null, hol=null;
-      if(obj&&obj.version===2&&obj.data){
-        incoming=obj.data;
-        var required=['ot_cal','ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
-        var missing=required.filter(function(k){return !(k in incoming)});
-        if(missing.length)throw new Error('ข้อมูลขาดฟิลด์: '+missing.join(', '));
-        cal=JSON.parse(incoming.ot_cal||'{}');hol=JSON.parse(incoming.holidays||'[]');
-      }
-      else if(obj&&obj.cal){cal=obj.cal;incoming={ot_rate:obj.rate,ot_cutoff:obj.cutoff,ot_bank_adj:obj.bankAdj};hol=[]}
-      else if(obj&&obj.ot_cal){incoming=obj;cal=obj.ot_cal;hol=obj.holidays||[]}
-      else throw new Error('ไม่พบโครงสร้างข้อมูลที่รองรับ');
-      var err=validateCal(cal)||validateHolidays(hol); if(err){alert('ไฟล์ไม่ถูกต้อง: '+err);return}
-      if(!confirm('นำเข้าข้อมูลจะแทนที่ข้อมูลปัจจุบันทั้งหมด ดำเนินการต่อ?'))return;
-      setCal(cal); setHolidays(hol);
-      Object.keys(incoming).forEach(function(k){
-        if(k==='ot_cal'||k==='holidays'||typeof incoming[k]==='undefined'||incoming[k]===null)return;
-        if(['ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award'].indexOf(k)>=0)setLS(k,incoming[k]);
+      var obj=JSON.parse(e.target.result);
+      showConfirm('กู้คืนข้อมูล','นำเข้าข้อมูลจะแทนที่ข้อมูลปัจจุบันทั้งหมด\nดำเนินการต่อ?','กู้คืน', function(){
+        if(obj.cal) localStorage.setItem('ot_cal', JSON.stringify(obj.cal));
+        if(obj.salary>0) localStorage.setItem('ot_salary', obj.salary); else if(obj.rate>0){ /* legacy backup fallback */ }
+        if(typeof obj.kpiDaily!=='undefined') localStorage.setItem('ot_kpi_daily', obj.kpiDaily);
+        if(obj.cutoff) localStorage.setItem('ot_cutoff', obj.cutoff); else localStorage.removeItem('ot_cutoff');
+        if(typeof obj.bankAdj!=='undefined') localStorage.setItem('ot_bank_adj', obj.bankAdj);
+        if(typeof obj.sso!=='undefined') localStorage.setItem('ot_sso', obj.sso);
+        if(typeof obj.tax!=='undefined') localStorage.setItem('ot_tax', obj.tax);
+        if(typeof obj.other!=='undefined') localStorage.setItem('ot_other_deduct', obj.other);
+        if(obj.holidays) localStorage.setItem('ot_holidays', JSON.stringify(obj.holidays));
+        if(obj.kpiBonusMap){ for(var k in obj.kpiBonusMap) localStorage.setItem(k, obj.kpiBonusMap[k]); }
+        if(obj.workDaysMap){ for(var k2 in obj.workDaysMap) localStorage.setItem(k2, obj.workDaysMap[k2]); }
+        closeSettings();
+        curP=periodFor(new Date());
+        renderInfo(); render();
+        if(obj.rate>0 && !(obj.salary>0)){
+          alert('ไฟล์ backup นี้เป็นเวอร์ชันเก่า (มีค่าแรง/ชม. แต่ไม่มีเงินเดือน) กรุณากรอกเงินเดือนใหม่ในเมนูตั้งค่า');
+        }
       });
-      if(incoming.social_security!==undefined)setLS('ot_ss',incoming.social_security);
-      if(incoming.tax!==undefined)setLS('ot_tax',incoming.tax);
-      if(incoming.other_deduction!==undefined)setLS('ot_other',incoming.other_deduction);
-      alert('กู้คืนข้อมูลเรียบร้อย');closeSettings();currentPeriod=periodFor(today);renderAll();
-    }catch(err){alert('ไฟล์ไม่ถูกต้อง: '+err.message)}
+    }catch(err){ alert('ไฟล์ไม่ถูกต้อง'); }
   };
-  reader.readAsText(f); ev.target.value='';
-}
-function refreshHistory(){
-  var data=getCal(), months={}, weeks={};
-  Object.keys(data).forEach(function(k){
-    var d=parseDateKey(k), mk=d.getFullYear()+'-'+pad(d.getMonth()+1), wk=dateKey(weekStart(d));
-    months[mk]=monthStats(d.getFullYear(),d.getMonth());
-    weeks[wk]=periodStats({start:weekStart(d),end:addDays(weekStart(d),6)});
-  });
-  localStorage.setItem('monthly_history',JSON.stringify(months));
-  localStorage.setItem('weekly_history',JSON.stringify(weeks));
-}
-function wireInputEvents(root,fn){
-  Array.prototype.forEach.call(root.querySelectorAll('input'),function(el){el.addEventListener('input',fn);el.addEventListener('change',fn)});
+  reader.readAsText(f);
+  ev.target.value='';
 }
 
-$('prevBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.start,-1));renderAll()};
-$('nextBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.end,1));renderAll()};
-$('settingsBtn').onclick=openSettings;$('rateInfo').onclick=openSettings;
-$('tabCalendar').onclick=function(){showPage('calendar')};$('tabDashboard').onclick=function(){showPage('dashboard')};$('tabWeekly').onclick=function(){showPage('weekly')};
-$('weekPrev').onclick=function(){currentWeek=addDays(currentWeek,-7);renderAll()};$('weekNext').onclick=function(){currentWeek=addDays(currentWeek,7);renderAll()};
-$('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
-$('closeSettingsBtn').onclick=closeSettings;$('saveSettingsBtn').onclick=saveSettings;$('settingsOverlay').onclick=function(e){if(e.target===this)closeSettings()};
-$('saveHolidayBtn').onclick=saveHoliday;$('clearHolidayBtn').onclick=clearHolidayForm;$('exportBtn').onclick=exportData;$('importBtn').onclick=function(){$('importFile').click()};$('importFile').onchange=importFile;$('pdfBtn').onclick=function(){window.print()};
-Array.prototype.forEach.call(document.getElementsByName('entryKind'),function(el){el.onchange=function(){toggleEntryFields();previewEntry()}});
-wireInputEvents($('entryOverlay'),previewEntry);
-wireInputEvents($('settingsOverlay'),function(){renderDashboard()});
-renderAll();
-</script>
-</body>
-</html>
+function remindBackup(){
+  showConfirm('💾 สำรองข้อมูล','ข้อมูลจะหายหากล้าง browser หรือเปลี่ยนอุปกรณ์\nต้องการดาวน์โหลด backup ทันที?','ดาวน์โหลด', exportData);
+}
+
+function printPayslip(){
+  var label=periodLabel(curP);
+  var data=gd(); var th=0,tp=0;
+  var cur2=new Date(curP.start);
+  var rows='';
+  while(cur2<=curP.end){
+    var k=keyOf(cur2.getFullYear(),cur2.getMonth(),cur2.getDate());
+    var en=data[k];
+    if(en&&en.kind=='ot'){
+      var earned=en.payType=='money'?en.total:0;
+      rows+='<tr><td>'+k+'</td><td>'+en.hours+'h × '+en.multiplier+'x</td><td>'+(en.payType=='money'?earned.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท':'สะสม '+en.credit+'h')+'</td></tr>';
+      th+=parseFloat(en.hours); if(en.payType=='money') tp+=parseFloat(en.total);
+    }
+    cur2.setDate(cur2.getDate()+1);
+  }
+  var d=getDeductions();
+  var net=tp-d.sso-d.tax-d.other;
+  var slip=document.getElementById('printSlip');
+  slip.style.display='block';
+  slip.innerHTML='<h2 style="font-size:18px;margin:0 0 4px">ใบสรุป OT</h2>'+
+    '<div style="font-size:13px;color:#666;margin-bottom:16px">รอบ: '+label+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">'+
+    '<thead><tr style="background:#eef1f5"><th style="text-align:left;padding:6px">วันที่</th><th style="text-align:left;padding:6px">ชม.</th><th style="text-align:right;padding:6px">ยอด</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table>'+
+    '<div style="text-align:right;font-size:14px;border-top:1px solid #ddd;padding-top:10px">'+
+    '<div>รวม OT เงิน: <b>'+tp.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท</b></div>'+
+    '<div style="color:#888">หัก ประกันสังคม: -'+d.sso.toLocaleString('th-TH',{minimumFractionDigits:2})+'</div>'+
+    '<div style="color:#888">หัก ภาษี: -'+d.tax.toLocaleString('th-TH',{minimumFractionDigits:2})+'</div>'+
+    '<div style="color:#888">หักอื่นๆ: -'+d.other.toLocaleString('th-TH',{minimumFractionDigits:2})+'</div>'+
+    '<div style="font-size:16px;font-weight:800;margin-top:8px;color:#16233d">ยอดสุทธิ: '+net.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท</div>'+
+    '</div>';
+  window.print();
+  setTimeout(function(){slip.style.display='none';},500);
+}
+
+document.getElementById('pv').onclick=prevPeriod;
+document.getElementById('nx').onclick=nextPeriod;
+document.getElementById('gearBtn').onclick=openSettings;
+document.getElementById('rd').onclick=openSettings;
+document.getElementById('cb').onclick=close_;
+document.getElementById('svBtn').onclick=save_;
+document.getElementById('db').onclick=del_;
+document.getElementById('hr').oninput=prev_;
+document.getElementById('uh').oninput=prev_;
+var ks=document.getElementsByName('k'); for(var i=0;i<ks.length;i++) ks[i].onchange=function(){showBlocks(radVal('k'));prev_();};
+var rs=document.getElementsByName('m'); for(var i=0;i<rs.length;i++) rs[i].onchange=prev_;
+var pts=document.getElementsByName('pt'); for(var i=0;i<pts.length;i++) pts[i].onchange=prev_;
+document.getElementById('ov').onclick=function(e){if(e.target===this)close_()};
+document.getElementById('setCloseBtn').onclick=closeSettings;
+document.getElementById('setSaveBtn').onclick=saveSettings;
+document.getElementById('expBtn').onclick=exportData;
+document.getElementById('impBtnShow').onclick=function(){document.getElementById('impFile').click();};
+document.getElementById('impFile').onchange=importFile;
+document.getElementById('setOv').onclick=function(e){if(e.target===this)closeSettings();};
+
+document.getElementById('sumWorkDays').oninput=function(){
+  var label=periodLabel(curP);
+  var v=parseInt(this.value); if(isNaN(v)||v<0) v=0;
+  saveWorkDays(label, v);
+};
+
+document.getElementById('kpiBonusInput').oninput=function(){
+  var label=periodLabel(curP);
+  saveKpiBonusPct(label, this.value);
+  render();
+};
+
+document.getElementById('setSalary').oninput=updateHourlyPreview;
+document.getElementById('setKpiDaily').oninput=updateHourlyPreview;
+
+document.getElementById('phCheck').onchange=function(){
+  document.getElementById('phNote').style.display=this.checked?'block':'none';
+};
+
+renderInfo();
+render();
+</script></body></html>
