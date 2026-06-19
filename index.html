@@ -134,6 +134,18 @@ canvas{width:100%;height:150px;display:block}
       <div><span id="totalHours" class="big">0</span> ชม. OT</div>
       <div class="side">รวมเงิน OT<b id="totalPay">0.00 บาท</b></div>
     </div>
+    <div class="periodControls noPrint">
+      <div class="periodCard">
+        <label for="sumWorkDays">จำนวนวันทำงาน</label>
+        <input type="number" id="sumWorkDays" step="1" min="0" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="periodCard">
+        <label for="kpiBonusPct">KPI Bonus เดือนนี้ (%)</label>
+        <input type="number" id="kpiBonusPct" step="0.1" inputmode="decimal" placeholder="0">
+      </div>
+    </div>
+    <div class="strip warn hide" id="kpiNotice"></div>
+    <div class="summaryList kpiSummary" id="kpiSummary"></div>
     <div class="strip" id="bankBox">วันหยุดสะสม: 0 ชม.</div>
     <div class="strip" id="deductionBox">รายการหัก: 0.00 บาท · สุทธิ: 0.00 บาท</div>
     <div class="strip warn" id="paydayBox">เงินออกอีก 0 วัน</div>
@@ -205,7 +217,7 @@ canvas{width:100%;height:150px;display:block}
 <div class="overlay" id="settingsOverlay"><div class="sheet">
   <h2>ตั้งค่า</h2>
   <div class="settingsGrid">
-    <div class="group"><label>ค่าแรงปกติ (บาท/ชม.)</label><input type="number" id="setRate" inputmode="decimal"></div>
+    <div class="group"><label>เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalary" inputmode="decimal"></div>
     <div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
     <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
     <div class="group"><label>ยอดวันหยุดสะสม</label><input type="number" id="setBank" step="0.1" inputmode="decimal"></div>
@@ -213,10 +225,9 @@ canvas{width:100%;height:150px;display:block}
 
   <div class="subhead">รายได้ประจำ</div>
   <div class="settingsGrid">
-    <div class="group"><label>เงินเดือน</label><input type="number" id="setSalary" inputmode="decimal"></div>
     <div class="group"><label>ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
     <div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
-    <div class="group"><label>KPI (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
+    <div class="group"><label>KPI Daily (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
   </div>
   <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setDiligenceEnabled"> ได้เบี้ยขยัน</label></div>
 
@@ -267,7 +278,7 @@ var MS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย
 var today=new Date(), currentPeriod=periodFor(today), currentWeek=weekStart(today), activeKey=null, editingHoliday=-1;
 
 function $(id){return document.getElementById(id)}
-function num(v){return Number(v)||0}
+function num(v){var n=Number(v);return (isNaN(n)||!isFinite(n))?0:n}
 function pad(n){return n<10?'0'+n:''+n}
 function keyOf(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d)}
 function dateKey(dt){return keyOf(dt.getFullYear(),dt.getMonth(),dt.getDate())}
@@ -286,6 +297,12 @@ function getNum(k,fb,def){
 }
 function getBool(k,def){var v=getLS(k);if(v===null)return !!def;return v==='1'||v==='true'}
 function setBool(k,v){setLS(k,v?'1':'0')}
+function currentPeriodLabel(){return periodLabel(currentPeriod)}
+function getWorkDays(label){var k='workdays_'+encodeURIComponent(String(label||''));var v=getLS(k);if(v===null||v==='')return 0;return num(v)}
+function saveWorkDays(label,val){var k='workdays_'+encodeURIComponent(String(label||''));setLS(k,num(val))}
+function getKpiBonusPct(label){var k='kpi_bonus_'+encodeURIComponent(String(label||''));var v=getLS(k);if(v===null||v==='')return 0;return num(v)}
+function saveKpiBonusPct(label,val){var k='kpi_bonus_'+encodeURIComponent(String(label||''));setLS(k,num(val))}
+function getLegacyRateWarning(){return getLS('ot_rate')!==null}
 function getCal(){try{return JSON.parse(getLS('ot_cal')||'{}')||{}}catch(e){return {}}}
 function setCal(d){localStorage.setItem('ot_cal',JSON.stringify(d||{}))}
 function getHolidays(){try{var h=JSON.parse(getLS('holidays')||'[]');return Array.isArray(h)?h:[]}catch(e){return []}}
@@ -297,11 +314,10 @@ function holidayName(k){var h=getHolidays().find(function(x){return x.date===k})
 
 function settings(){
   return {
-    rate:getNum('ot_rate',null,0),
     cutoff:getValidDay(getLS('ot_cutoff')||getLS('cutoff_day')),
     payday:getValidDay(getLS('payday'))||getValidDay(getLS('cutoff_day'))||getValidDay(getLS('ot_cutoff')),
     bankAdj:getNum('ot_bank_adj',null,0),
-    salary:getNum('salary',null,0),
+    salary:getNum('ot_salary','salary',0),
     housing:getNum('housing',null,0),
     diligence:getNum('diligence',null,0),
     diligenceEnabled:getBool('diligence_enabled',true),
@@ -346,6 +362,14 @@ function totalBank(excludeKey){
   Object.keys(data).forEach(function(k){if(k!==excludeKey)b+=entryContribution(data[k])});
   return b;
 }
+function getHourlyRate(){
+  var st=settings(), salary=num(st.salary), dailyKpi=num(st.kpiPercent), bonusKpi=num(getKpiBonusPct(currentPeriodLabel()));
+  if(salary<=0)return 0;
+  var totalKpiPct=dailyKpi+bonusKpi;
+  var totalKpiAmount=salary*(totalKpiPct/100);
+  var base=salary+totalKpiAmount;
+  return base/30/8;
+}
 function periodStats(p){
   var data=getCal(), st=settings(), th=0,tp=0,otDays=0,leaveUse=0,byDay={}, start=p.start,end=p.end;
   Object.keys(data).forEach(function(k){
@@ -364,7 +388,9 @@ function periodStats(p){
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otDays,night:st.nightEnabled?st.nightRate*actual:0};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
-  var kpi=st.salary*(st.kpiPercent/100);
+  var bonusKpi=num(getKpiBonusPct(periodLabel(p)));
+  var totalKpiPct=num(st.kpiPercent)+bonusKpi;
+  var kpi=st.salary*(totalKpiPct/100);
   var diligence=st.diligenceEnabled?st.diligence:0;
   var base=st.salary+st.housing+diligence+kpi;
   var deductions={social:st.social,tax:st.tax,other:st.other,total:st.social+st.tax+st.other};
@@ -389,9 +415,30 @@ function showPage(name){
   renderAll();
 }
 function renderInfo(){
-  var st=settings(), rate=st.rate?('ค่าแรง '+st.rate.toLocaleString('th-TH')+' บาท/ชม.'):'ยังไม่ตั้งค่าแรง';
-  var cutoff=st.cutoff?('ตัดรอบวันที่ '+st.cutoff):'ตามเดือนปฏิทิน';
-  $('rateInfo').innerText=rate+' · '+cutoff+' · แตะเพื่อตั้งค่า';
+  var st=settings(), cutoff=st.cutoff?('ตัดรอบวันที่ '+st.cutoff):'ตามเดือนปฏิทิน';
+  var hourly=getHourlyRate();
+  var bonusPct=getKpiBonusPct(currentPeriodLabel());
+  var rateText=hourly>0?('ค่าแรง '+money(hourly)+' / ชม.'):'ยังไม่ตั้งค่าเงินเดือน';
+  var legacy=getLegacyRateWarning();
+  $('rateInfo').innerText=(legacy?'⚠️ ระบบเปลี่ยนวิธีคำนวณค่าแรง กรุณากรอกเงินเดือนใหม่ในเมนูตั้งค่า · ':'')+rateText+' · KPI Daily '+st.kpiPercent.toLocaleString('th-TH',{maximumFractionDigits:1})+'% · KPI Bonus '+bonusPct.toLocaleString('th-TH',{maximumFractionDigits:1})+'% · '+cutoff+' · แตะเพื่อตั้งค่า';
+}
+function renderPeriodInputs(){
+  var label=currentPeriodLabel();
+  $('sumWorkDays').value=getWorkDays(label);
+  $('kpiBonusPct').value=getKpiBonusPct(label);
+  var bonus=getKpiBonusPct(label);
+  $('kpiNotice').innerText='⚠️ กรุณากรอก KPI Bonus ก่อนเริ่มบันทึก OT ของรอบบิลนี้ เพื่อให้คำนวณค่าแรงต่อชั่วโมงถูกต้อง';
+  $('kpiNotice').classList.toggle('hide',bonus!==0);
+}
+function renderKpiSummary(){
+  var st=settings(), label=currentPeriodLabel(), bonus=getKpiBonusPct(label), daily=num(st.kpiPercent), totalPct=daily+bonus, amount=st.salary*(totalPct/100), hourly=getHourlyRate();
+  $('kpiSummary').innerHTML=[
+    ['KPI Daily (%)',daily.toLocaleString('th-TH',{maximumFractionDigits:1})+'%'],
+    ['KPI Bonus (%) ของรอบบิลนี้',bonus.toLocaleString('th-TH',{maximumFractionDigits:1})+'%'],
+    ['KPI รวม (%)',totalPct.toLocaleString('th-TH',{maximumFractionDigits:1})+'%'],
+    ['KPI รวม (บาท)',money(amount)],
+    ['ค่าแรงต่อชั่วโมง (auto)',hourly>0?money(hourly):'ยังไม่ตั้งค่า']
+  ].map(function(r){return '<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join('');
 }
 function renderCalendar(){
   $('monthLabel').innerText=periodLabel(currentPeriod);
@@ -424,11 +471,11 @@ function renderCalendar(){
   $('sideNet').innerText=money(st.net);
 }
 function renderDashboard(){
-  var st=periodStats(currentPeriod), s=settings();
+  var st=periodStats(currentPeriod), s=settings(), label=currentPeriodLabel(), bonus=getKpiBonusPct(label), totalKpiPct=num(s.kpiPercent)+bonus;
   $('dashOt').innerText=hours(st.otHours)+' ชม.';
   $('dashOtPay').innerText=money(st.otPay);
   $('dashBank').innerText=hours(totalBank())+' ชม.';
-  $('dashKpi').innerText=hours(s.kpiPercent)+'%';
+  $('dashKpi').innerText=hours(totalKpiPct)+'%';
   $('dashKpiAmt').innerText=money(st.kpi);
   $('dashPayday').innerText=paydayCountdown()+' วัน';
   $('dashNet').innerText=money(st.net);
@@ -466,7 +513,7 @@ function renderHolidayList(){
   Array.prototype.forEach.call(box.querySelectorAll('[data-edit]'),function(b){b.onclick=function(){editHoliday(num(b.getAttribute('data-edit')))}});
   Array.prototype.forEach.call(box.querySelectorAll('[data-del]'),function(b){b.onclick=function(){deleteHoliday(num(b.getAttribute('data-del')))}});
 }
-function renderAll(){renderInfo();renderCalendar();renderDashboard();renderWeekly();renderHolidayList();refreshHistory()}
+function renderAll(){renderInfo();renderPeriodInputs();renderKpiSummary();renderCalendar();renderDashboard();renderWeekly();renderHolidayList();refreshHistory()}
 
 function drawCharts(){
   var labels=[],hVals=[],iVals=[],base=new Date(currentPeriod.start.getFullYear(),currentPeriod.start.getMonth(),1);
@@ -491,7 +538,7 @@ function drawBar(canvas,labels,values,color,isMoney){
 
 function openEntry(k){
   activeKey=k;
-  if(settings().rate<=0){alert('กรุณาตั้งค่าแรงก่อนในเมนูตั้งค่า');openSettings();return}
+  if(num(settings().salary)<=0){alert('กรุณากรอกเงินเดือนก่อนในเมนูตั้งค่า');openSettings();return}
   var d=parseDateKey(k), W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
   $('entryTitle').innerText='วัน'+W[d.getDay()]+' ที่ '+d.getDate()+' '+MN[d.getMonth()]+' '+(d.getFullYear()+543)+(holidayName(k)?' · '+holidayName(k):'');
   var en=getCal()[k], kind=en?en.kind:'ot';
@@ -515,8 +562,8 @@ function toggleEntryFields(){
 }
 function previewEntry(){
   if(radVal('entryKind')==='ot'){
-    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
-    $('entryPreview').innerText=pt==='money'?'= '+money(settings().rate*h*m):'= '+hours(h*m)+' ชม. สะสม';
+    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType'), rate=getHourlyRate();
+    $('entryPreview').innerText=pt==='money'?(rate>0?'= '+money(rate*h*m):'= '+money(0)):'= '+hours(h*m)+' ชม. สะสม';
   }else{
     $('entryPreview').innerText='ใช้ '+hours($('useHours').value)+' ชม.';
   }
@@ -526,7 +573,7 @@ function saveEntry(){
   if(kind==='ot'){
     var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
     if(h<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
-    data[activeKey]=pt==='money'?{kind:'ot',payType:'money',rate:settings().rate,hours:h,multiplier:m,total:settings().rate*h*m}:{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h*m};
+    data[activeKey]=pt==='money'?{kind:'ot',payType:'money',rate:getHourlyRate(),hours:h,multiplier:m,total:getHourlyRate()*h*m}:{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h*m};
   }else{
     var uh=num($('useHours').value), avail=totalBank(activeKey);
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
@@ -542,8 +589,8 @@ function deleteEntry(){
 
 function openSettings(){
   var st=settings();
-  $('setRate').value=st.rate||'';$('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
-  $('setSalary').value=st.salary||'';$('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
+  $('setSalary').value=st.salary||'';$('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
+  $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   $('setDiligenceEnabled').checked=st.diligenceEnabled;
   $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
   $('setNightEnabled').checked=st.nightEnabled;
@@ -553,12 +600,11 @@ function openSettings(){
 }
 function closeSettings(){$('settingsOverlay').classList.remove('show')}
 function saveSettings(){
-  var entriesSum=totalBank()-settings().bankAdj, bankInput=num($('setBank').value);
-  setLS('ot_rate',num($('setRate').value));
+  var entriesSum=totalBank()-settings().bankAdj, bankInput=num($('setBank').value), salary=num($('setSalary').value);
   var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
   setLS('ot_bank_adj',bankInput-entriesSum);
-  setLS('salary',num($('setSalary').value));setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));setBool('diligence_enabled',$('setDiligenceEnabled').checked);
+  setLS('ot_salary',salary);setLS('salary',salary);setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));setBool('diligence_enabled',$('setDiligenceEnabled').checked);
   setLS('kpi_percent',num($('setKpi').value));
   setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
   setLS('sick_leave',num($('setSick').value));setLS('personal_leave',num($('setPersonal').value));setLS('absent_days',num($('setAbsent').value));setLS('service_award',num($('setServiceAward').value));
@@ -585,9 +631,12 @@ function deleteHoliday(i){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
 function exportData(){
-  var keys=['ot_cal','ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
-  var payload={version:2,exported_at:new Date().toISOString(),data:{}};
+  var keys=['ot_cal','ot_rate','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
+  var extraKeys=[];
+  for(var i=0;i<localStorage.length;i++){var key=localStorage.key(i); if(/^kpi_bonus_/.test(key)||/^workdays_/.test(key))extraKeys.push(key)}
+  var payload={version:3,exported_at:new Date().toISOString(),data:{}};
   keys.forEach(function(k){payload.data[k]=getLS(k)});
+  extraKeys.forEach(function(k){payload.data[k]=getLS(k)});
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='ot-calendar-v2-'+dateKey(today)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
@@ -619,11 +668,8 @@ function importFile(ev){
   reader.onload=function(e){
     try{
       var obj=JSON.parse(e.target.result), incoming={}, cal=null, hol=null;
-      if(obj&&obj.version===2&&obj.data){
+      if(obj&&obj.version>=2&&obj.data){
         incoming=obj.data;
-        var required=['ot_cal','ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
-        var missing=required.filter(function(k){return !(k in incoming)});
-        if(missing.length)throw new Error('ข้อมูลขาดฟิลด์: '+missing.join(', '));
         cal=JSON.parse(incoming.ot_cal||'{}');hol=JSON.parse(incoming.holidays||'[]');
       }
       else if(obj&&obj.cal){cal=obj.cal;incoming={ot_rate:obj.rate,ot_cutoff:obj.cutoff,ot_bank_adj:obj.bankAdj};hol=[]}
@@ -634,7 +680,8 @@ function importFile(ev){
       setCal(cal); setHolidays(hol);
       Object.keys(incoming).forEach(function(k){
         if(k==='ot_cal'||k==='holidays'||typeof incoming[k]==='undefined'||incoming[k]===null)return;
-        if(['ot_rate','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award'].indexOf(k)>=0)setLS(k,incoming[k]);
+        if(/^kpi_bonus_/.test(k)||/^workdays_/.test(k))setLS(k,incoming[k]);
+        if(['ot_rate','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award'].indexOf(k)>=0)setLS(k,incoming[k]);
       });
       if(incoming.social_security!==undefined)setLS('ot_ss',incoming.social_security);
       if(incoming.tax!==undefined)setLS('ot_tax',incoming.tax);
@@ -657,6 +704,12 @@ function refreshHistory(){
 function wireInputEvents(root,fn){
   Array.prototype.forEach.call(root.querySelectorAll('input'),function(el){el.addEventListener('input',fn);el.addEventListener('change',fn)});
 }
+function attachPeriodInputs(){
+  $('sumWorkDays').addEventListener('input',function(){saveWorkDays(currentPeriodLabel(),num($('sumWorkDays').value));renderAll()});
+  $('sumWorkDays').addEventListener('change',function(){saveWorkDays(currentPeriodLabel(),num($('sumWorkDays').value));renderAll()});
+  $('kpiBonusPct').addEventListener('input',function(){saveKpiBonusPct(currentPeriodLabel(),num($('kpiBonusPct').value));renderAll()});
+  $('kpiBonusPct').addEventListener('change',function(){saveKpiBonusPct(currentPeriodLabel(),num($('kpiBonusPct').value));renderAll()});
+}
 
 $('prevBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.start,-1));renderAll()};
 $('nextBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.end,1));renderAll()};
@@ -669,6 +722,7 @@ $('saveHolidayBtn').onclick=saveHoliday;$('clearHolidayBtn').onclick=clearHolida
 Array.prototype.forEach.call(document.getElementsByName('entryKind'),function(el){el.onchange=function(){toggleEntryFields();previewEntry()}});
 wireInputEvents($('entryOverlay'),previewEntry);
 wireInputEvents($('settingsOverlay'),function(){renderDashboard()});
+attachPeriodInputs();
 renderAll();
 </script>
 </body>
