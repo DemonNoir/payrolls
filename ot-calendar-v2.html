@@ -60,6 +60,13 @@ button,input,select{font:inherit}
 .row{display:flex;gap:8px;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #edf0f5;font-size:13px}
 .row:last-child{border-bottom:0}
 .row b{text-align:right}
+.periodControls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 8px}
+.periodCard{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.periodCard label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:4px}
+.periodCard input{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 9px;text-align:center;background:#fff}
+.kpiSummary{margin:8px 0 10px}
+.kpiSummary .row{padding:10px 12px}
+#kpiNotice{margin:8px 0 0}
 .canvasWrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px}
 .canvasWrap h3{font-size:13px;margin:0 0 8px}
 canvas{width:100%;height:150px;display:block}
@@ -136,8 +143,8 @@ canvas{width:100%;height:150px;display:block}
     </div>
     <div class="periodControls noPrint">
       <div class="periodCard">
-        <label for="sumWorkDays">จำนวนวันทำงาน</label>
-        <input type="number" id="sumWorkDays" step="1" min="0" inputmode="numeric" placeholder="0">
+        <label>จำนวนวันทำงาน (คำนวณอัตโนมัติ)</label>
+        <div id="sumWorkDays" style="font-size:13px;font-weight:800;color:var(--ink);padding:8px 0;text-align:center">0 วัน</div>
       </div>
       <div class="periodCard">
         <label for="kpiBonusPct">KPI Bonus เดือนนี้ (%)</label>
@@ -229,6 +236,18 @@ canvas{width:100%;height:150px;display:block}
     <div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
     <div class="group"><label>KPI Daily (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
   </div>
+  <div class="periodControls">
+    <div class="periodCard">
+      <label>จำนวนวันทำงาน (คำนวณอัตโนมัติ)</label>
+      <div id="sumWorkDays" style="font-size:13px;font-weight:800;color:var(--ink);padding:8px 0;text-align:center">0 วัน</div>
+    </div>
+    <div class="periodCard">
+      <label for="kpiBonusPct">KPI Bonus เดือนนี้ (%)</label>
+      <input type="number" id="kpiBonusPct" step="0.1" inputmode="decimal" placeholder="0">
+    </div>
+  </div>
+  <div class="strip warn" id="kpiNotice"></div>
+  <div class="summaryList kpiSummary" id="kpiSummary"></div>
   <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setDiligenceEnabled"> ได้เบี้ยขยัน</label></div>
 
   <div class="subhead">สวัสดิการ</div>
@@ -297,6 +316,19 @@ function getNum(k,fb,def){
 }
 function getBool(k,def){var v=getLS(k);if(v===null)return !!def;return v==='1'||v==='true'}
 function setBool(k,v){setLS(k,v?'1':'0')}
+function ensureDefaultSettings(){
+  var defaults={
+    ot_salary:'12000',
+    salary:'12000',
+    housing:'1000',
+    diligence:'1000',
+    transport_rate:'50',
+    food_rate:'40',
+    ot_food_rate:'50',
+    night_shift_rate:'50'
+  };
+  Object.keys(defaults).forEach(function(k){if(getLS(k)===null)setLS(k,defaults[k])});
+}
 function currentPeriodLabel(){return periodLabel(currentPeriod)}
 function getWorkDays(label){var k='workdays_'+encodeURIComponent(String(label||''));var v=getLS(k);if(v===null||v==='')return 0;return num(v)}
 function saveWorkDays(label,val){var k='workdays_'+encodeURIComponent(String(label||''));setLS(k,num(val))}
@@ -424,7 +456,7 @@ function renderInfo(){
 }
 function renderPeriodInputs(){
   var label=currentPeriodLabel();
-  $('sumWorkDays').value=getWorkDays(label);
+  $('sumWorkDays').innerText=getWorkDays(label)+' วัน';
   $('kpiBonusPct').value=getKpiBonusPct(label);
   var bonus=getKpiBonusPct(label);
   $('kpiNotice').innerText='⚠️ กรุณากรอก KPI Bonus ก่อนเริ่มบันทึก OT ของรอบบิลนี้ เพื่อให้คำนวณค่าแรงต่อชั่วโมงถูกต้อง';
@@ -723,6 +755,7 @@ Array.prototype.forEach.call(document.getElementsByName('entryKind'),function(el
 wireInputEvents($('entryOverlay'),previewEntry);
 wireInputEvents($('settingsOverlay'),function(){renderDashboard()});
 attachPeriodInputs();
+ensureDefaultSettings();
 renderAll();
 </script>
 </body>
