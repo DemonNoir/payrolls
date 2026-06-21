@@ -38,7 +38,7 @@ function renderCalendar(){
   var data=getCal(), grid=$('calendarGrid'); grid.innerHTML='';
   for(var i=0;i<currentPeriod.start.getDay();i++){var blank=document.createElement('div');blank.className='cell empty';grid.appendChild(blank)}
 
-  var cur=new Date(currentPeriod.start), st=periodStats(currentPeriod);
+  var cur=new Date(currentPeriod.start), st=periodStats(currentPeriod), set=settings();
   while(cur<=currentPeriod.end){
     var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k);
     if(hname)cls+=' holiday';
@@ -52,7 +52,8 @@ function renderCalendar(){
     var cell=document.createElement('div');
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
     cell.title=hname||'';
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+'<span class="num">'+cur.getDate()+'</span>'+badge;
+    var isStart = (set.startDate && k === set.startDate);
+    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+'<span class="num">'+cur.getDate()+'</span>'+badge;
     cell.onclick=(function(key){return function(){openEntry(key)}})(k);
     grid.appendChild(cell);
     cur=addDays(cur,1);
