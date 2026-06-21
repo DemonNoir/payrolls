@@ -98,15 +98,25 @@ function saveSettings(){
   closeSettings();currentPeriod=periodFor(today);renderAll();
 }
 
-function clearHolidayForm(){editingHoliday=-1;$('holidayDate').value='';$('holidayName').value=''}
-function editHoliday(i){var h=getHolidays()[i];if(!h)return;editingHoliday=i;$('holidayDate').value=h.date;$('holidayName').value=h.name}
+function clearHolidayForm(){editingHoliday=-1;$('holidayDate').value='';if($('holidayDateEnd'))$('holidayDateEnd').value='';$('holidayName').value=''}
+function editHoliday(i){var h=getHolidays()[i];if(!h)return;editingHoliday=i;$('holidayDate').value=h.date;if($('holidayDateEnd'))$('holidayDateEnd').value='';$('holidayName').value=h.name}
 function saveHoliday(){
-  var date=$('holidayDate').value, name=$('holidayName').value.trim();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!name){alert('กรอกวันและชื่อวันหยุดให้ครบ');return}
+  var date=$('holidayDate').value, dateEnd=$('holidayDateEnd')?$('holidayDateEnd').value:'', name=$('holidayName').value.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!name){alert('กรอกวันที่เริ่มและชื่อวันหยุดให้ครบ');return}
   var h=getHolidays();
-  if(editingHoliday>=0)h[editingHoliday]={date:date,name:name};else{
-    if(h.some(function(x){return x.date===date})){alert('มีวันหยุดวันนี้แล้ว');return}
-    h.push({date:date,name:name});
+  if(editingHoliday>=0){
+    h[editingHoliday]={date:date,name:name};
+  }else{
+    var dStart = parseDateKey(date);
+    var dEnd = (dateEnd && /^\d{4}-\d{2}-\d{2}$/.test(dateEnd)) ? parseDateKey(dateEnd) : new Date(dStart.getTime());
+    if(dEnd < dStart){alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่ม');return;}
+    
+    var cur = new Date(dStart.getTime());
+    while(cur <= dEnd){
+      var dk = dateKey(cur);
+      if(!h.some(function(x){return x.date===dk})) h.push({date:dk,name:name});
+      cur = addDays(cur, 1);
+    }
   }
   setHolidays(h);clearHolidayForm();renderHolidayList();renderAll();
 }
