@@ -1,5 +1,5 @@
 function showPage(name){
-  ['calendar','dashboard','weekly'].forEach(function(p){
+  ['calendar','dashboard','summary'].forEach(function(p){
     $(p+'Page').classList.toggle('on',p===name);
     $('tab'+p.charAt(0).toUpperCase()+p.slice(1)).classList.toggle('on',p===name);
   });
@@ -108,10 +108,8 @@ function renderDashboard(){
   drawCharts();
 }
 
-function renderWeekly(){
-  var end=addDays(currentWeek,6);
-  $('weekLabel').innerText=currentWeek.getDate()+' '+MS[currentWeek.getMonth()]+' - '+end.getDate()+' '+MS[end.getMonth()]+' '+(end.getFullYear()+543);
-  var st=periodStats({start:currentWeek,end:end});
+function renderSummary(){
+  var st=periodStats(currentPeriod);
   var rows=[
     ['วันทำงานจริง',hours(st.actualDays)+' วัน'],
     ['วันลา/ใช้สิทธิ',hours(st.leaveDays)+' วัน'],
@@ -130,7 +128,7 @@ function renderWeekly(){
     ['หักอื่นๆ',money(st.deductions.other)],
     ['รายได้สุทธิ',money(st.net)]
   ];
-  $('weeklySummary').innerHTML=rows.map(function(r){return '<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join('');
+  $('monthlySummary').innerHTML=rows.map(function(r){return '<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join('');
 }
 
 function renderHolidayList(){
@@ -142,7 +140,7 @@ function renderHolidayList(){
   Array.prototype.forEach.call(box.querySelectorAll('[data-del]'),function(b){b.onclick=function(){deleteHoliday(num(b.getAttribute('data-del')))}});
 }
 
-function renderAll(){renderInfo();renderCalendar();renderDashboard();renderWeekly();renderHolidayList();refreshHistory()}
+function renderAll(){renderInfo();renderCalendar();renderDashboard();renderSummary();renderHolidayList();refreshHistory()}
 
 function drawCharts(){
   var labels=[],hVals=[],iVals=[],base=new Date(currentPeriod.start.getFullYear(),currentPeriod.start.getMonth(),1);

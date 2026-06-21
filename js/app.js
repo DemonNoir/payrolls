@@ -1,4 +1,4 @@
-var today=new Date(), currentPeriod=periodFor(today), currentWeek=weekStart(today), activeKey=null, editingHoliday=-1;
+var today=new Date(), currentPeriod=periodFor(today), activeKey=null, editingHoliday=-1;
 
 function wireInputEvents(root,fn){
   Array.prototype.forEach.call(root.querySelectorAll('input'),function(el){el.addEventListener('input',fn);el.addEventListener('change',fn)});
@@ -9,8 +9,7 @@ $('prevBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.st
 $('nextBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.end,1));renderAll()};
 $('settingsBtn').onclick=openSettings;$('rateInfo').onclick=openSettings;
 
-$('tabCalendar').onclick=function(){showPage('calendar')};$('tabDashboard').onclick=function(){showPage('dashboard')};$('tabWeekly').onclick=function(){showPage('weekly')};
-$('weekPrev').onclick=function(){currentWeek=addDays(currentWeek,-7);renderAll()};$('weekNext').onclick=function(){currentWeek=addDays(currentWeek,7);renderAll()};
+$('tabCalendar').onclick=function(){showPage('calendar')};$('tabDashboard').onclick=function(){showPage('dashboard')};$('tabSummary').onclick=function(){showPage('summary')};
 
 $('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
 
