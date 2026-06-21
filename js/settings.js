@@ -78,7 +78,7 @@ function openSettings(){
   $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
   $('setNightEnabled').checked=st.nightEnabled;
   $('setSick').value=st.sick||'';$('setPersonal').value=st.personal||'';$('setAbsent').value=st.absent||'';$('setServiceAward').value=st.serviceAward||'';
-  $('setSocial').value=st.social||'';$('setTax').value=st.tax||'';$('setOther').value=st.other||'';
+  $('setTax').value=st.tax||'';$('setOther').value=st.other||'';
   clearHolidayForm();renderHolidayList();$('settingsOverlay').classList.add('show');
 }
 
@@ -95,8 +95,8 @@ function saveSettings(){
   setLS('kpi_percent',num($('setKpi').value));
   setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
   setLS('sick_leave',num($('setSick').value));setLS('personal_leave',num($('setPersonal').value));setLS('absent_days',num($('setAbsent').value));setLS('service_award',num($('setServiceAward').value));
-  setLS('social_security',num($('setSocial').value));setLS('tax',num($('setTax').value));setLS('other_deduction',num($('setOther').value));
-  setLS('ot_ss',num($('setSocial').value));setLS('ot_tax',num($('setTax').value));setLS('ot_other',num($('setOther').value));
+  setLS('tax',num($('setTax').value));setLS('other_deduction',num($('setOther').value));
+  setLS('ot_tax',num($('setTax').value));setLS('ot_other',num($('setOther').value));
   closeSettings();currentPeriod=periodFor(today);renderAll();
 }
 

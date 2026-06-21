@@ -16,7 +16,6 @@ function settings(){
     sick:getNum('sick_leave',null,0),
     personal:getNum('personal_leave',null,0),
     absent:getNum('absent_days',null,0),
-    social:getNum('social_security','ot_ss',0),
     tax:getNum('tax','ot_tax',0),
     other:getNum('other_deduction','ot_other',0),
     serviceAward:getNum('service_award',null,0),
@@ -111,7 +110,8 @@ function periodStats(p,kpiBonusPctOverride){
   if (employedDaysInPeriod < totalDaysInPeriod) {
     base = fullBase * (employedDaysInPeriod / totalDaysInPeriod);
   }
-  var deductions={social:st.social,tax:st.tax,other:st.other,total:st.social+st.tax+st.other};
+  var socialSecurity = Math.round(Math.min(750, (st.salaryBase * (employedDaysInPeriod / totalDaysInPeriod)) * 0.05));
+  var deductions={social:socialSecurity,tax:st.tax,other:st.other,total:socialSecurity+st.tax+st.other};
   var gross=base+tp+welfare.total;
 
   return {
