@@ -19,7 +19,8 @@ function settings(){
     social:getNum('social_security','ot_ss',0),
     tax:getNum('tax','ot_tax',0),
     other:getNum('other_deduction','ot_other',0),
-    serviceAward:getNum('service_award',null,0)
+    serviceAward:getNum('service_award',null,0),
+    startDate:getLS('start_date')||null
   };
 }
 
@@ -80,10 +81,17 @@ function periodStats(p,kpiBonusPctOverride){
     if(en.kind==='use')leaveUse+=num(en.hours)/8;
   });
 
+  var dStart = st.startDate ? parseDateKey(st.startDate) : null;
+  var totalDaysInPeriod = 0;
+  var employedDaysInPeriod = 0;
   var autoDays=0, cur=new Date(start);
   while(cur<=end){
+    totalDaysInPeriod++;
+    var isEmployed = !dStart || cur >= dStart;
+    if (isEmployed) employedDaysInPeriod++;
+
     var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
-    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt))autoDays++;
+    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt) && isEmployed) autoDays++;
     cur=addDays(cur,1);
   }
 
@@ -98,7 +106,11 @@ function periodStats(p,kpiBonusPctOverride){
   var kpi=st.salaryBase*(st.kpiPercent/100); /* KPI ที่แสดงในรายได้สุทธิ */
   var hasLeavePenalty=(st.sick>0||st.personal>0||st.absent>0);
   var diligence=hasLeavePenalty?0:st.diligence;
-  var base=st.salaryBase+st.housing+st.serviceAward+diligence+kpi;
+  var fullBase=st.salaryBase+st.housing+st.serviceAward+diligence+kpi;
+  var base = fullBase;
+  if (employedDaysInPeriod < totalDaysInPeriod) {
+    base = fullBase * (employedDaysInPeriod / totalDaysInPeriod);
+  }
   var deductions={social:st.social,tax:st.tax,other:st.other,total:st.social+st.tax+st.other};
   var gross=base+tp+welfare.total;
 

@@ -72,6 +72,7 @@ function deleteEntry(){
 function openSettings(){
   var st=settings();
   $('setSalaryBase').value=st.salaryBase||'';
+  $('setStartDate').value=st.startDate||'';
   $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
   $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
@@ -86,6 +87,7 @@ function closeSettings(){$('settingsOverlay').classList.remove('show')}
 function saveSettings(){
   var entriesSum=totalBank()-settings().bankAdj, bankInput=num($('setBank').value);
   setLS('ot_salary',num($('setSalaryBase').value));  /* เงินเดือนหลักสำหรับคำนวณ rate */
+  var sd=$('setStartDate').value; if(sd)setLS('start_date',sd);else localStorage.removeItem('start_date');
   var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
   setLS('ot_bank_adj',bankInput-entriesSum);
