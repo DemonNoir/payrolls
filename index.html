@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="auto">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ปฏิทิน OT V2</title>
-<link rel="stylesheet" href="css/style.css?v=2">
+<meta name="description" content="แอปบันทึกชั่วโมง OT คำนวณค่าแรงรายรอบบิล รองรับ KPI Bonus และสรุปรายปี">
+<meta name="theme-color" content="#18233a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 <main class="app">
@@ -12,14 +16,20 @@
 <button class="icon" id="prevBtn" title="ก่อนหน้า">‹</button>
 <h1 id="monthLabel"></h1>
 <button class="icon" id="nextBtn" title="ถัดไป">›</button>
+<button class="icon" id="installBtn" title="วิธีติดตั้งแอป">📱</button>
+<button class="icon" id="themeBtn" title="สลับธีม">🌙</button>
 <button class="icon" id="settingsBtn" title="ตั้งค่า">⚙</button>
 </div>
 <div class="tabs noPrint">
 <button id="tabCalendar" class="on">ปฏิทิน</button>
 <button id="tabDashboard">แดชบอร์ด</button>
 <button id="tabSummary">สรุปรอบบิล</button>
+<button id="tabAnnual">รายปี</button>
 </div>
 <div id="rateInfo" class="mini"></div>
+<div id="backupWarn" class="strip alert hide noPrint">
+⚠️ ยังไม่ได้สำรองข้อมูลนาน 15 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">กด⚙ → สำรองข้อมูลเดี๋ยวนี้</b>
+</div>
 <div id="migrationNotice" class="migration-notice hide">
 ⚠️ ระบบเปลี่ยนวิธีคำนวณค่าแรง — กรุณากรอก <b>เงินเดือน (บาท/เดือน)</b> ใหม่ในเมนูตั้งค่า
 </div>
@@ -39,35 +49,11 @@
 <div class="grid" id="calendarGrid"></div>
 </div>
 </div>
+<div class="rate-footer" id="rateFooter"></div>
 <div class="legend">🟧 OT-เงิน &nbsp; 🟦 OT-สะสมวันหยุด &nbsp; 🟪 ใช้วันหยุด<br>ขอบเหลือง = 2x &nbsp; ขอบแดง = 3x &nbsp; สีแดง = วันหยุด</div>
 </section>
 
 <section id="dashboardPage" class="section">
-<!-- KPI Bonus Banner (แสดงเมื่อยังไม่กรอก) -->
-<div class="kpi-banner" id="kpiBanner">
-<b>⚠️ ยังไม่ได้กรอก KPI Bonus รอบบิลนี้</b>
-กรุณากรอก KPI Bonus ก่อนเริ่มบันทึก OT เพื่อให้คำนวณค่าแรงต่อชั่วโมงถูกต้อง
-</div>
-
-<!-- ช่อง KPI Bonus ต่อรอบบิล -->
-<div class="period-kpi-row">
-<div class="group">
-<label>KPI Bonus เดือนนี้ (%)</label>
-<input type="number" id="kpiBonusPct" step="0.1" inputmode="decimal" placeholder="0">
-</div>
-</div>
-
-<!-- KPI Info Box: แสดงที่มาค่าแรง/ชม. -->
-<div class="kpi-info-box" id="kpiInfoBox">
-<div class="kpi-title">📊 รายละเอียดอัตราค่าแรง OT</div>
-<div class="kpi-row"><span>KPI Daily (%)</span><b id="infoKpiDaily">0%</b></div>
-<div class="kpi-row"><span>KPI Bonus รอบนี้ (%)</span><b id="infoKpiBonus">0%</b></div>
-<div class="kpi-row"><span>KPI รวม (%)</span><b id="infoKpiTotal">0%</b></div>
-<div class="kpi-row"><span>KPI รวม (บาท)</span><b id="infoKpiMoney">0 บาท</b></div>
-<div class="kpi-row"><span>ฐานคำนวณ (เงินเดือน + KPI)</span><b id="infoBase">0 บาท</b></div>
-<div class="kpi-row"><span>ค่าแรง/ชม. (อัตโนมัติ)</span><b id="infoHourlyRate">0 บาท/ชม.</b></div>
-</div>
-
 <div class="cards">
 <div class="card"><div class="label">OT รอบนี้</div><div class="value" id="dashOt">0 ชม.</div><div class="sub" id="dashOtPay">0.00 บาท</div></div>
 <div class="card"><div class="label">วันหยุดสะสม</div><div class="value" id="dashBank">0 ชม.</div><div class="sub">ชั่วโมงคงเหลือ</div></div>
@@ -88,6 +74,19 @@
 <section id="summaryPage" class="section">
 <div class="summaryList" id="monthlySummary"></div>
 </section>
+
+<section id="annualPage" class="section">
+<div class="annual-head">
+<button class="icon" id="annualPrevBtn">‹</button>
+<span id="annualYearLabel" style="font-weight:900;font-size:16px"></span>
+<button class="icon" id="annualNextBtn">›</button>
+</div>
+<div class="annual-tax-box" id="annualTaxBox"></div>
+<div class="summaryList" id="annualSummary"></div>
+<div class="summaryList" id="annualMonths" style="margin-top:10px"></div>
+<div class="actions noPrint"><button class="btn primary" id="annualPdfBtn">📄 ส่งออก PDF (รายปี)</button></div>
+</section>
+
 </main>
 
 <!-- Entry Overlay -->
@@ -108,6 +107,7 @@
 <label><input type="radio" name="payType" value="money" checked> เงิน</label>
 <label><input type="radio" name="payType" value="leave"> วันหยุด</label>
 </div></div>
+<button class="btn soft" id="repeatLastBtn" style="margin-bottom:8px">📋 ซ้ำจากวัน OT ล่าสุด</button>
 </div>
 <div id="useFields" class="hide">
 <div class="group"><label>ชม. ที่ใช้สิทธิ (มีอยู่ <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.1" inputmode="decimal"></div>
@@ -132,6 +132,17 @@
 <div class="group"><label>ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
 <div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
 <div class="group"><label>KPI Daily (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
+<div class="group"><label id="kpiBonusLabel">KPI Bonus รอบนี้ (%)</label><input type="number" id="setKpiBonus" step="0.1" inputmode="decimal" placeholder="0"></div>
+</div>
+<!-- KPI Info Box: แสดงที่มาค่าแรง/ชม. -->
+<div class="kpi-info-box" id="kpiInfoBox">
+<div class="kpi-title">📊 รายละเอียดอัตราค่าแรง OT</div>
+<div class="kpi-row"><span>KPI Daily (%)</span><b id="infoKpiDaily">0%</b></div>
+<div class="kpi-row"><span>KPI Bonus รอบนี้ (%)</span><b id="infoKpiBonus">0%</b></div>
+<div class="kpi-row"><span>KPI รวม (%)</span><b id="infoKpiTotal">0%</b></div>
+<div class="kpi-row"><span>KPI รวม (บาท)</span><b id="infoKpiMoney">0 บาท</b></div>
+<div class="kpi-row"><span>ฐานคำนวณ (เงินเดือน + KPI)</span><b id="infoBase">0 บาท</b></div>
+<div class="kpi-row"><span>ค่าแรง/ชม. (อัตโนมัติ)</span><b id="infoHourlyRate">0 บาท/ชม.</b></div>
 </div>
 <div class="subhead">สวัสดิการ</div>
 <div class="settingsGrid">
@@ -141,14 +152,14 @@
 <div class="group"><label>ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
 </div>
 <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setNightEnabled"> สัปดาห์นี้เข้ากะดึก</label></div>
-<div class="subhead">การลา</div>
+<div class="subhead" id="leaveSubhead">การลา — รอบนี้</div>
 <div class="settingsGrid">
 <div class="group"><label>ลาป่วย</label><input type="number" id="setSick" step="0.5" inputmode="decimal"></div>
 <div class="group"><label>ลากิจ</label><input type="number" id="setPersonal" step="0.5" inputmode="decimal"></div>
 <div class="group"><label>ขาดงาน</label><input type="number" id="setAbsent" step="0.5" inputmode="decimal"></div>
 <div class="group"><label>รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
 </div>
-<div class="subhead">รายการหัก</div>
+<div class="subhead" id="deductSubhead">รายการหัก — รอบนี้</div>
 <div class="settingsGrid">
 <div class="group"><label>ประกันสังคม</label><input type="text" id="setSocial" value="อัตโนมัติ (5%)" disabled style="background: transparent; border: none; color: var(--muted); text-align: right; padding-right: 0;"></div>
 <div class="group"><label>ภาษี</label><input type="number" id="setTax" inputmode="decimal"></div>
@@ -171,11 +182,39 @@
 <button class="ghost" id="closeSettingsBtn">ปิด</button>
 </div></div>
 
-<script src="js/utils.js?v=2"></script>
-<script src="js/calc.js?v=2"></script>
-<script src="js/ui.js?v=2"></script>
-<script src="js/settings.js?v=2"></script>
-<script src="js/data.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<!-- Install Guide Overlay -->
+<div class="overlay" id="installOverlay"><div class="sheet">
+<h2>📱 วิธีติดตั้งแอปลงมือถือ</h2>
+<div style="font-size:13px;line-height:1.6;color:var(--ink);margin-bottom:15px;">
+  <p>คุณสามารถติดตั้งปฏิทิน OT ไว้บนหน้าจอโฮมเพื่อใช้งานเหมือนแอปพลิเคชันทั่วไป และสามารถใช้งานได้แม้ไม่มีอินเทอร์เน็ต</p>
+  
+  <b style="color:var(--blue)">สำหรับ iOS (Safari):</b>
+  <ol style="margin-top:5px;margin-bottom:15px;padding-left:20px;">
+    <li>กดปุ่ม <b>"แชร์"</b> (ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น) ที่ด้านล่างของหน้าจอ</li>
+    <li>เลื่อนหาเมนู <b>"เพิ่มไปยังหน้าจอโฮม"</b> (Add to Home Screen) แล้วกดเลือก</li>
+    <li>กด <b>"เพิ่ม"</b> (Add) ที่มุมขวาบน</li>
+  </ol>
+  
+  <b style="color:var(--green)">สำหรับ Android (Chrome):</b>
+  <ol style="margin-top:5px;margin-bottom:15px;padding-left:20px;">
+    <li>กดปุ่ม <b>"เมนู"</b> (จุด 3 จุด) ที่มุมขวาบนของเบราว์เซอร์</li>
+    <li>เลือกเมนู <b>"เพิ่มลงในหน้าจอหลัก"</b> หรือ <b>"ติดตั้งแอป"</b> (Install app)</li>
+    <li>กด <b>"ติดตั้ง"</b> (Install)</li>
+  </ol>
+</div>
+<button class="ghost" id="closeInstallBtn">ปิด</button>
+</div></div>
+
+<script src="js/utils.js?v=3"></script>
+<script src="js/calc.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/settings.js?v=3"></script>
+<script src="js/data.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
 </body>
 </html>

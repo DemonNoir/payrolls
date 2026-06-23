@@ -73,10 +73,22 @@ function periodStats(p,kpiBonusPctOverride){
   if(isNaN(kpiBonusPct))kpiBonusPct=0;
   var hourlyRate=getHourlyRate(kpiBonusPct);
 
+  /* per-period: การลา + รายการหัก */
+  var ppSick=getPerPeriod('pp_sick',label);
+  var ppPersonal=getPerPeriod('pp_personal',label);
+  var ppAbsent=getPerPeriod('pp_absent',label);
+  var ppServiceAward=getPerPeriod('pp_service_award',label);
+  var ppTax=getPerPeriod('pp_tax',label);
+  var ppOther=getPerPeriod('pp_other',label);
+
   Object.keys(data).forEach(function(k){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
     byDay[k]=en;
-    if(en.kind==='ot'){th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;if(en.payType==='money')tp+=num(en.total)}
+    if(en.kind==='ot'){
+      th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
+      /* คำนวณ OT ใหม่เสมอตาม rate ปัจจุบัน (ไม่ lock total) */
+      if(en.payType==='money') tp+=num(en.hours)*num(en.multiplier)*hourlyRate;
+    }
     if(en.kind==='use')leaveUse+=num(en.hours)/8;
   });
 
@@ -94,7 +106,7 @@ function periodStats(p,kpiBonusPctOverride){
     cur=addDays(cur,1);
   }
 
-  var leaveDays=st.sick+st.personal+st.absent+leaveUse;
+  var leaveDays=ppSick+ppPersonal+ppAbsent+leaveUse;
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightEnabled?st.nightRate*actual:0};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
@@ -102,22 +114,23 @@ function periodStats(p,kpiBonusPctOverride){
   var kpiDaily=isNaN(st.kpiPercent)?0:num(st.kpiPercent);
   var kpiTotal=kpiDaily+kpiBonusPct;
   var kpiMoney=num(st.salaryBase)*(kpiTotal/100);
-  var kpi=st.salaryBase*(st.kpiPercent/100); /* KPI ที่แสดงในรายได้สุทธิ */
-  var hasLeavePenalty=(st.sick>0||st.personal>0||st.absent>0);
+  var kpi=st.salaryBase*(kpiTotal/100); /* KPI รวม (Daily + Bonus) ที่แสดงในรายได้สุทธิ */
+  var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
   var diligence=hasLeavePenalty?0:st.diligence;
-  var fullBase=st.salaryBase+st.housing+st.serviceAward+diligence+kpi;
+  var fullBase=st.salaryBase+st.housing+ppServiceAward+diligence+kpi;
   var base = fullBase;
   if (employedDaysInPeriod < totalDaysInPeriod) {
     base = fullBase * (employedDaysInPeriod / totalDaysInPeriod);
   }
   var socialSecurity = Math.round(Math.min(750, (st.salaryBase * (employedDaysInPeriod / totalDaysInPeriod)) * 0.05));
-  var deductions={social:socialSecurity,tax:st.tax,other:st.other,total:socialSecurity+st.tax+st.other};
+  var deductions={social:socialSecurity,tax:ppTax,other:ppOther,total:socialSecurity+ppTax+ppOther};
   var gross=base+tp+welfare.total;
 
   return {
     otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,
-    welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:st.serviceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
-    hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney
+    welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:ppServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
+    hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney,
+    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward
   };
 }
 

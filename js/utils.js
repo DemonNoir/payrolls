@@ -56,3 +56,55 @@ function saveKpiBonusPct(label,val){
   if(isNaN(n))n=0;
   setLS(kpiBonusKey(label),n);
 }
+
+/* ── Per-period generic storage (การลา + รายการหัก) ── */
+var PP_KEYS=['pp_sick','pp_personal','pp_absent','pp_service_award','pp_tax','pp_other'];
+function ppKey(prefix,label){return prefix+':'+label}
+function getPerPeriod(prefix,label){
+  var v=getLS(ppKey(prefix,label));
+  if(v===null||v==='')return 0;
+  return num(v);
+}
+function savePerPeriod(prefix,label,val){
+  var n=num(val);
+  if(isNaN(n))n=0;
+  setLS(ppKey(prefix,label),n);
+}
+
+/* ── IndexedDB Auto-Backup ── */
+var _idb=null;
+function openIDB(cb){
+  if(_idb){cb(_idb);return;}
+  var req=indexedDB.open('ot_backup',1);
+  req.onupgradeneeded=function(e){e.target.result.createObjectStore('snapshots',{keyPath:'id'})};
+  req.onsuccess=function(e){_idb=e.target.result;cb(_idb)};
+  req.onerror=function(){/* silent */};
+}
+function idbSave(){
+  try{
+    /* รวบรวมข้อมูลทั้งหมด */
+    var snap={};
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k)snap[k]=localStorage.getItem(k);}
+    openIDB(function(db){
+      var tx=db.transaction('snapshots','readwrite');
+      tx.objectStore('snapshots').put({id:'latest',data:JSON.stringify(snap),ts:Date.now()});
+    });
+  }catch(e){/* silent */}
+}
+function idbRestore(cb){
+  openIDB(function(db){
+    var req=db.transaction('snapshots','readonly').objectStore('snapshots').get('latest');
+    req.onsuccess=function(){cb(req.result||null)};
+    req.onerror=function(){cb(null)};
+  });
+}
+
+/* ── Backup Warning (15 วัน) ── */
+function markExported(){setLS('last_export_ts',String(Date.now()));}
+function checkBackupWarning(){
+  var el=$('backupWarn'); if(!el)return;
+  var last=getLS('last_export_ts');
+  if(!last){el.classList.remove('hide');return;}
+  var days=(Date.now()-Number(last))/(86400000);
+  el.classList.toggle('hide',days<15);
+}

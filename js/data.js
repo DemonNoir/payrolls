@@ -4,7 +4,7 @@ function exportData(){
   var extraKeys={};
   for(var i=0;i<localStorage.length;i++){
     var k=localStorage.key(i);
-    if(k&&(k.indexOf('kpi_bonus_pct:')=== 0||k.indexOf('work_days:')===0)){
+    if(k&&(k.indexOf('kpi_bonus_pct:')=== 0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0)){
       extraKeys[k]=getLS(k);
     }
   }
@@ -13,6 +13,8 @@ function exportData(){
   keys.forEach(function(k){payload.data[k]=getLS(k)});
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='ot-calendar-v3-'+dateKey(today)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  markExported();
+  checkBackupWarning();
 }
 
 function validateCal(cal){
@@ -71,9 +73,9 @@ function importFile(ev){
         if(k==='ot_cal'||k==='holidays'||typeof incoming[k]==='undefined'||incoming[k]===null)return;
         if(allowedKeys.indexOf(k)>=0)setLS(k,incoming[k]);
       });
-      /* restore extra keys (kpi_bonus_pct / work_days) */
+      /* restore extra keys (kpi_bonus_pct / work_days / pp_*) */
       Object.keys(extraData).forEach(function(k){
-        if((k.indexOf('kpi_bonus_pct:')===0||k.indexOf('work_days:')===0)&&extraData[k]!==null)setLS(k,extraData[k]);
+        if((k.indexOf('kpi_bonus_pct:')===0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0)&&extraData[k]!==null)setLS(k,extraData[k]);
       });
       if(incoming.social_security!==undefined)setLS('ot_ss',incoming.social_security);
       if(incoming.tax!==undefined)setLS('ot_tax',incoming.tax);
@@ -99,4 +101,5 @@ function refreshHistory(){
   });
   localStorage.setItem('monthly_history',JSON.stringify(months));
   localStorage.setItem('weekly_history',JSON.stringify(weeks));
+  idbSave(); /* auto-backup ทุกครั้งที่มีการเปลี่ยนแปลง */
 }
