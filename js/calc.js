@@ -26,6 +26,7 @@ function settings(){
 function getValidDay(v){v=parseInt(v,10);return (v>=1&&v<=31)?v:0}
 
 /* ── คำนวณค่าแรง/ชม. จากเงินเดือน + KPI ── */
+/* ปัดทศนิยมขึ้น 2 ตำแหน่ง ก่อนนำไปคูณ (ตามสูตรบริษัท) */
 function getHourlyRate(kpiBonusPct){
   var st=settings();
   var salaryBase=st.salaryBase;
@@ -35,7 +36,7 @@ function getHourlyRate(kpiBonusPct){
   var kpiTotal=kpiDaily+kpiBonus;
   var kpiMoney=salaryBase*(kpiTotal/100);
   var base=salaryBase+kpiMoney;
-  return base/30/8;
+  return Math.ceil(base/30/8*100)/100;
 }
 
 function periodFor(ref){
