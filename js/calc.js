@@ -113,16 +113,25 @@ function periodStats(p,kpiBonusPctOverride){
 
   var kpiDaily=isNaN(st.kpiPercent)?0:num(st.kpiPercent);
   var kpiTotal=kpiDaily+kpiBonusPct;
-  var kpiMoney=num(st.salaryBase)*(kpiTotal/100);
-  var kpi=st.salaryBase*(kpiTotal/100); /* KPI รวม (Daily + Bonus) ที่แสดงในรายได้สุทธิ */
+
+  /* ── Prorate: หาร 30 วัน (ตามสูตรสลิป) ── */
+  var isFullPeriod=(employedDaysInPeriod>=totalDaysInPeriod);
+  var proratedSalary=isFullPeriod?st.salaryBase:Math.min(st.salaryBase,(st.salaryBase/30)*employedDaysInPeriod);
+  var proratedHousing=isFullPeriod?st.housing:Math.min(st.housing,(st.housing/30)*employedDaysInPeriod);
+
+  /* หักลากิจ/ขาดงาน (ไม่ได้รับค่าจ้าง): วันละ เงินเดือน/30 */
+  var unpaidLeaveDays=ppPersonal+ppAbsent;
+  if(unpaidLeaveDays>0) proratedSalary=Math.max(0,proratedSalary-(st.salaryBase/30)*unpaidLeaveDays);
+
+  /* KPI คำนวณจากเงินเดือนที่ prorate แล้ว */
+  var kpiMoney=proratedSalary*(kpiTotal/100);
+  var kpi=kpiMoney;
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
   var diligence=hasLeavePenalty?0:st.diligence;
-  var fullBase=st.salaryBase+st.housing+ppServiceAward+diligence+kpi;
-  var base = fullBase;
-  if (employedDaysInPeriod < totalDaysInPeriod) {
-    base = fullBase * (employedDaysInPeriod / totalDaysInPeriod);
-  }
-  var socialSecurity = Math.round(Math.min(750, (st.salaryBase * (employedDaysInPeriod / totalDaysInPeriod)) * 0.05));
+  var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
+
+  /* ประกันสังคม: 5% ของเงินเดือนที่ prorate แล้ว (ปัดลง, ไม่เกิน 750) */
+  var socialSecurity=Math.min(750,Math.floor(proratedSalary*0.05));
   var deductions={social:socialSecurity,tax:ppTax,other:ppOther,total:socialSecurity+ppTax+ppOther};
   var gross=base+tp+welfare.total;
 
@@ -130,7 +139,8 @@ function periodStats(p,kpiBonusPctOverride){
     otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,
     welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:ppServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
     hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney,
-    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward
+    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward,
+    proratedSalary:proratedSalary,proratedHousing:proratedHousing,isProrated:!isFullPeriod,employedDays:employedDaysInPeriod,totalDays:totalDaysInPeriod
   };
 }
 

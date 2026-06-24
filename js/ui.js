@@ -138,11 +138,22 @@ function renderKpiInfo(){
 }
 
 function renderSummary(){
-  var st=periodStats(currentPeriod);
+  var st=periodStats(currentPeriod), s=settings();
   var rows=[
     ['วันทำงานจริง',hours(st.actualDays)+' วัน'],
     ['วันลา/ใช้สิทธิ',hours(st.leaveDays)+' วัน'],
-    ['วันที่ทำ OT',st.otDays+' วัน'],
+    ['วันที่ทำ OT',st.otDays+' วัน']
+  ];
+  /* แสดง prorate info ถ้าไม่ใช่เดือนเต็ม */
+  if(st.isProrated){
+    rows.push(['⚠ ทำงานในรอบนี้',st.employedDays+'/'+st.totalDays+' วัน (หาร 30)']);
+    rows.push(['เงินเดือน (Prorate)',money(st.proratedSalary)+' จาก '+money(s.salaryBase)]);
+    rows.push(['ค่าบ้าน (Prorate)',money(st.proratedHousing)+' จาก '+money(s.housing)]);
+  }else{
+    rows.push(['เงินเดือน',money(st.proratedSalary)]);
+    rows.push(['ค่าบ้าน',money(st.proratedHousing)]);
+  }
+  rows=rows.concat([
     ['ชั่วโมง OT',hours(st.otHours)+' ชม.'],
     ['รายได้ OT',money(st.otPay)],
     ['ค่าเดินทาง',money(st.welfare.transport)],
@@ -156,7 +167,7 @@ function renderSummary(){
     ['ภาษี',money(st.deductions.tax)],
     ['หักอื่นๆ',money(st.deductions.other)],
     ['รายได้สุทธิ',money(st.net)]
-  ];
+  ]);
   $('monthlySummary').innerHTML=rows.map(function(r,i){
     var cls=i===rows.length-1?' class="row total-row"':' class="row"';
     return '<div'+cls+'><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';
