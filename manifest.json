@@ -2,7 +2,7 @@
   "name": "ปฏิทิน OT",
   "short_name": "OT Cal",
   "description": "แอปบันทึกชั่วโมง OT คำนวณค่าแรงรายรอบบิล",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#eef2f6",
   "theme_color": "#18233a",
