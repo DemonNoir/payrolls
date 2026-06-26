@@ -74,6 +74,7 @@ function openSettings(){
   $('setSalaryBase').value=st.salaryBase||'';
   $('setStartDate').value=st.startDate||'';
   $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
+  if($('setCalcMode')) $('setCalcMode').value=st.calcMode||'realtime';
   $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   /* KPI Bonus โหลดตามรอบบิลที่เลือกอยู่ */
   var curLabel=periodLabel(currentPeriod);
@@ -104,6 +105,7 @@ function saveSettings(){
   var sd=$('setStartDate').value; if(sd)setLS('start_date',sd);else localStorage.removeItem('start_date');
   var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
+  if($('setCalcMode')) setLS('calc_mode', $('setCalcMode').value);
   setLS('ot_bank_adj',bankInput-entriesSum);
   setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));
   setLS('kpi_percent',num($('setKpi').value));

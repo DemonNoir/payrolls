@@ -164,3 +164,28 @@ body{background:#fff;display:block;padding:0}
 .section:not(#dashboardPage):not(#annualPage){display:none!important}
 .card,.summaryList,.canvasWrap,.annual-tax-box{break-inside:avoid}
 }
+
+.sub-header-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 15px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85em;
+  color: var(--muted);
+}
+.mode-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+  outline: none;
+}
+.mode-select:focus {
+  border-color: var(--primary);
+}

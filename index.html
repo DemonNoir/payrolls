@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#18233a">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 <main class="app">
@@ -26,7 +26,13 @@
 <button id="tabSummary">สรุปรอบบิล</button>
 <button id="tabAnnual">รายปี</button>
 </div>
-<div id="rateInfo" class="mini"></div>
+<div class="sub-header-row noPrint">
+  <span class="rate-info" id="topRateInfo"></span>
+  <select id="calcModeSelect" class="mode-select">
+    <option value="realtime">เรียลไทม์ (ถึงวันนี้)</option>
+    <option value="overall">โดยรวม (เต็มรอบบิล)</option>
+  </select>
+</div>
 <div id="backupWarn" class="strip alert hide noPrint">
 ⚠️ ยังไม่ได้สำรองข้อมูลนาน 15 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">กด⚙ → สำรองข้อมูลเดี๋ยวนี้</b>
 </div>
@@ -126,6 +132,11 @@
 <div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
 <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
 <div class="group"><label>ยอดวันหยุดสะสม</label><input type="number" id="setBank" step="0.1" inputmode="decimal"></div>
+<div class="group"><label>โหมดการคำนวณ</label>
+<select id="setCalcMode">
+  <option value="realtime">เรียลไทม์ (คำนวณรายได้ถึงวันปัจจุบัน)</option>
+  <option value="overall">โดยรวม (ประเมินรายได้เต็มรอบบิล)</option>
+</select></div>
 </div>
 <div class="subhead">รายได้ประจำ</div>
 <div class="settingsGrid">
@@ -205,12 +216,12 @@
 <button class="ghost" id="closeInstallBtn">ปิด</button>
 </div></div>
 
-<script src="js/utils.js?v=4"></script>
-<script src="js/calc.js?v=4"></script>
-<script src="js/ui.js?v=4"></script>
-<script src="js/settings.js?v=4"></script>
-<script src="js/data.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/utils.js?v=5"></script>
+<script src="js/calc.js?v=5"></script>
+<script src="js/ui.js?v=5"></script>
+<script src="js/settings.js?v=5"></script>
+<script src="js/data.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});

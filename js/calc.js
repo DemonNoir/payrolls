@@ -19,7 +19,8 @@ function settings(){
     tax:getNum('tax','ot_tax',0),
     other:getNum('other_deduction','ot_other',0),
     serviceAward:getNum('service_award',null,0),
-    startDate:getLS('start_date')||null
+    startDate:getLS('start_date')||null,
+    calcMode:getLS('calc_mode')||'realtime'
   };
 }
 
@@ -82,8 +83,10 @@ function periodStats(p,kpiBonusPctOverride){
   var ppTax=getPerPeriod('pp_tax',label);
   var ppOther=getPerPeriod('pp_other',label);
 
+  var todayDt = new Date(); todayDt.setHours(0,0,0,0);
   Object.keys(data).forEach(function(k){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
+    if(st.calcMode === 'realtime' && dt > todayDt) return;
     byDay[k]=en;
     if(en.kind==='ot'){
       th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
@@ -99,11 +102,13 @@ function periodStats(p,kpiBonusPctOverride){
   var autoDays=0, cur=new Date(start);
   while(cur<=end){
     totalDaysInPeriod++;
+    var countForRealtime = (st.calcMode === 'overall') || (cur <= todayDt);
     var isEmployed = !dStart || cur >= dStart;
-    if (isEmployed) employedDaysInPeriod++;
+    
+    if (isEmployed && countForRealtime) employedDaysInPeriod++;
 
     var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
-    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt) && isEmployed) autoDays++;
+    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt) && isEmployed && countForRealtime) autoDays++;
     cur=addDays(cur,1);
   }
 

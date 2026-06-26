@@ -8,7 +8,17 @@ function wireInputEvents(root,fn){
 /* ── Event Wiring ── */
 $('prevBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.start,-1));renderAll()};
 $('nextBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.end,1));renderAll()};
-$('settingsBtn').onclick=openSettings;$('rateInfo').onclick=openSettings;
+$('settingsBtn').onclick=openSettings;
+if($('topRateInfo')) $('topRateInfo').onclick=openSettings;
+
+if($('calcModeSelect')) {
+  $('calcModeSelect').value = settings().calcMode || 'realtime';
+  $('calcModeSelect').onchange = function() {
+    setLS('calc_mode', this.value);
+    if($('setCalcMode')) $('setCalcMode').value = this.value;
+    renderAll();
+  };
+}
 
 /* Dark Mode */
 $('themeBtn').onclick=toggleTheme;
