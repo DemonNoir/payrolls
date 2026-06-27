@@ -108,7 +108,8 @@ function periodStats(p,kpiBonusPctOverride){
     if (isEmployed && countForRealtime) employedDaysInPeriod++;
 
     var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
-    if(cur.getDay()!==0 && (!isHolidayKey(k)||hasOt) && isEmployed && countForRealtime) autoDays++;
+    var isWorkingDay = (cur.getDay()!==0 && !isHolidayKey(k));
+    if((isWorkingDay || hasOt) && isEmployed && countForRealtime) autoDays++;
     cur=addDays(cur,1);
   }
 
