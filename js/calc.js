@@ -1,3 +1,11 @@
+/* ══════════════════════════════════════════════════════════════
+ * calc.js — สูตรคำนวณเงินเดือน OT สวัสดิการ และรายการหัก
+ *
+ * ⚠️ คำเตือนสำหรับนักพัฒนา / AI Agent:
+ * ไฟล์นี้คือหัวใจของแอป — แก้ผิดแม้บรรทัดเดียวจะทำให้ยอดเงินผิดทั้งหมด
+ * ก่อนแก้ไข ต้องอ่าน ARCHITECTURE.md และรัน tests/calc-tests.html ทุกครั้ง
+ * ══════════════════════════════════════════════════════════════ */
+
 /* ── Settings ── */
 function settings(){
   return {
@@ -27,7 +35,10 @@ function settings(){
 function getValidDay(v){v=parseInt(v,10);return (v>=1&&v<=31)?v:0}
 
 /* ── คำนวณค่าแรง/ชม. จากเงินเดือน + KPI ── */
-/* ปัดทศนิยมขึ้น 2 ตำแหน่ง ก่อนนำไปคูณ (ตามสูตรบริษัท) */
+/* สูตร: (เงินเดือน + KPI เงิน) ÷ 30 ÷ 8 แล้ว ceil ทศนิยม 2 ตำแหน่ง
+ * ⚠️ Math.ceil ปัดขึ้น ตามสลิปบริษัท — อย่าเปลี่ยนเป็น Math.round/floor
+ * ⚠️ หาร 30 เสมอ (ไม่ใช่จำนวนวันในเดือน) — ตามสูตรบริษัท
+ * ⚠️ หาร 8 คือ 8 ชม./วัน — ค่าคงที่ตามกฎหมายแรงงาน */
 function getHourlyRate(kpiBonusPct){
   var st=settings();
   var salaryBase=st.salaryBase;
@@ -37,7 +48,7 @@ function getHourlyRate(kpiBonusPct){
   var kpiTotal=kpiDaily+kpiBonus;
   var kpiMoney=salaryBase*(kpiTotal/100);
   var base=salaryBase+kpiMoney;
-  return Math.ceil(base/30/8*100)/100;
+  return Math.ceil(base/30/8*100)/100; /* ← ห้ามเปลี่ยน ceil/30/8 */
 }
 
 function periodFor(ref){
@@ -96,6 +107,18 @@ function periodStats(p,kpiBonusPctOverride){
     if(en.kind==='use')leaveUse+=num(en.hours)/8;
   });
 
+  /* ── นับวันทำงาน (autoDays) สำหรับคำนวณสวัสดิการ ──
+   * autoDays ใช้คูณ: ค่าเดินทาง, ค่าอาหาร, ค่ากะดึก
+   *
+   * กฎ: นับวันเมื่อ (วันทำงานปกติ) หรือ (มี OT บันทึกในวันนั้น)
+   *
+   * ⚠️ BUG FIX 2026-06-27: เคยเขียน (getDay()!==0 && (!isHolidayKey(k) || hasOt))
+   *    ทำให้วันอาทิตย์ที่ทำ OT ไม่ถูกนับ → ไม่ได้ค่าเดินทาง/ค่าอาหาร
+   *    แก้เป็น: (isWorkingDay || hasOt) — ให้วันหยุดหรือวันอาทิตย์ที่ทำ OT ได้สวัสดิการด้วย
+   *
+   * ⚠️ อย่าเปลี่ยน || hasOt เป็น && hasOt — จะทำให้บั๊กเดิมกลับมา
+   * ⚠️ อย่าเอา isWorkingDay ไปรวมกับ hasOt เป็นเงื่อนไขเดียว
+   */
   var dStart = st.startDate ? parseDateKey(st.startDate) : null;
   var totalDaysInPeriod = 0;
   var employedDaysInPeriod = 0;
@@ -113,6 +136,10 @@ function periodStats(p,kpiBonusPctOverride){
     cur=addDays(cur,1);
   }
 
+  /* ── สวัสดิการ (Welfare) ──
+   * คูณจาก actual = autoDays − วันลา
+   * ⚠️ otFoodDays นับแยก: นับเฉพาะวันที่ OT >= 2 ชม. (ดูบรรทัด 92)
+   * ⚠️ ค่ากะดึก: จ่ายทุกวันทำงานถ้าเปิด nightEnabled (ไม่ใช่แค่วัน OT) */
   var leaveDays=ppSick+ppPersonal+ppAbsent+leaveUse;
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightEnabled?st.nightRate*actual:0};
@@ -121,23 +148,31 @@ function periodStats(p,kpiBonusPctOverride){
   var kpiDaily=isNaN(st.kpiPercent)?0:num(st.kpiPercent);
   var kpiTotal=kpiDaily+kpiBonusPct;
 
-  /* ── Prorate: หาร 30 วัน (ตามสูตรสลิป) ── */
+  /* ── Prorate: หาร 30 วัน (ตามสูตรสลิป) ──
+   * ⚠️ หาร 30 เสมอ ไม่ใช่จำนวนวันจริงในเดือน — ตามสูตรบริษัท
+   * ⚠️ ใช้ Math.min เพื่อป้องกันกรณีทำงานเกิน 30 วัน ไม่ให้เงินเกินฐาน */
   var isFullPeriod=(employedDaysInPeriod>=totalDaysInPeriod);
   var proratedSalary=isFullPeriod?st.salaryBase:Math.min(st.salaryBase,(st.salaryBase/30)*employedDaysInPeriod);
   var proratedHousing=isFullPeriod?st.housing:Math.min(st.housing,(st.housing/30)*employedDaysInPeriod);
 
-  /* หักลากิจ/ขาดงาน (ไม่ได้รับค่าจ้าง): วันละ เงินเดือน/30 */
+  /* ── หักลากิจ/ขาดงาน ──
+   * ⚠️ ลาป่วย (ppSick) ไม่หักเงินเดือน — เฉพาะลากิจ+ขาดงานเท่านั้น
+   * ⚠️ หักจาก st.salaryBase (ฐานเดิม) ไม่ใช่ proratedSalary — ตามสลิป */
   var unpaidLeaveDays=ppPersonal+ppAbsent;
   if(unpaidLeaveDays>0) proratedSalary=Math.max(0,proratedSalary-(st.salaryBase/30)*unpaidLeaveDays);
 
-  /* KPI คำนวณจากเงินเดือนที่ prorate แล้ว */
+  /* ── KPI ──
+   * ⚠️ KPI คำนวณจาก proratedSalary (หลัง prorate + หลังหักลา)
+   * ⚠️ ถ้ามีการลาใดๆ (ป่วย/กิจ/ขาด) → เบี้ยขยัน = 0 */
   var kpiMoney=proratedSalary*(kpiTotal/100);
   var kpi=kpiMoney;
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
   var diligence=hasLeavePenalty?0:st.diligence;
   var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
 
-  /* ประกันสังคม: 5% ของเงินเดือนที่ prorate แล้ว (ปัดลง, ไม่เกิน 750) */
+  /* ── ประกันสังคม ──
+   * ⚠️ 5% ของ proratedSalary, ปัดลง (Math.floor), ไม่เกิน 750 บาท
+   * ⚠️ อย่าเปลี่ยนเป็น Math.round — จะทำให้ผิดจากสลิปจริง */
   var socialSecurity=Math.min(750,Math.floor(proratedSalary*0.05));
   var deductions={social:socialSecurity,tax:ppTax,other:ppOther,total:socialSecurity+ppTax+ppOther};
   var gross=base+tp+welfare.total;

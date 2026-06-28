@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>calc.js — ชุดทดสอบ</title>
+<style>
+  body { font-family: 'SFMono-Regular', Consolas, monospace; background: #0f1923; color: #e2e8f0; padding: 20px; font-size: 14px; }
+  h1 { font-size: 18px; margin: 0 0 16px; }
+  .pass { color: #3aa87a; } .fail { color: #e06560; font-weight: 900; }
+  .result { margin: 3px 0; padding: 4px 8px; border-left: 3px solid transparent; }
+  .result.pass { border-color: #3aa87a; } .result.fail { border-color: #e06560; background: rgba(224,101,96,0.1); }
+  .summary { margin-top: 20px; padding: 12px; border-radius: 8px; font-weight: 900; font-size: 16px; }
+  .summary.pass { background: rgba(58,168,122,0.15); color: #3aa87a; }
+  .summary.fail { background: rgba(224,101,96,0.15); color: #e06560; }
+  .section { margin: 16px 0 6px; font-weight: 900; color: #5b8ee0; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>🧪 ชุดทดสอบ calc.js</h1>
+<div id="output"></div>
+<div id="summary"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+ * Mock Layer — จำลอง localStorage + DOM ให้ทดสอบได้โดยไม่ต้องเปิดแอป
+ * ═══════════════════════════════════════════════════════════ */
+var _store = {};
+var Storage = {
+  reset: function(defaults) {
+    _store = {};
+    if (defaults) Object.keys(defaults).forEach(function(k) { _store[k] = String(defaults[k]); });
+  }
+};
+function getLS(k) { return _store.hasOwnProperty(k) ? _store[k] : null; }
+function setLS(k,v) { _store[k] = String(v); }
+function getBool(k,def) { var v=getLS(k); if(v===null) return !!def; return v==='1'||v==='true'; }
+function setBool(k,v) { setLS(k,v?'1':'0'); }
+
+/* Mock DOM */
+function $(id) { return null; }
+
+/* ═══ Inline copies of utils.js functions (ที่ calc.js ต้องใช้) ═══ */
+function num(v) { var n=Number(v); return isNaN(n)?0:n; }
+function pad(n) { return n<10?'0'+n:''+n; }
+function keyOf(y,m,d) { return y+'-'+pad(m+1)+'-'+pad(d); }
+function dateKey(dt) { return keyOf(dt.getFullYear(),dt.getMonth(),dt.getDate()); }
+function parseDateKey(k) { var p=String(k).split('-'); return new Date(num(p[0]),num(p[1])-1,num(p[2])); }
+function addDays(d,n) { return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
+function daysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+function getCal() { try { return JSON.parse(getLS('ot_cal')||'{}')||{}; } catch(e) { return {}; } }
+function setCal(d) { _store['ot_cal'] = JSON.stringify(d||{}); }
+function getHolidays() { try { var h=JSON.parse(getLS('holidays')||'[]'); return Array.isArray(h)?h:[]; } catch(e) { return []; } }
+function isHolidayKey(k) {
+  if(parseDateKey(k).getDay()===0) return true;
+  return getHolidays().some(function(h) { return h.date===k; });
+}
+function getNum(k,fb,def) {
+  var v=getLS(k);
+  if((v===null||v==='')&&fb) v=getLS(fb);
+  if(v===null||v==='') return num(def);
+  return num(v);
+}
+
+var MN=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+var MS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+function kpiBonusKey(label) { return 'kpi_bonus_pct:'+label; }
+function getKpiBonusPct(label) { var v=getLS(kpiBonusKey(label)); if(v===null||v==='') return 0; return num(v); }
+function inRangeDate(dt,start,end) { return dt>=start && dt<=end; }
+var PP_KEYS=['pp_sick','pp_personal','pp_absent','pp_service_award','pp_tax','pp_other'];
+function ppKey(prefix,label) { return prefix+':'+label; }
+function getPerPeriod(prefix,label) { var v=getLS(ppKey(prefix,label)); if(v===null||v==='') return 0; return num(v); }
+
+var today = new Date();
+</script>
+
+<!-- Load actual calc.js -->
+<script src="../js/calc.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+ * Test Framework
+ * ═══════════════════════════════════════════════════════════ */
+var _passed = 0, _failed = 0, _out = document.getElementById('output');
+
+function section(name) {
+  _out.innerHTML += '<div class="section">── ' + name + ' ──</div>';
+}
+
+function assert(name, actual, expected) {
+  var ok;
+  if (typeof expected === 'number') {
+    ok = Math.abs(actual - expected) < 0.015; /* tolerance for float */
+  } else {
+    ok = actual === expected;
+  }
+  if (ok) { _passed++; } else { _failed++; }
+  _out.innerHTML += '<div class="result ' + (ok?'pass':'fail') + '">' +
+    (ok ? '✅' : '❌') + ' ' + name +
+    (ok ? '' : ' — expected: <b>' + expected + '</b>, got: <b>' + actual + '</b>') +
+    '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Helper: สร้าง defaults สำหรับ settings ทั่วไป
+ * ═══════════════════════════════════════════════════════════ */
+function defaultSettings() {
+  return {
+    'ot_salary': 12000,
+    'ot_cutoff': 15,
+    'payday': 25,
+    'ot_bank_adj': 0,
+    'housing': 1000,
+    'diligence': 1000,
+    'kpi_percent': 10,
+    'transport_rate': 50,
+    'food_rate': 40,
+    'ot_food_rate': 50,
+    'night_shift_rate': 50,
+    'night_shift_enabled': '0',
+    'sick_leave': 0,
+    'personal_leave': 0,
+    'absent_days': 0,
+    'calc_mode': 'overall'  /* ใช้ overall เพื่อให้ test ไม่ขึ้นกับวันที่ */
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 1: getHourlyRate — สูตรค่าแรง/ชม.
+ * ═══════════════════════════════════════════════════════════ */
+section('getHourlyRate — สูตรค่าแรง/ชม.');
+
+Storage.reset(defaultSettings());
+/* เงินเดือน 12000, KPI Daily 10%, KPI Bonus 0%
+ * base = 12000 + 1200 = 13200
+ * rate = ceil(13200/30/8 * 100) / 100 = ceil(55 * 100) / 100 = 55.00 */
+assert('เงินเดือน 12000 + KPI 10% = 55.00 บาท/ชม.', getHourlyRate(0), 55.00);
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 13000, 'kpi_percent': 10 }));
+/* base = 13000 + 1300 = 14300, rate = ceil(14300/240 * 100)/100 = ceil(59.5833... * 100)/100 = ceil(5958.33)/100 = 59.59 */
+assert('เงินเดือน 13000 + KPI 10% = 59.59 บาท/ชม. (ceil)', getHourlyRate(0), 59.59);
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 13000, 'kpi_percent': 10 }));
+/* base = 13000 + 1300 + 650 = 14950, rate = ceil(14950/240 * 100)/100 */
+assert('เงินเดือน 13000 + KPI 10% + Bonus 5% = 62.30 (ceil)', getHourlyRate(5), 62.30);
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 0 }));
+assert('เงินเดือน 0 = rate 0', getHourlyRate(0), 0);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 2: autoDays — วันอาทิตย์ที่ทำ OT ต้องนับ
+ * ═══════════════════════════════════════════════════════════ */
+section('autoDays — วันหยุดที่ทำ OT ต้องได้สวัสดิการ');
+
+/* สร้าง period: 16 มิ.ย. - 15 ก.ค. 2026 */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000 }));
+/* 21 มิ.ย. 2026 = วันอาทิตย์ → ใส่ OT 2 ชม. */
+var sundayKey = '2026-06-21';
+var testCal = {};
+testCal[sundayKey] = { kind:'ot', payType:'money', rate:55, hours:2, multiplier:1.5, total:165 };
+setCal(testCal);
+
+var p1 = { start: new Date(2026, 5, 16), end: new Date(2026, 6, 15) };
+var st1 = periodStats(p1);
+/* วันอาทิตย์ 21 มิ.ย. ต้องนับ autoDays +1 (เพราะทำ OT) */
+assert('วันอาทิตย์ทำ OT → autoDays นับ (ได้ค่าเดินทาง)', st1.welfare.transport > 0, true);
+assert('วันอาทิตย์ทำ OT → OT pay > 0', st1.otPay > 0, true);
+
+/* วันหยุดนักขัตฤกษ์ที่ทำ OT ต้องนับ */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'holidays': JSON.stringify([{date:'2026-06-23',name:'วันทดสอบ'}]) }));
+var testCal2 = {};
+testCal2['2026-06-23'] = { kind:'ot', payType:'money', rate:55, hours:3, multiplier:3, total:495 };
+setCal(testCal2);
+var st2 = periodStats(p1);
+assert('วันหยุดนักขัตฤกษ์ทำ OT → autoDays นับ', st2.welfare.transport > 0, true);
+
+/* วันหยุดที่ไม่ได้ทำ OT → ห้ามนับ autoDays */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'holidays': JSON.stringify([{date:'2026-06-23',name:'วันทดสอบ'}]) }));
+setCal({}); /* ไม่มี OT */
+var pShort = { start: new Date(2026, 5, 23), end: new Date(2026, 5, 23) }; /* แค่ 1 วัน = วันหยุด */
+var st3 = periodStats(pShort);
+assert('วันหยุดไม่ทำ OT → autoDays = 0', st3.autoDays, 0);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 3: Prorate — พนักงานใหม่
+ * ═══════════════════════════════════════════════════════════ */
+section('Prorate — พนักงานใหม่');
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'start_date': '2026-07-01' }));
+setCal({});
+var pJuly = { start: new Date(2026, 5, 16), end: new Date(2026, 6, 15) };
+var st4 = periodStats(pJuly);
+/* เริ่มงาน 1 ก.ค. ในรอบ 16 มิ.ย. - 15 ก.ค. → ทำงาน 15 วัน (1-15 ก.ค.) */
+assert('พนักงานใหม่ 1 ก.ค. → employedDays = 15', st4.employedDays, 15);
+assert('พนักงานใหม่ → isProrated = true', st4.isProrated, true);
+/* proratedSalary = min(12000, (12000/30)*15) = min(12000, 6000) = 6000 */
+assert('Prorate เงินเดือน 12000 × 15/30 = 6000', st4.proratedSalary, 6000);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 4: หักลา — เฉพาะลากิจ+ขาดงานหักเงินเดือน, ลาป่วยไม่หัก
+ * ═══════════════════════════════════════════════════════════ */
+section('หักลา — ลาป่วยไม่หักเงิน, ลากิจ/ขาดหัก');
+
+var pTest = { start: new Date(2026, 5, 16), end: new Date(2026, 6, 15) };
+var labelTest = periodLabel(pTest);
+
+/* ลาป่วย 2 วัน → ไม่หักเงินเดือน แต่เบี้ยขยัน = 0 */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000 }));
+setLS(ppKey('pp_sick', labelTest), '2');
+setCal({});
+var st5 = periodStats(pTest);
+assert('ลาป่วย → proratedSalary ยังเต็ม 12000', st5.proratedSalary, 12000);
+assert('ลาป่วย → เบี้ยขยัน = 0', st5.diligence, 0);
+
+/* ลากิจ 1 วัน → หักเงินเดือน 12000/30 = 400 */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000 }));
+setLS(ppKey('pp_personal', labelTest), '1');
+setCal({});
+var st6 = periodStats(pTest);
+assert('ลากิจ 1 วัน → หัก 400, เหลือ 11600', st6.proratedSalary, 11600);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 5: ประกันสังคม — 5% ปัดลง ไม่เกิน 750
+ * ═══════════════════════════════════════════════════════════ */
+section('ประกันสังคม — 5% ปัดลง ไม่เกิน 750');
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000 }));
+setCal({});
+var st7 = periodStats(pTest);
+/* 12000 * 0.05 = 600, floor = 600 */
+assert('เงินเดือน 12000 → ประกันสังคม 600', st7.deductions.social, 600);
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 20000 }));
+setCal({});
+var st8 = periodStats(pTest);
+/* 20000 * 0.05 = 1000 > 750 → cap 750 */
+assert('เงินเดือน 20000 → ประกันสังคม cap 750', st8.deductions.social, 750);
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12345 }));
+setCal({});
+var st9 = periodStats(pTest);
+/* 12345 * 0.05 = 617.25 → floor = 617 */
+assert('เงินเดือน 12345 → floor(617.25) = 617', st9.deductions.social, 617);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 6: OT Food — นับเฉพาะวันที่ OT >= 2 ชม.
+ * ═══════════════════════════════════════════════════════════ */
+section('OT Food — นับเฉพาะวันที่ OT >= 2 ชม.');
+
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'ot_food_rate': 50 }));
+var foodCal = {};
+foodCal['2026-06-23'] = { kind:'ot', payType:'money', rate:55, hours:2, multiplier:1.5, total:165 };   /* >= 2 ✅ */
+foodCal['2026-06-24'] = { kind:'ot', payType:'money', rate:55, hours:1.5, multiplier:1.5, total:123 }; /* < 2 ❌ */
+foodCal['2026-06-25'] = { kind:'ot', payType:'money', rate:55, hours:3, multiplier:1.5, total:247 };   /* >= 2 ✅ */
+setCal(foodCal);
+var st10 = periodStats(pTest);
+assert('3 วัน OT แต่แค่ 2 วัน >= 2 ชม. → otFood = 100', st10.welfare.otFood, 100);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 7: Calc Mode — realtime vs overall
+ * ═══════════════════════════════════════════════════════════ */
+section('Calc Mode — realtime vs overall');
+
+/* เตรียมข้อมูล OT ในอนาคต */
+var futureDate = new Date();
+futureDate.setDate(futureDate.getDate() + 30); /* 30 วันข้างหน้า */
+var futureKey = dateKey(futureDate);
+var futureCal = {};
+futureCal[futureKey] = { kind:'ot', payType:'money', rate:55, hours:2, multiplier:1.5, total:165 };
+
+/* Overall mode: ต้องนับ OT ในอนาคต */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'calc_mode': 'overall' }));
+setCal(futureCal);
+var pFuture = { start: new Date(futureDate.getFullYear(), futureDate.getMonth(), 1), end: new Date(futureDate.getFullYear(), futureDate.getMonth()+1, 0) };
+var st11 = periodStats(pFuture);
+assert('overall mode → OT ในอนาคตถูกนับ', st11.otHours, 2);
+
+/* Realtime mode: ต้องไม่นับ OT ในอนาคต */
+Storage.reset(Object.assign(defaultSettings(), { 'ot_salary': 12000, 'calc_mode': 'realtime' }));
+setCal(futureCal);
+var st12 = periodStats(pFuture);
+assert('realtime mode → OT ในอนาคตไม่ถูกนับ', st12.otHours, 0);
+
+/* ═══════════════════════════════════════════════════════════
+ * สรุปผล
+ * ═══════════════════════════════════════════════════════════ */
+var total = _passed + _failed;
+var sumEl = document.getElementById('summary');
+sumEl.className = 'summary ' + (_failed === 0 ? 'pass' : 'fail');
+sumEl.innerHTML = (_failed === 0 ? '✅' : '❌') + ' ผลลัพธ์: ' + _passed + '/' + total + ' ผ่าน' + (_failed > 0 ? ', ' + _failed + ' ไม่ผ่าน' : ' — ทั้งหมดผ่าน!');
+</script>
+</body>
+</html>
