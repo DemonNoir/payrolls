@@ -186,7 +186,7 @@ function renderAnnual(){
     var st=monthStats(annualYear,m);
     totOtHours+=st.otHours;totOtPay+=st.otPay;totBase+=st.base;totWelfare+=st.welfare.total;
     totSocial+=st.deductions.social;totTax+=st.deductions.tax;totOther+=st.deductions.other;totNet+=st.net;
-    monthRows+='<div class="row"><span>'+MN[m]+'</span><span style="text-align:center;color:var(--muted)">OT '+hours(st.otHours)+' ชม.</span><b>สุทธิ '+money(st.net)+'</b></div>';
+    monthRows+='<div class="row"><span style="flex:1">'+MN[m]+'</span><span style="width:90px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums">OT '+hours(st.otHours)+' ชม.</span><b style="width:120px;text-align:right;font-variant-numeric:tabular-nums">สุทธิ '+money(st.net)+'</b></div>';
   }
 
   /* ภ.ง.ด.91 box */
