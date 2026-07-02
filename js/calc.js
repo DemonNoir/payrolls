@@ -163,11 +163,14 @@ function periodStats(p,kpiBonusPctOverride){
 
   /* ── KPI ──
    * ⚠️ KPI คำนวณจาก proratedSalary (หลัง prorate + หลังหักลา)
-   * ⚠️ ถ้ามีการลาใดๆ (ป่วย/กิจ/ขาด) → เบี้ยขยัน = 0 */
-  var kpiMoney=proratedSalary*(kpiTotal/100);
+   * ⚠️ ถ้ามีการลาใดๆ (ป่วย/กิจ/ขาด) → เบี้ยขยัน = 0
+   * ⚠️ ถ้ายังไม่เริ่มงาน (employedDaysInPeriod === 0) → ทุกอย่างเป็น 0 */
+  var notEmployedYet = (employedDaysInPeriod === 0);
+  var kpiMoney=notEmployedYet?0:proratedSalary*(kpiTotal/100);
   var kpi=kpiMoney;
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
-  var diligence=hasLeavePenalty?0:st.diligence;
+  var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
+  if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
   var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
 
   /* ── ประกันสังคม ──
@@ -193,4 +196,14 @@ function paydayCountdown(){
   return Math.ceil((target-now)/86400000);
 }
 
-function monthStats(y,m){return periodStats({start:new Date(y,m,1),end:new Date(y,m+1,0)})}
+/* ── monthStats: ใช้ periodFor เพื่อตัดตามวันตัดยอดบิล ──
+ * refDate = วันอ้างอิง (cutoff+1 ของเดือนนั้น) เพื่อให้ periodFor คืน billing period ที่ถูกต้อง
+ * ⚠️ เดิมใช้ calendar month (1-สิ้นเดือน) ซึ่งผิดเมื่อตั้งวันตัดรอบ */
+function monthStats(y,m){
+  var cutoff=settings().cutoff;
+  if(!cutoff) return periodStats({start:new Date(y,m,1),end:new Date(y,m+1,0)});
+  /* สร้าง refDate = วันที่ cutoff+1 ของเดือน m เพื่อให้ periodFor คืนรอบที่ end ตรงเดือน m */
+  var refDay=Math.min(cutoff+1,daysInMonth(y,m));
+  var ref=new Date(y,m,refDay);
+  return periodStats(periodFor(ref));
+}

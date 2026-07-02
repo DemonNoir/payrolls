@@ -234,26 +234,226 @@ function renderAll(){
 }
 
 function drawCharts(){
-  var labels=[],hVals=[],iVals=[],base=new Date(currentPeriod.start.getFullYear(),currentPeriod.start.getMonth(),1);
-  for(var i=5;i>=0;i--){var d=new Date(base.getFullYear(),base.getMonth()-i,1), st=monthStats(d.getFullYear(),d.getMonth());labels.push(MS[d.getMonth()]);hVals.push(st.otHours);iVals.push(st.net)}
-  drawBar($('hoursChart'),labels,hVals,varColor('--blue'),false);
-  drawBar($('incomeChart'),labels,iVals,varColor('--green'),true);
+  var labels=[],hVals=[],iVals=[];
+  /* เดินย้อน 5 รอบบิลจากรอบปัจจุบัน แล้วใช้ periodFor เพื่อตัดตามวันตัดยอดบิล */
+  var periods=[];
+  var p=currentPeriod;
+  for(var i=0;i<6;i++){
+    periods.unshift(p);
+    p=periodFor(addDays(p.start,-1));
+  }
+  periods.forEach(function(per){
+    var st=periodStats(per);
+    /* ใช้เดือนของวันสิ้นสุดรอบบิลเป็น label */
+    labels.push(MS[per.end.getMonth()]);
+    hVals.push(st.otHours);
+    iVals.push(st.net);
+  });
+  /* Update subtitle with current period's values */
+  var curH=hVals[hVals.length-1], curI=iVals[iVals.length-1];
+  if($('chartOtSub')) $('chartOtSub').innerText=hours(curH)+' ชม. รอบนี้';
+  if($('chartIncomeSub')) $('chartIncomeSub').innerText=money(curI)+' รอบนี้';
+  drawAreaChart($('hoursChart'),labels,hVals,'--blue',false);
+  drawAreaChart($('incomeChart'),labels,iVals,'--green',true);
 }
 
 function varColor(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()}
 
-function drawBar(canvas,labels,values,color,isMoney){
-  var ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
-  var bg=varColor('--canvas-bg')||'#ffffff';
-  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-  var max=Math.max.apply(null,values.concat([1])),pad=34,bw=(w-pad*2)/values.length*.58,gap=(w-pad*2)/values.length;
-  ctx.strokeStyle=varColor('--line')||'#d9dee8';ctx.beginPath();ctx.moveTo(pad,14);ctx.lineTo(pad,h-pad);ctx.lineTo(w-12,h-pad);ctx.stroke();
-  ctx.font='22px sans-serif';ctx.textAlign='center';
-  values.forEach(function(v,i){
-    var x=pad+i*gap+gap/2, bh=(h-pad-20)*(v/max);
-    ctx.fillStyle=color;ctx.fillRect(x-bw/2,h-pad-bh,bw,bh);
-    ctx.fillStyle=varColor('--canvas-label')||'#61708a';
-    ctx.fillText(labels[i],x,h-8);
-    ctx.fillText(isMoney?Math.round(v/1000)+'พัน':String(Math.round(v*10)/10),x,h-pad-bh-7);
+/* ── Google Weather-style Smooth Area Chart ── */
+function drawAreaChart(canvas,labels,values,colorVar,isMoney){
+  var dpr=window.devicePixelRatio||1;
+  var rect=canvas.getBoundingClientRect();
+  var w=rect.width*dpr, h=rect.height*dpr;
+  canvas.width=w; canvas.height=h;
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  var cw=rect.width, ch=rect.height;
+
+  /* ── Colors ── */
+  var baseColor=varColor(colorVar)||'#3b6fd1';
+  var bgColor=varColor('--canvas-bg')||'#ffffff';
+  var labelColor=varColor('--canvas-label')||'#61708a';
+  var lineColor=varColor('--line')||'#d9dee8';
+  var panelColor=varColor('--panel')||'#ffffff';
+
+  /* ── Background ── */
+  ctx.fillStyle=bgColor;
+  ctx.fillRect(0,0,cw,ch);
+
+  /* ── Layout ── */
+  var padTop=30, padBottom=36, padLeft=24, padRight=30;
+  var chartW=cw-padLeft-padRight;
+  var chartH=ch-padTop-padBottom;
+
+  var max=Math.max.apply(null,values.concat([1]));
+  /* Add 15% headroom */
+  max=max*1.15;
+
+  var n=values.length;
+  if(n<2) return;
+
+  /* ── Calculate data points ── */
+  var points=[];
+  for(var i=0;i<n;i++){
+    var x=padLeft+(chartW/(n-1))*i;
+    var y=padTop+chartH-(values[i]/max)*chartH;
+    points.push({x:x,y:y});
+  }
+
+  /* ── Grid lines (subtle, horizontal dashed) ── */
+  ctx.save();
+  ctx.strokeStyle=lineColor;
+  ctx.lineWidth=0.5;
+  ctx.setLineDash([4,4]);
+  var gridLines=4;
+  for(var g=0;g<=gridLines;g++){
+    var gy=padTop+(chartH/gridLines)*g;
+    ctx.beginPath();
+    ctx.moveTo(padLeft,gy);
+    ctx.lineTo(cw-padRight,gy);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  /* ── Monotone cubic spline (prevents overshoot) ── */
+  function bezierPath(pts){
+    var n=pts.length;
+    if(n<2) return;
+    ctx.moveTo(pts[0].x,pts[0].y);
+    if(n===2){ctx.lineTo(pts[1].x,pts[1].y);return;}
+
+    /* Compute tangent slopes (Fritsch-Carlson monotone) */
+    var slopes=[];
+    for(var i=0;i<n-1;i++){
+      var dx=pts[i+1].x-pts[i].x;
+      slopes.push(dx===0?0:(pts[i+1].y-pts[i].y)/dx);
+    }
+    var tangents=[slopes[0]];
+    for(var i=1;i<n-1;i++){
+      if(slopes[i-1]*slopes[i]<=0){
+        tangents.push(0);
+      } else {
+        tangents.push((slopes[i-1]+slopes[i])/2);
+      }
+    }
+    tangents.push(slopes[n-2]);
+
+    /* Monotone correction */
+    for(var i=0;i<n-1;i++){
+      if(Math.abs(slopes[i])<1e-6){tangents[i]=0;tangents[i+1]=0;continue;}
+      var a=tangents[i]/slopes[i], b=tangents[i+1]/slopes[i];
+      var s=a*a+b*b;
+      if(s>9){var t=3/Math.sqrt(s);tangents[i]=t*a*slopes[i];tangents[i+1]=t*b*slopes[i];}
+    }
+
+    /* Draw cubic segments */
+    for(var i=0;i<n-1;i++){
+      var dx=pts[i+1].x-pts[i].x;
+      var cx1=pts[i].x+dx/3;
+      var cy1=pts[i].y+tangents[i]*dx/3;
+      var cx2=pts[i+1].x-dx/3;
+      var cy2=pts[i+1].y-tangents[i+1]*dx/3;
+      ctx.bezierCurveTo(cx1,cy1,cx2,cy2,pts[i+1].x,pts[i+1].y);
+    }
+  }
+
+  /* ── Gradient fill under curve ── */
+  var grad=ctx.createLinearGradient(0,padTop,0,padTop+chartH);
+  /* Parse base color to rgba */
+  var r=parseInt(baseColor.slice(1,3),16)||59;
+  var g2=parseInt(baseColor.slice(3,5),16)||111;
+  var b=parseInt(baseColor.slice(5,7),16)||209;
+  grad.addColorStop(0,'rgba('+r+','+g2+','+b+',0.25)');
+  grad.addColorStop(0.6,'rgba('+r+','+g2+','+b+',0.08)');
+  grad.addColorStop(1,'rgba('+r+','+g2+','+b+',0.01)');
+
+  ctx.beginPath();
+  bezierPath(points);
+  ctx.lineTo(points[n-1].x,padTop+chartH);
+  ctx.lineTo(points[0].x,padTop+chartH);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  /* ── Main line ── */
+  ctx.beginPath();
+  bezierPath(points);
+  ctx.strokeStyle=baseColor;
+  ctx.lineWidth=2.5;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.stroke();
+
+  /* ── Data point dots + value labels ── */
+  ctx.font='600 11px system-ui,-apple-system,sans-serif';
+  ctx.textAlign='center';
+  points.forEach(function(pt,i){
+    /* Outer glow */
+    ctx.beginPath();
+    ctx.arc(pt.x,pt.y,6,0,Math.PI*2);
+    ctx.fillStyle=panelColor;
+    ctx.fill();
+
+    /* Inner dot */
+    ctx.beginPath();
+    ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2);
+    ctx.fillStyle=baseColor;
+    ctx.fill();
+
+    /* Value label above point — skip last point (pill shows it) */
+    if(i===points.length-1) return;
+    var val=values[i];
+    var displayVal;
+    if(isMoney){
+      if(val>=1000000) displayVal=(val/1000000).toFixed(1)+'ล้าน';
+      else if(val>=10000) displayVal=Math.round(val/1000)+'พัน';
+      else if(val>=1000) displayVal=(val/1000).toFixed(1)+'พัน';
+      else displayVal=Math.round(val).toString();
+    } else {
+      displayVal=String(Math.round(val*10)/10);
+    }
+    ctx.fillStyle=baseColor;
+    ctx.font='700 12px system-ui,-apple-system,sans-serif';
+    ctx.fillText(displayVal,pt.x,pt.y-14);
   });
+
+  /* ── X-axis labels ── */
+  ctx.font='600 12px system-ui,-apple-system,sans-serif';
+  ctx.fillStyle=labelColor;
+  points.forEach(function(pt,i){
+    ctx.fillText(labels[i],pt.x,ch-10);
+  });
+
+  /* ── Highlight current period (last point) with accent pill ── */
+  var last=points[n-1];
+  var pillVal=isMoney?Math.round(values[n-1]/1000)+'พัน':String(Math.round(values[n-1]*10)/10);
+  ctx.font='700 11px system-ui,-apple-system,sans-serif';
+  var tw=ctx.measureText(pillVal).width;
+  var pw=tw+16, ph=22;
+  /* Clamp pill so it doesn't overflow canvas right edge */
+  var pillCenterX=Math.min(last.x, cw-pw/2-4);
+  var px=pillCenterX-pw/2, py=last.y-38;
+  /* Pill background */
+  ctx.beginPath();
+  var pillR=ph/2;
+  ctx.moveTo(px+pillR,py);ctx.lineTo(px+pw-pillR,py);
+  ctx.arc(px+pw-pillR,py+pillR,pillR,-Math.PI/2,Math.PI/2);
+  ctx.lineTo(px+pillR,py+ph);
+  ctx.arc(px+pillR,py+pillR,pillR,Math.PI/2,Math.PI*1.5);
+  ctx.closePath();
+  ctx.fillStyle=baseColor;
+  ctx.fill();
+  /* Pill text */
+  ctx.fillStyle='#ffffff';
+  ctx.fillText(pillVal,pillCenterX,py+ph/2+4);
+
+  /* Pill arrow pointing down to actual data point */
+  ctx.beginPath();
+  ctx.moveTo(last.x-4,py+ph);
+  ctx.lineTo(last.x,py+ph+5);
+  ctx.lineTo(last.x+4,py+ph);
+  ctx.closePath();
+  ctx.fillStyle=baseColor;
+  ctx.fill();
 }
+

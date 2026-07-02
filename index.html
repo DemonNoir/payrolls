@@ -72,8 +72,14 @@
   <div class="sub" id="dashRateDetail"></div>
 </div>
 </div>
-<div class="canvasWrap"><h3>ชั่วโมง OT รายเดือน</h3><canvas id="hoursChart" width="600" height="220"></canvas></div>
-<div class="canvasWrap"><h3>รายได้รายเดือน</h3><canvas id="incomeChart" width="600" height="220"></canvas></div>
+<div class="canvasWrap chartCard">
+  <div class="chartHeader"><span class="chartIcon">⏱</span><div><div class="chartTitle">ชั่วโมง OT</div><div class="chartSub" id="chartOtSub">รายรอบบิล</div></div></div>
+  <canvas id="hoursChart" width="600" height="280"></canvas>
+</div>
+<div class="canvasWrap chartCard">
+  <div class="chartHeader"><span class="chartIcon">💰</span><div><div class="chartTitle">รายได้สุทธิ</div><div class="chartSub" id="chartIncomeSub">รายรอบบิล</div></div></div>
+  <canvas id="incomeChart" width="600" height="280"></canvas>
+</div>
 <div class="actions noPrint"><button class="btn primary" id="pdfBtn">📄 ส่งออก PDF</button></div>
 </section>
 
