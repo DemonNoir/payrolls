@@ -385,7 +385,7 @@ function drawAreaChart(canvas,labels,values,colorVar,isMoney){
   ctx.stroke();
 
   /* ── Data point dots + value labels ── */
-  ctx.font='600 11px system-ui,-apple-system,sans-serif';
+  ctx.font='600 11px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
   ctx.textAlign='center';
   points.forEach(function(pt,i){
     /* Outer glow */
@@ -413,12 +413,12 @@ function drawAreaChart(canvas,labels,values,colorVar,isMoney){
       displayVal=String(Math.round(val*10)/10);
     }
     ctx.fillStyle=baseColor;
-    ctx.font='700 12px system-ui,-apple-system,sans-serif';
+    ctx.font='700 12px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
     ctx.fillText(displayVal,pt.x,pt.y-14);
   });
 
   /* ── X-axis labels ── */
-  ctx.font='600 12px system-ui,-apple-system,sans-serif';
+  ctx.font='600 12px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
   ctx.fillStyle=labelColor;
   points.forEach(function(pt,i){
     ctx.fillText(labels[i],pt.x,ch-10);
@@ -427,7 +427,7 @@ function drawAreaChart(canvas,labels,values,colorVar,isMoney){
   /* ── Highlight current period (last point) with accent pill ── */
   var last=points[n-1];
   var pillVal=isMoney?Math.round(values[n-1]/1000)+'พัน':String(Math.round(values[n-1]*10)/10);
-  ctx.font='700 11px system-ui,-apple-system,sans-serif';
+  ctx.font='700 11px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
   var tw=ctx.measureText(pillVal).width;
   var pw=tw+16, ph=22;
   /* Clamp pill so it doesn't overflow canvas right edge */
