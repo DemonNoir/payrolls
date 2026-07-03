@@ -20,3 +20,9 @@
 
 > [!NOTE]
 > ระบบหลังบ้านและการคำนวณทั้งหมด (`calc.js` และ `data.js`) **ไม่มีการแก้ไขใดๆ** ตามข้อตกลงครับ การเปลี่ยนแปลงทั้งหมดเกิดที่ HTML และ CSS รวมไปถึง JavaScript ในส่วนของการแสดงผล (`ui.js` และ `settings.js` บางส่วนเพื่อเพิ่มไอคอน)
+
+## Update: Revert Calendar Stat Cards
+
+ตามคำขอของคุณผู้ใช้ ได้มีการยกเลิกดีไซน์ใหม่ของการ์ดสถิติ 3 ใบในหน้าปฏิทิน และปรับกลับเป็นรูปแบบแถบแนวนอน (Strips) ตามเดิมเรียบร้อยแล้ว
+
+![Calendar Strips Reverted](/Users/ginkless/.gemini/antigravity-ide/brain/773a1b12-2d1a-4edf-b6b8-8873d0750096/calendar_strips_reverted_1783096461696.png)
