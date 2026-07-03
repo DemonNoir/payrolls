@@ -106,17 +106,178 @@ canvas{width:100%;display:block}
 .chartIcon{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:var(--strip-bg);flex-shrink:0}
 .chartTitle{font-size:15px;font-weight:900;color:var(--ink);line-height:1.2}
 .chartSub{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
-/* Annual Summary */
-.annual-head{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
-.annual-tax-box{background:var(--strip-bg);color:var(--strip-text);border-radius:10px;padding:12px 16px;margin-bottom:10px;font-size:12px}
-.annual-tax-box .tax-title{font-weight:900;font-size:13px;margin-bottom:6px}
-.annual-tax-box .tax-row{display:flex;justify-content:space-between;padding:2px 0}
-.annual-month-list{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
-.annual-month-item{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;cursor:pointer}
-.annual-month-item:last-child{border-bottom:0}
-.annual-month-item .mon-name{font-weight:800}
-.annual-month-item .mon-val{text-align:right;color:var(--muted)}
-.annual-month-item .mon-net{text-align:right;font-weight:700;color:var(--green)}
+/* ═══════════════════════════════════════════════════════
+   Annual Summary — Premium Redesign
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Hero Header ── */
+.annual-hero{
+  background:linear-gradient(135deg,#18233a 0%,#1e3a5f 50%,#0d2847 100%);
+  color:#fff;border-radius:20px;padding:22px 20px 20px;margin-bottom:12px;
+  text-align:center;position:relative;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15),0 8px 32px rgba(0,0,0,0.1);
+}
+.annual-hero::before{
+  content:'';position:absolute;top:-40%;right:-20%;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(91,142,224,0.15) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.annual-hero::after{
+  content:'';position:absolute;bottom:-30%;left:-15%;width:160px;height:160px;
+  background:radial-gradient(circle,rgba(34,134,95,0.12) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+[data-theme="dark"] .annual-hero{
+  background:linear-gradient(135deg,#0a1628 0%,#0f2240 50%,#091a30 100%);
+  box-shadow:0 4px 24px rgba(0,0,0,0.35);
+}
+@media(prefers-color-scheme:dark){
+  [data-theme="auto"] .annual-hero{
+    background:linear-gradient(135deg,#0a1628 0%,#0f2240 50%,#091a30 100%);
+    box-shadow:0 4px 24px rgba(0,0,0,0.35);
+  }
+}
+.annual-hero-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px}
+.annual-hero-btn{
+  width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.08);color:#fff;font-size:18px;font-weight:900;
+  cursor:pointer;display:grid;place-items:center;
+  transition:all .2s ease;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.annual-hero-btn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.4);transform:scale(1.08)}
+.annual-hero-btn:active{transform:scale(0.95)}
+.annual-hero-year{display:flex;flex-direction:column;align-items:center;gap:1px}
+.annual-hero-year-label{font-size:18px;font-weight:900;letter-spacing:0.5px}
+.annual-hero-year-sub{font-size:11px;opacity:0.6;font-weight:500}
+.annual-hero-amount{
+  font-size:32px;font-weight:900;letter-spacing:-0.5px;line-height:1.1;
+  margin:4px 0 6px;font-variant-numeric:tabular-nums;
+  background:linear-gradient(135deg,#fff 30%,rgba(91,142,224,0.8));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.annual-hero-sub{font-size:12px;opacity:0.55;font-weight:600;letter-spacing:0.3px}
+
+/* ── Stats Cards Grid ── */
+.annual-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.annual-stat-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px 12px;display:flex;gap:10px;align-items:flex-start;
+  transition:all .25s ease;position:relative;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.annual-stat-card::after{
+  content:'';position:absolute;inset:0;border-radius:14px;opacity:0;
+  background:linear-gradient(135deg,rgba(59,111,209,0.06),rgba(34,134,95,0.06));
+  transition:opacity .25s;pointer-events:none;
+}
+.annual-stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.annual-stat-card:hover::after{opacity:1}
+.annual-stat-icon{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  font-size:18px;flex-shrink:0;
+  background:var(--strip-bg);
+}
+.annual-stat-info{flex:1;min-width:0}
+.annual-stat-label{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:3px}
+.annual-stat-value{font-size:16px;font-weight:900;line-height:1.2;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.annual-stat-sub{font-size:10px;color:var(--muted);margin-top:2px;font-weight:600}
+
+/* ── Annual Chart Card ── */
+.annual-chart-card{
+  background:var(--panel);border-radius:16px;overflow:hidden;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+  transition:box-shadow .25s,transform .25s;
+}
+.annual-chart-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1),0 8px 24px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.annual-chart-card canvas{width:100%;height:180px;display:block;padding:0 4px 4px}
+
+/* ── Tax Card (ภ.ง.ด.91) ── */
+.annual-tax-card{
+  background:var(--panel);border-radius:14px;padding:16px 16px 14px;margin-bottom:12px;
+  border:1px solid var(--line);position:relative;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.annual-tax-card::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--blue),var(--green));border-radius:4px 0 0 4px;
+}
+.annual-tax-card .tax-title{
+  font-weight:900;font-size:14px;margin-bottom:10px;color:var(--ink);
+  display:flex;align-items:center;gap:8px;padding-left:8px;
+}
+.annual-tax-card .tax-row{
+  display:flex;justify-content:space-between;padding:7px 8px 7px 12px;
+  font-size:13px;border-radius:6px;transition:background .15s;
+}
+.annual-tax-card .tax-row:hover{background:var(--strip-bg)}
+.annual-tax-card .tax-row b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.annual-tax-card .tax-row span{color:var(--muted);font-weight:500}
+.annual-tax-card .tax-row-total{
+  display:flex;justify-content:space-between;padding:10px 8px 6px 12px;
+  font-size:14px;font-weight:900;color:var(--ink);
+  border-top:1.5px solid var(--line);margin-top:6px;
+}
+.annual-tax-card .tax-row-total b{color:var(--green);font-variant-numeric:tabular-nums}
+
+/* ── Monthly Breakdown ── */
+.annual-months-header{
+  display:flex;align-items:center;gap:8px;padding:10px 14px 8px;
+  font-size:12px;font-weight:900;color:var(--muted);
+}
+.annual-months-icon{font-size:16px}
+.annual-months-list{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.annual-month-row{
+  border-bottom:1px solid var(--line);cursor:pointer;
+  transition:background .15s;overflow:hidden;
+}
+.annual-month-row:last-child{border-bottom:0}
+.annual-month-row:hover{background:rgba(59,111,209,0.03)}
+.annual-month-row-main{
+  display:grid;grid-template-columns:1fr auto auto;gap:8px;
+  padding:12px 14px;align-items:center;
+}
+.annual-month-name{font-size:13px;font-weight:800;color:var(--ink)}
+.annual-month-ot{font-size:11px;color:var(--muted);font-weight:600;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.annual-month-net{font-size:13px;font-weight:800;color:var(--green);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.annual-month-bar{
+  height:3px;margin:0 14px 0;border-radius:2px;
+  background:var(--line);overflow:hidden;
+}
+.annual-month-bar-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--blue),var(--green));
+  transition:width .4s cubic-bezier(0.4,0,0.2,1);
+}
+.annual-month-detail{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s cubic-bezier(0.4,0,0.2,1),padding .35s;
+  padding:0 14px;background:var(--strip-bg);
+}
+.annual-month-row.expanded .annual-month-detail{
+  max-height:300px;padding:10px 14px;
+}
+.annual-month-detail-row{
+  display:flex;justify-content:space-between;padding:3px 0;font-size:12px;
+}
+.annual-month-detail-row span{color:var(--muted)}
+.annual-month-detail-row b{color:var(--ink);font-variant-numeric:tabular-nums}
+.annual-month-expand-icon{
+  font-size:10px;color:var(--muted);transition:transform .3s;display:inline-block;margin-left:4px;
+}
+.annual-month-row.expanded .annual-month-expand-icon{transform:rotate(180deg)}
+
+/* ── Responsive ── */
+@media(max-width:380px){
+  .annual-hero-amount{font-size:26px}
+  .annual-stats-grid{gap:6px}
+  .annual-stat-card{padding:10px 8px;gap:8px}
+  .annual-stat-icon{width:32px;height:32px;font-size:15px;border-radius:10px}
+  .annual-stat-value{font-size:14px}
+}
 /* Overlays */
 .overlay{position:fixed;inset:0;background:rgba(15,23,42,.48);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .overlay.show{display:flex}
@@ -171,7 +332,7 @@ body{background:#fff;display:block;padding:0}
 .app{max-width:none;padding:18px}
 .section{display:block!important}
 .section:not(#dashboardPage):not(#annualPage){display:none!important}
-.card,.summaryList,.canvasWrap,.annual-tax-box{break-inside:avoid}
+.card,.summaryList,.canvasWrap,.annual-tax-card,.annual-stat-card,.annual-hero,.annual-months-list{break-inside:avoid}
 }
 
 .sub-header-row {

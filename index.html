@@ -91,15 +91,79 @@
 </section>
 
 <section id="annualPage" class="section">
-<div class="annual-head">
-<button class="icon" id="annualPrevBtn">‹</button>
-<span id="annualYearLabel" style="font-weight:900;font-size:16px"></span>
-<button class="icon" id="annualNextBtn">›</button>
+<!-- Hero Header -->
+<div class="annual-hero" id="annualHero">
+  <div class="annual-hero-nav">
+    <button class="annual-hero-btn" id="annualPrevBtn">‹</button>
+    <div class="annual-hero-year">
+      <span class="annual-hero-year-label" id="annualYearLabel"></span>
+      <span class="annual-hero-year-sub" id="annualYearSub"></span>
+    </div>
+    <button class="annual-hero-btn" id="annualNextBtn">›</button>
+  </div>
+  <div class="annual-hero-amount" id="annualHeroAmount">0.00</div>
+  <div class="annual-hero-sub">รายได้สุทธิรวมทั้งปี</div>
 </div>
-<div class="annual-tax-box" id="annualTaxBox"></div>
-<div class="summaryList" id="annualSummary"></div>
-<div class="summaryList" id="annualMonths" style="margin-top:10px"></div>
-<div class="actions noPrint"><button class="btn primary" id="annualPdfBtn">📄 ส่งออก PDF (รายปี)</button></div>
+
+<!-- Stats Cards -->
+<div class="annual-stats-grid">
+  <div class="annual-stat-card" id="annualStatOt">
+    <div class="annual-stat-icon">⏱</div>
+    <div class="annual-stat-info">
+      <div class="annual-stat-label">OT รวม</div>
+      <div class="annual-stat-value" id="annualOtHours">0 ชม.</div>
+      <div class="annual-stat-sub" id="annualOtPay">0.00 บาท</div>
+    </div>
+  </div>
+  <div class="annual-stat-card" id="annualStatBase">
+    <div class="annual-stat-icon">💼</div>
+    <div class="annual-stat-info">
+      <div class="annual-stat-label">รายได้ประจำ</div>
+      <div class="annual-stat-value" id="annualBaseTotal">0.00</div>
+      <div class="annual-stat-sub">เงินเดือน+KPI+เบี้ยขยัน</div>
+    </div>
+  </div>
+  <div class="annual-stat-card" id="annualStatWelfare">
+    <div class="annual-stat-icon">🎁</div>
+    <div class="annual-stat-info">
+      <div class="annual-stat-label">สวัสดิการ</div>
+      <div class="annual-stat-value" id="annualWelfareTotal">0.00</div>
+      <div class="annual-stat-sub">เดินทาง+อาหาร+กะดึก</div>
+    </div>
+  </div>
+  <div class="annual-stat-card" id="annualStatDeduct">
+    <div class="annual-stat-icon">📉</div>
+    <div class="annual-stat-info">
+      <div class="annual-stat-label">รายการหัก</div>
+      <div class="annual-stat-value" id="annualDeductTotal">0.00</div>
+      <div class="annual-stat-sub">ประกันสังคม+ภาษี+อื่นๆ</div>
+    </div>
+  </div>
+</div>
+
+<!-- Annual Bar Chart -->
+<div class="annual-chart-card">
+  <div class="chartHeader">
+    <span class="chartIcon">📊</span>
+    <div>
+      <div class="chartTitle">รายได้สุทธิรายเดือน</div>
+      <div class="chartSub" id="annualChartSub">เปรียบเทียบ 12 เดือน</div>
+    </div>
+  </div>
+  <canvas id="annualBarChart" width="600" height="260"></canvas>
+</div>
+
+<!-- Tax Summary Card (ภ.ง.ด.91) -->
+<div class="annual-tax-card" id="annualTaxBox"></div>
+
+<!-- Monthly Breakdown -->
+<div class="annual-months-header">
+  <span class="annual-months-icon">📅</span>
+  <span>รายละเอียดรายเดือน</span>
+</div>
+<div class="annual-months-list" id="annualMonths"></div>
+
+<div class="actions noPrint" style="margin-top:12px"><button class="btn primary" id="annualPdfBtn">📄 ส่งออก PDF (รายปี)</button></div>
 </section>
 <footer class="site-footer noPrint">
   <span class="footer-credit">Designed &amp; Built by <code>&lt;Khaomao /&gt;</code></span>

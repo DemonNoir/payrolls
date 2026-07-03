@@ -174,50 +174,211 @@ function renderSummary(){
   }).join('');
 }
 
-/* ── Annual Summary ── */
+/* ── Annual Summary — Premium Redesign ── */
 function renderAnnual(){
   var lbl=$('annualYearLabel');
-  if(lbl) lbl.innerText=(annualYear+543)+' ('+annualYear+')';
+  var sub=$('annualYearSub');
+  if(lbl) lbl.innerText='พ.ศ. '+(annualYear+543);
+  if(sub) sub.innerText='ค.ศ. '+annualYear;
 
-  var totOtHours=0,totOtPay=0,totBase=0,totWelfare=0,totSocial=0,totTax=0,totOther=0,totNet=0;
-  var monthRows='';
+  var totOtHours=0,totOtPay=0,totBase=0,totWelfare=0,totSocial=0,totTax=0,totOther=0,totNet=0,totDeduct=0;
+  var monthData=[];
 
   for(var m=0;m<12;m++){
     var st=monthStats(annualYear,m);
     totOtHours+=st.otHours;totOtPay+=st.otPay;totBase+=st.base;totWelfare+=st.welfare.total;
     totSocial+=st.deductions.social;totTax+=st.deductions.tax;totOther+=st.deductions.other;totNet+=st.net;
-    monthRows+='<div class="row"><span style="flex:1">'+MN[m]+'</span><span style="width:90px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums">OT '+hours(st.otHours)+' ชม.</span><b style="width:120px;text-align:right;font-variant-numeric:tabular-nums">สุทธิ '+money(st.net)+'</b></div>';
+    totDeduct+=st.deductions.total;
+    monthData.push({name:MN[m],nameShort:MS[m],st:st});
   }
 
-  /* ภ.ง.ด.91 box */
+  /* ── Hero ── */
+  var heroAmt=$('annualHeroAmount');
+  if(heroAmt) heroAmt.innerText=num(totNet).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท';
+
+  /* ── Stats Cards ── */
+  var otH=$('annualOtHours'),otP=$('annualOtPay');
+  if(otH) otH.innerText=hours(totOtHours)+' ชม.';
+  if(otP) otP.innerText=money(totOtPay);
+
+  var baseEl=$('annualBaseTotal');
+  if(baseEl) baseEl.innerText=money(totBase);
+
+  var welEl=$('annualWelfareTotal');
+  if(welEl) welEl.innerText=money(totWelfare);
+
+  var dedEl=$('annualDeductTotal');
+  if(dedEl) dedEl.innerText=money(totDeduct);
+
+  /* ── Bar Chart ── */
+  var canvas=$('annualBarChart');
+  if(canvas){
+    var chartLabels=[], chartValues=[];
+    for(var i=0;i<12;i++){
+      chartLabels.push(monthData[i].nameShort);
+      chartValues.push(monthData[i].st.net);
+    }
+    drawAnnualBarChart(canvas,chartLabels,chartValues);
+    var chartSub=$('annualChartSub');
+    if(chartSub) chartSub.innerText='เฉลี่ย '+money(totNet/12)+'/เดือน';
+  }
+
+  /* ── Tax Card (ภ.ง.ด.91) ── */
   var taxBox=$('annualTaxBox');
   if(taxBox){
-    taxBox.innerHTML='<div class="tax-title">📋 ข้อมูลสำหรับยื่น ภ.ง.ด.91 ปี '+(annualYear+543)+'</div>'+
+    taxBox.innerHTML=
+      '<div class="tax-title">📋 ข้อมูลสำหรับยื่น ภ.ง.ด.91 ปี '+(annualYear+543)+'</div>'+
       '<div class="tax-row"><span>รายได้รวมทั้งปี (เงินเดือน+KPI+สวัสดิการ)</span><b>'+money(totBase+totWelfare)+'</b></div>'+
       '<div class="tax-row"><span>รายได้ OT ทั้งปี</span><b>'+money(totOtPay)+'</b></div>'+
       '<div class="tax-row"><span>ประกันสังคมที่หักทั้งปี</span><b>'+money(totSocial)+'</b></div>'+
       '<div class="tax-row"><span>ภาษีที่หักทั้งปี</span><b>'+money(totTax)+'</b></div>'+
-      '<div class="tax-row" style="font-weight:900;border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>รายได้สุทธิรวมทั้งปี</span><b>'+money(totNet)+'</b></div>';
+      '<div class="tax-row-total"><span>รายได้สุทธิรวมทั้งปี</span><b>'+money(totNet)+'</b></div>';
   }
 
-  var sumEl=$('annualSummary');
-  if(sumEl){
-    sumEl.innerHTML=[
-      ['ชั่วโมง OT รวม',hours(totOtHours)+' ชม.'],
-      ['เงิน OT รวม',money(totOtPay)],
-      ['รายได้ประจำรวม',money(totBase)],
-      ['สวัสดิการรวม',money(totWelfare)],
-      ['ประกันสังคมรวม',money(totSocial)],
-      ['ภาษีรวม',money(totTax)],
-      ['รายได้สุทธิรวม',money(totNet)]
-    ].map(function(r,i,a){
-      var cls=i===a.length-1?' class="row total-row"':' class="row"';
-      return '<div'+cls+'><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';
-    }).join('');
-  }
+  /* ── Monthly Breakdown ── */
+  var maxNet=0;
+  for(var i=0;i<12;i++){if(monthData[i].st.net>maxNet)maxNet=monthData[i].st.net;}
+  if(maxNet<=0) maxNet=1;
 
   var mEl=$('annualMonths');
-  if(mEl) mEl.innerHTML='<div style="padding:8px 12px;font-size:11px;font-weight:900;color:var(--muted)">รายละเอียดรายเดือน</div>'+monthRows;
+  if(mEl){
+    var html='';
+    for(var i=0;i<12;i++){
+      var md=monthData[i], s=md.st;
+      var barW=Math.round((s.net/maxNet)*100);
+      html+='<div class="annual-month-row" data-month="'+i+'">'+
+        '<div class="annual-month-row-main">'+
+          '<span class="annual-month-name">'+md.name+' <span class="annual-month-expand-icon">▼</span></span>'+
+          '<span class="annual-month-ot">OT '+hours(s.otHours)+' ชม.</span>'+
+          '<span class="annual-month-net">'+money(s.net)+'</span>'+
+        '</div>'+
+        '<div class="annual-month-bar"><div class="annual-month-bar-fill" style="width:'+barW+'%"></div></div>'+
+        '<div class="annual-month-detail">'+
+          '<div class="annual-month-detail-row"><span>เงินเดือน</span><b>'+money(s.proratedSalary)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>ค่าบ้าน</span><b>'+money(s.proratedHousing)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>KPI</span><b>'+money(s.kpi)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>เบี้ยขยัน</span><b>'+money(s.diligence)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>OT ('+hours(s.otHours)+' ชม.)</span><b>'+money(s.otPay)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>สวัสดิการ</span><b>'+money(s.welfare.total)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>ประกันสังคม</span><b>-'+money(s.deductions.social)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>ภาษี</span><b>-'+money(s.deductions.tax)+'</b></div>'+
+          '<div class="annual-month-detail-row"><span>หักอื่นๆ</span><b>-'+money(s.deductions.other)+'</b></div>'+
+        '</div>'+
+      '</div>';
+    }
+    mEl.innerHTML=html;
+
+    /* Attach expand/collapse listeners */
+    Array.prototype.forEach.call(mEl.querySelectorAll('.annual-month-row'),function(row){
+      row.querySelector('.annual-month-row-main').onclick=function(){
+        row.classList.toggle('expanded');
+      };
+    });
+  }
+}
+
+/* ── Annual Bar Chart (12 เดือน) ── */
+function drawAnnualBarChart(canvas,labels,values){
+  var dpr=window.devicePixelRatio||1;
+  var rect=canvas.getBoundingClientRect();
+  var w=rect.width*dpr, h=rect.height*dpr;
+  canvas.width=w; canvas.height=h;
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  var cw=rect.width, ch=rect.height;
+
+  var bgColor=varColor('--canvas-bg')||'#ffffff';
+  var labelColor=varColor('--canvas-label')||'#61708a';
+  var lineColor=varColor('--line')||'#d9dee8';
+  var blueColor=varColor('--blue')||'#3b6fd1';
+  var greenColor=varColor('--green')||'#22865f';
+  var panelColor=varColor('--panel')||'#ffffff';
+
+  ctx.fillStyle=bgColor;
+  ctx.fillRect(0,0,cw,ch);
+
+  var padTop=28,padBottom=34,padLeft=12,padRight=12;
+  var chartW=cw-padLeft-padRight;
+  var chartH=ch-padTop-padBottom;
+
+  var max=Math.max.apply(null,values.concat([1]));
+  max=max*1.2;
+
+  var n=values.length;
+  var barGap=4;
+  var barW=Math.max(8,(chartW/n)-barGap);
+  var totalBarSpace=(barW+barGap)*n-barGap;
+  var startX=padLeft+(chartW-totalBarSpace)/2;
+
+  /* Grid lines */
+  ctx.save();
+  ctx.strokeStyle=lineColor;
+  ctx.lineWidth=0.5;
+  ctx.setLineDash([4,4]);
+  var gridLines=4;
+  for(var g=0;g<=gridLines;g++){
+    var gy=padTop+(chartH/gridLines)*g;
+    ctx.beginPath();
+    ctx.moveTo(padLeft,gy);
+    ctx.lineTo(cw-padRight,gy);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  /* Parse blue color for gradient */
+  var r=parseInt(blueColor.slice(1,3),16)||59;
+  var g2=parseInt(blueColor.slice(3,5),16)||111;
+  var b=parseInt(blueColor.slice(5,7),16)||209;
+  var gr=parseInt(greenColor.slice(1,3),16)||34;
+  var gg=parseInt(greenColor.slice(3,5),16)||134;
+  var gb=parseInt(greenColor.slice(5,7),16)||95;
+
+  /* Bars */
+  for(var i=0;i<n;i++){
+    var barH=max>0?(values[i]/max)*chartH:0;
+    var x=startX+(barW+barGap)*i;
+    var y=padTop+chartH-barH;
+    var barRadius=Math.min(barW/2,4);
+
+    /* Bar gradient */
+    var grad=ctx.createLinearGradient(0,y,0,padTop+chartH);
+    grad.addColorStop(0,'rgba('+r+','+g2+','+b+',0.85)');
+    grad.addColorStop(1,'rgba('+gr+','+gg+','+gb+',0.65)');
+
+    /* Draw rounded bar */
+    ctx.beginPath();
+    if(barH>barRadius*2){
+      ctx.moveTo(x,y+barRadius);
+      ctx.arc(x+barRadius,y+barRadius,barRadius,Math.PI,Math.PI*1.5);
+      ctx.arc(x+barW-barRadius,y+barRadius,barRadius,Math.PI*1.5,0);
+      ctx.lineTo(x+barW,padTop+chartH);
+      ctx.lineTo(x,padTop+chartH);
+    }else if(barH>0){
+      ctx.rect(x,y,barW,barH);
+    }
+    ctx.closePath();
+    ctx.fillStyle=grad;
+    ctx.fill();
+
+    /* Value label above bar (only if nonzero) */
+    if(values[i]>0){
+      ctx.font='600 9px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillStyle=blueColor;
+      var displayVal;
+      if(values[i]>=1000000) displayVal=(values[i]/1000000).toFixed(1)+'ล.';
+      else if(values[i]>=10000) displayVal=Math.round(values[i]/1000)+'k';
+      else if(values[i]>=1000) displayVal=(values[i]/1000).toFixed(1)+'k';
+      else displayVal=Math.round(values[i]).toString();
+      ctx.fillText(displayVal,x+barW/2,y-5);
+    }
+
+    /* X-axis label */
+    ctx.font='600 10px -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillStyle=labelColor;
+    ctx.fillText(labels[i],x+barW/2,ch-10);
+  }
 }
 
 function renderHolidayList(){
