@@ -139,39 +139,42 @@ function renderKpiInfo(){
 
 function renderSummary(){
   var st=periodStats(currentPeriod), s=settings();
-  var rows=[
-    ['วันทำงานจริง',hours(st.actualDays)+' วัน'],
-    ['วันลา/ใช้สิทธิ',hours(st.leaveDays)+' วัน'],
-    ['วันที่ทำ OT',st.otDays+' วัน']
-  ];
-  /* แสดง prorate info ถ้าไม่ใช่เดือนเต็ม */
+  var html = '';
+  
+  html += '<div class="row section-divider">📊 สถิติการทำงาน</div>';
+  html += '<div class="row"><span>วันทำงานจริง</span><b>'+hours(st.actualDays)+' วัน</b></div>';
+  html += '<div class="row"><span>วันลา/ใช้สิทธิ</span><b>'+hours(st.leaveDays)+' วัน</b></div>';
+  html += '<div class="row"><span>วันที่ทำ OT</span><b>'+st.otDays+' วัน</b></div>';
+
+  html += '<div class="row section-divider">💰 รายได้พื้นฐาน</div>';
   if(st.isProrated){
-    rows.push(['⚠ ทำงานในรอบนี้',st.employedDays+'/'+st.totalDays+' วัน (หาร 30)']);
-    rows.push(['เงินเดือน (Prorate)',money(st.proratedSalary)+' จาก '+money(s.salaryBase)]);
-    rows.push(['ค่าบ้าน (Prorate)',money(st.proratedHousing)+' จาก '+money(s.housing)]);
+    html += '<div class="row"><span>⚠ ทำงานในรอบนี้</span><b>'+st.employedDays+'/'+st.totalDays+' วัน (หาร 30)</b></div>';
+    html += '<div class="row"><span>เงินเดือน (Prorate)</span><b>'+money(st.proratedSalary)+' จาก '+money(s.salaryBase)+'</b></div>';
+    html += '<div class="row"><span>🏠 ค่าบ้าน (Prorate)</span><b>'+money(st.proratedHousing)+' จาก '+money(s.housing)+'</b></div>';
   }else{
-    rows.push(['เงินเดือน',money(st.proratedSalary)]);
-    rows.push(['ค่าบ้าน',money(st.proratedHousing)]);
+    html += '<div class="row"><span>เงินเดือน</span><b>'+money(st.proratedSalary)+'</b></div>';
+    html += '<div class="row"><span>🏠 ค่าบ้าน</span><b>'+money(st.proratedHousing)+'</b></div>';
   }
-  rows=rows.concat([
-    ['ชั่วโมง OT',hours(st.otHours)+' ชม.'],
-    ['รายได้ OT',money(st.otPay)],
-    ['ค่าเดินทาง',money(st.welfare.transport)],
-    ['ค่าอาหาร',money(st.welfare.food)],
-    ['ค่าอาหาร OT',money(st.welfare.otFood)],
-    ['ค่ากะดึก',money(st.welfare.night)],
-    ['KPI',money(st.kpi)],
-    ['เบี้ยขยัน',money(st.diligence)],
-    ['รางวัลอายุงาน',money(st.serviceAward)],
-    ['ประกันสังคม',money(st.deductions.social)],
-    ['ภาษี',money(st.deductions.tax)],
-    ['หักอื่นๆ',money(st.deductions.other)],
-    ['รายได้สุทธิ',money(st.net)]
-  ]);
-  $('monthlySummary').innerHTML=rows.map(function(r,i){
-    var cls=i===rows.length-1?' class="row total-row"':' class="row"';
-    return '<div'+cls+'><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';
-  }).join('');
+
+  html += '<div class="row section-divider">⚡ รายได้เพิ่มเติม</div>';
+  html += '<div class="row"><span>⏱ ชั่วโมง OT</span><b>'+hours(st.otHours)+' ชม.</b></div>';
+  html += '<div class="row"><span>รายได้ OT</span><b>'+money(st.otPay)+'</b></div>';
+  html += '<div class="row"><span>🚗 ค่าเดินทาง</span><b>'+money(st.welfare.transport)+'</b></div>';
+  html += '<div class="row"><span>🍱 ค่าอาหาร</span><b>'+money(st.welfare.food)+'</b></div>';
+  html += '<div class="row"><span>🍜 ค่าอาหาร OT</span><b>'+money(st.welfare.otFood)+'</b></div>';
+  html += '<div class="row"><span>🌙 ค่ากะดึก</span><b>'+money(st.welfare.night)+'</b></div>';
+  html += '<div class="row"><span>📊 KPI</span><b>'+money(st.kpi)+'</b></div>';
+  html += '<div class="row"><span>⭐ เบี้ยขยัน</span><b>'+money(st.diligence)+'</b></div>';
+  html += '<div class="row"><span>🎁 รางวัลอายุงาน</span><b>'+money(st.serviceAward)+'</b></div>';
+
+  html += '<div class="row section-divider">📉 รายการหัก</div>';
+  html += '<div class="row"><span>🏥 ประกันสังคม</span><b>-'+money(st.deductions.social)+'</b></div>';
+  html += '<div class="row"><span>🏛 ภาษี</span><b>-'+money(st.deductions.tax)+'</b></div>';
+  html += '<div class="row"><span>🏷 หักอื่นๆ</span><b>-'+money(st.deductions.other)+'</b></div>';
+
+  html += '<div class="row total-row"><span>💵 รายได้สุทธิ</span><b>'+money(st.net)+'</b></div>';
+
+  $('monthlySummary').innerHTML = html;
 }
 
 /* ── Annual Summary — Premium Redesign ── */

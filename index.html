@@ -48,9 +48,11 @@
 <div><span id="totalHours" class="big">0</span> ชม. OT</div>
 <div class="side">รวมเงิน OT<b id="totalPay">0.00 บาท</b></div>
 </div>
-<div class="strip" id="bankBox">วันหยุดสะสม: 0 ชม.</div>
-<div class="strip" id="deductionBox">รายการหัก: 0.00 บาท · สุทธิ: 0.00 บาท</div>
-<div class="strip warn" id="paydayBox">เงินออกอีก 0 วัน</div>
+<div class="cal-stats">
+  <div class="cal-stat"><div class="cal-stat-icon">🏦</div><div class="cal-stat-value" id="bankBox">0 ชม.</div><div class="cal-stat-label">วันหยุดสะสม</div></div>
+  <div class="cal-stat"><div class="cal-stat-icon">📉</div><div class="cal-stat-value" id="deductionBox">0.00 บาท</div><div class="cal-stat-label">สุทธิ</div></div>
+  <div class="cal-stat"><div class="cal-stat-icon">📅</div><div class="cal-stat-value" id="paydayBox">0 วัน</div><div class="cal-stat-label">เงินออก</div></div>
+</div>
 
 <div class="calendarDesk">
 <div>
@@ -63,18 +65,57 @@
 </section>
 
 <section id="dashboardPage" class="section">
-<div class="cards">
-<div class="card"><div class="label">OT รอบนี้</div><div class="value" id="dashOt">0 ชม.</div><div class="sub" id="dashOtPay">0.00 บาท</div></div>
-<div class="card"><div class="label">วันหยุดสะสม</div><div class="value" id="dashBank">0 ชม.</div><div class="sub">ชั่วโมงคงเหลือ</div></div>
-<div class="card"><div class="label">KPI Daily + Bonus</div><div class="value" id="dashKpi">0%</div><div class="sub" id="dashKpiAmt">0.00 บาท</div></div>
-<div class="card"><div class="label">นับถอยหลังเงินออก</div><div class="value" id="dashPayday">0 วัน</div><div class="sub">จนถึงวันเงินออก</div></div>
-<div class="card wide"><div class="label">รายได้สุทธิโดยประมาณ</div><div class="value" id="dashNet">0.00 บาท</div><div class="sub" id="dashNetSub"></div></div>
-<div class="card wide">
-  <div class="label">อัตราค่าแรง OT (รอบปัจจุบัน)</div>
-  <div class="value" id="dashHourlyRate">0 บาท/ชม.</div>
-  <div class="sub" id="dashRateDetail"></div>
+<!-- Hero -->
+<div class="dash-hero">
+  <div class="dash-hero-label">รายได้สุทธิโดยประมาณ</div>
+  <div class="dash-hero-amount" id="dashNet">0.00 บาท</div>
+  <div class="dash-hero-sub" id="dashNetSub"></div>
 </div>
+
+<!-- Stats Grid -->
+<div class="dash-stats">
+  <div class="dash-stat-card">
+    <div class="dash-stat-icon">⏱</div>
+    <div class="dash-stat-info">
+      <div class="dash-stat-label">OT รอบนี้</div>
+      <div class="dash-stat-value" id="dashOt">0 ชม.</div>
+      <div class="dash-stat-sub" id="dashOtPay">0.00 บาท</div>
+    </div>
+  </div>
+  <div class="dash-stat-card">
+    <div class="dash-stat-icon">🏦</div>
+    <div class="dash-stat-info">
+      <div class="dash-stat-label">วันหยุดสะสม</div>
+      <div class="dash-stat-value" id="dashBank">0 ชม.</div>
+      <div class="dash-stat-sub">ชั่วโมงคงเหลือ</div>
+    </div>
+  </div>
+  <div class="dash-stat-card">
+    <div class="dash-stat-icon">📊</div>
+    <div class="dash-stat-info">
+      <div class="dash-stat-label">KPI Daily + Bonus</div>
+      <div class="dash-stat-value" id="dashKpi">0%</div>
+      <div class="dash-stat-sub" id="dashKpiAmt">0.00 บาท</div>
+    </div>
+  </div>
+  <div class="dash-stat-card">
+    <div class="dash-stat-icon">📅</div>
+    <div class="dash-stat-info">
+      <div class="dash-stat-label">นับถอยหลังเงินออก</div>
+      <div class="dash-stat-value" id="dashPayday">0 วัน</div>
+      <div class="dash-stat-sub">จนถึงวันเงินออก</div>
+    </div>
+  </div>
 </div>
+
+<!-- Rate Card -->
+<div class="dash-rate-card">
+  <div class="rate-title">⚡ อัตราค่าแรง OT (รอบปัจจุบัน)</div>
+  <div class="rate-value" id="dashHourlyRate">0 บาท/ชม.</div>
+  <div class="rate-detail" id="dashRateDetail"></div>
+</div>
+
+<!-- Charts -->
 <div class="canvasWrap chartCard">
   <div class="chartHeader"><span class="chartIcon">⏱</span><div><div class="chartTitle">ชั่วโมง OT</div><div class="chartSub" id="chartOtSub">รายรอบบิล</div></div></div>
   <canvas id="hoursChart" width="600" height="280"></canvas>
@@ -87,6 +128,9 @@
 </section>
 
 <section id="summaryPage" class="section">
+<div class="summary-header">
+  <span class="summary-header-icon">📋</span> สรุปรายรอบบิล
+</div>
 <div class="summaryList" id="monthlySummary"></div>
 </section>
 
@@ -202,7 +246,7 @@
 
 <!-- Settings Overlay -->
 <div class="overlay" id="settingsOverlay"><div class="sheet">
-<h2>ตั้งค่า</h2>
+<h2>⚙️ ตั้งค่า</h2>
 <div class="settingsGrid">
 <div class="group"><label>เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="เงินเดือนหลัก"></div>
 <div class="group"><label>วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
