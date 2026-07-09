@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 <main class="app">
@@ -309,6 +309,7 @@
 </div>
 <input type="file" id="importFile" accept="application/json,.json" class="hide">
 <div class="actions"><button class="btn primary" id="saveSettingsBtn">บันทึก</button></div>
+<div class="actions" style="margin-top:6px"><button class="btn soft" id="showTutorialBtn">📖 ดูคู่มือการใช้งาน</button></div>
 <button class="ghost" id="closeSettingsBtn">ปิด</button>
 </div></div>
 
@@ -335,12 +336,16 @@
 <button class="ghost" id="closeInstallBtn">ปิด</button>
 </div></div>
 
-<script src="js/utils.js?v=10"></script>
-<script src="js/calc.js?v=10"></script>
-<script src="js/ui.js?v=10"></script>
-<script src="js/settings.js?v=10"></script>
-<script src="js/data.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<!-- Tutorial Overlay -->
+<div class="tut-overlay" id="tutorialOverlay"></div>
+
+<script src="js/utils.js?v=11"></script>
+<script src="js/calc.js?v=11"></script>
+<script src="js/ui.js?v=11"></script>
+<script src="js/settings.js?v=11"></script>
+<script src="js/data.js?v=11"></script>
+<script src="js/tutorial.js?v=11"></script>
+<script src="js/app.js?v=11"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});

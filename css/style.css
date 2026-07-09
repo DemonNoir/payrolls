@@ -703,3 +703,196 @@ body{background:#fff;display:block;padding:0}
   color: var(--muted, #888);
   opacity: 0.6;
 }
+
+/* ══════════════════════════════════════════════════════════════
+ * Tutorial Overlay — Interactive Onboarding
+ * ══════════════════════════════════════════════════════════════ */
+.tut-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+.tut-overlay.show { display: flex; }
+
+.tut-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--panel);
+  border-radius: 20px;
+  padding: 28px 22px 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+/* Close button */
+.tut-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  z-index: 2;
+}
+.tut-close:hover { background: rgba(128,128,128,0.15); color: var(--ink); }
+
+/* Slides wrapper */
+.tut-slides-wrap {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+}
+
+/* Individual slide */
+.tut-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  text-align: center;
+  padding: 8px 0;
+}
+.tut-slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  position: relative;
+}
+.tut-slide.exit-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  position: absolute;
+}
+.tut-slide.exit-right {
+  opacity: 0;
+  transform: translateX(30px);
+  position: absolute;
+}
+.tut-slide.enter-right {
+  transform: translateX(30px);
+  opacity: 0;
+}
+.tut-slide.enter-left {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+/* Emoji */
+.tut-emoji {
+  font-size: 52px;
+  margin-bottom: 12px;
+  line-height: 1;
+  animation: tut-bounce 0.6s ease;
+}
+@keyframes tut-bounce {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Title */
+.tut-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+
+/* Body */
+.tut-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+  text-align: left;
+  padding: 0 4px;
+  white-space: pre-line;
+}
+
+/* Tip */
+.tut-tip {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(59,111,209,0.08);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--blue);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Dots */
+.tut-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 18px 0 14px;
+}
+.tut-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.tut-dot.active {
+  background: var(--blue);
+  width: 22px;
+  border-radius: 4px;
+}
+
+/* Nav buttons */
+.tut-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tut-btn {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tut-prev {
+  background: rgba(128,128,128,0.1);
+  color: var(--muted);
+}
+.tut-prev:hover { background: rgba(128,128,128,0.2); }
+.tut-next {
+  background: var(--blue);
+  color: #fff;
+}
+.tut-next:hover { opacity: 0.9; }
+.tut-next.tut-finish {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  animation: tut-pulse 1.5s ease infinite;
+}
+@keyframes tut-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59,111,209,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(59,111,209,0); }
+}
+
+@media print { .tut-overlay { display: none !important; } }

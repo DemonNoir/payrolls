@@ -91,3 +91,7 @@ $('setKpiBonus').addEventListener('change',function(){
 /* Init */
 initTheme();
 renderAll();
+
+/* Tutorial */
+if($('showTutorialBtn')) $('showTutorialBtn').onclick = function(){ closeSettings(); showTutorial(); };
+if(shouldShowTutorial()) setTimeout(showTutorial, 600);
