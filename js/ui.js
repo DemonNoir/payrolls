@@ -67,6 +67,11 @@ function renderCalendar(){
       badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
     }else if(en&&en.kind==='use'){
       cls+=' use'; badge='<span class="badge use">ใช้ '+hours(en.hours)+'h</span>';
+    }else if(en&&en.kind==='leave'){
+      var ltCls={annual:'leave-annual',sick:'leave-sick',personal:'leave-personal',absent:'leave-absent'};
+      var ltLabel={annual:'🏖️พักร้อน',sick:'🤒ป่วย',personal:'📋กิจ',absent:'🚫ขาด'};
+      var ltype=en.leaveType||'sick';
+      cls+=' leave-day'; badge='<span class="badge '+ltCls[ltype]+'">'+(ltLabel[ltype]||'ลา')+' '+hours(en.days)+'d</span>';
     }
     var cell=document.createElement('div');
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
@@ -143,8 +148,14 @@ function renderSummary(){
   
   html += '<div class="row section-divider">📊 สถิติการทำงาน</div>';
   html += '<div class="row"><span>วันทำงานจริง</span><b>'+hours(st.actualDays)+' วัน</b></div>';
-  html += '<div class="row"><span>วันลา/ใช้สิทธิ</span><b>'+hours(st.leaveDays)+' วัน</b></div>';
   html += '<div class="row"><span>วันที่ทำ OT</span><b>'+st.otDays+' วัน</b></div>';
+  if(st.leaveDays>0){
+    html += '<div class="row"><span>วันลา/หยุดทั้งหมด</span><b>'+hours(st.leaveDays)+' วัน</b></div>';
+    if(st.ppAnnual>0) html += '<div class="row"><span>&nbsp;&nbsp;🏖️ ลาพักร้อน</span><b>'+hours(st.ppAnnual)+' วัน</b></div>';
+    if(st.ppSick>0)   html += '<div class="row"><span>&nbsp;&nbsp;🤒 ลาป่วย</span><b>'+hours(st.ppSick)+' วัน</b></div>';
+    if(st.ppPersonal>0) html += '<div class="row"><span>&nbsp;&nbsp;📋 ลากิจ</span><b>'+hours(st.ppPersonal)+' วัน</b></div>';
+    if(st.ppAbsent>0) html += '<div class="row"><span>&nbsp;&nbsp;🚫 ขาดงาน</span><b>'+hours(st.ppAbsent)+' วัน</b></div>';
+  }
 
   html += '<div class="row section-divider">💰 รายได้พื้นฐาน</div>';
   if(st.isProrated){

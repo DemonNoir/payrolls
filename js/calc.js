@@ -95,17 +95,27 @@ function periodStats(p,kpiBonusPctOverride){
   var ppOther=getPerPeriod('pp_other',label);
 
   var todayDt = new Date(); todayDt.setHours(0,0,0,0);
+  /* คือนวนวันลาจากปฏิทิน (Hybrid: บวกกับยอดจากตั้งค่า) */
+  var calAnnual=0, calSick=0, calPersonal=0, calAbsent=0;
   Object.keys(data).forEach(function(k){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
     if(st.calcMode === 'realtime' && dt > todayDt) return;
     byDay[k]=en;
     if(en.kind==='ot'){
       th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
-      /* คำนวณ OT ใหม่เสมอตาม rate ปัจจุบัน (ไม่ lock total) */
       if(en.payType==='money') tp+=num(en.hours)*num(en.multiplier)*hourlyRate;
     }
     if(en.kind==='use')leaveUse+=num(en.hours)/8;
+    if(en.kind==='leave'){
+      var ld=num(en.days)||1;
+      if(en.leaveType==='annual') calAnnual+=ld;
+      else if(en.leaveType==='sick') calSick+=ld;
+      else if(en.leaveType==='personal') calPersonal+=ld;
+      else if(en.leaveType==='absent') calAbsent+=ld;
+    }
   });
+  ppSick+=calSick; ppPersonal+=calPersonal; ppAbsent+=calAbsent;
+  var ppAnnual=calAnnual;
 
   /* ── นับวันทำงาน (autoDays) สำหรับคำนวณสวัสดิการ ──
    * autoDays ใช้คูณ: ค่าเดินทาง, ค่าอาหาร, ค่ากะดึก
@@ -136,11 +146,10 @@ function periodStats(p,kpiBonusPctOverride){
     cur=addDays(cur,1);
   }
 
-  /* ── สวัสดิการ (Welfare) ──
+  /* สวัสดิการ (Welfare)
    * คูณจาก actual = autoDays − วันลา
-   * ⚠️ otFoodDays นับแยก: นับเฉพาะวันที่ OT >= 2 ชม. (ดูบรรทัด 92)
-   * ⚠️ ค่ากะดึก: จ่ายทุกวันทำงานถ้าเปิด nightEnabled (ไม่ใช่แค่วัน OT) */
-  var leaveDays=ppSick+ppPersonal+ppAbsent+leaveUse;
+   * ❗️ ลาพักร้อน (ppAnnual) ก็หักวันสวัสดิการ (แต่ไม่หักเบี้ยขยัน/เงินเดือน) */
+  var leaveDays=ppSick+ppPersonal+ppAbsent+ppAnnual+leaveUse;
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightEnabled?st.nightRate*actual:0};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
@@ -168,6 +177,7 @@ function periodStats(p,kpiBonusPctOverride){
   var notEmployedYet = (employedDaysInPeriod === 0);
   var kpiMoney=notEmployedYet?0:proratedSalary*(kpiTotal/100);
   var kpi=kpiMoney;
+  /* ❗️ ลาพักร้อน (ไม่ใช่ ppAnnual) ไม่หักเบี้ยขยัน — เฉพาะลาป่วย/กิจ/ขาดเท่านั้น */
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
   if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
@@ -184,7 +194,7 @@ function periodStats(p,kpiBonusPctOverride){
     otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,
     welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:ppServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
     hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney,
-    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward,
+    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppAnnual:ppAnnual,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward,
     proratedSalary:proratedSalary,proratedHousing:proratedHousing,isProrated:!isFullPeriod,employedDays:employedDaysInPeriod,totalDays:totalDaysInPeriod
   };
 }

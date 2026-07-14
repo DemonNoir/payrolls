@@ -226,12 +226,19 @@ button,input,select{font:inherit}
 .cell .badge.use{background:var(--purple)}
 .cell .badge.m1{box-shadow:0 0 0 2px var(--yellow)}
 .cell .badge.m3{box-shadow:0 0 0 2px var(--red)}
+/* Leave type badges */
+.cell.leave-day{background:#e8f5e9;border-color:#a5d6a7}
+.cell .badge.leave-annual{background:#22865f}
+.cell .badge.leave-sick{background:#d98f2b}
+.cell .badge.leave-personal{background:#7a4fc7}
+.cell .badge.leave-absent{background:#d64b45}
 .cell .holidayMark{position:absolute;top:2px;right:3px;font-size:9px;color:var(--red);font-weight:900}
 .cell .startMark{position:absolute;top:2px;left:3px;font-size:9px;color:var(--green);font-weight:900}
 /* Dark mode overrides for cells */
 [data-theme="dark"] .cell.money{background:#3a2410;border-color:#6e4a18}
 [data-theme="dark"] .cell.leave{background:#0f2240;border-color:#1e4a8a}
 [data-theme="dark"] .cell.use{background:#2a1550;border-color:#5a3090}
+[data-theme="dark"] .cell.leave-day{background:#0a2415;border-color:#1a5a30}
 [data-theme="dark"] .cell.holiday{background:#3a0f0e;border-color:#7a2520}
 .rate-footer{text-align:center;font-size:11px;color:var(--muted);margin:6px 0 4px;font-weight:600}
 .legend{

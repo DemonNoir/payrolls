@@ -13,6 +13,13 @@ function openEntry(k){
     $('entryHours').value='';setRad('multiplier',isHolidayKey(k)?3:1.5);setRad('payType','money');
   }
   $('useHours').value=(en&&en.kind==='use')?en.hours:'';
+  if(en&&en.kind==='leave'){
+    $('leaveType').value=en.leaveType||'annual';
+    $('leaveDays').value=en.days||1;
+  }else{
+    $('leaveType').value='annual';
+    $('leaveDays').value=1;
+  }
   $('availableBank').innerText=hours(totalBank(k));
   $('deleteEntryBtn').style.display=en?'block':'none';
   previewEntry();
@@ -22,22 +29,29 @@ function openEntry(k){
 function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
 
 function toggleEntryFields(){
-  var isOt=radVal('entryKind')==='ot';
-  $('otFields').classList.toggle('hide',!isOt);
-  $('useFields').classList.toggle('hide',isOt);
+  var kind=radVal('entryKind');
+  $('otFields').classList.toggle('hide',kind!=='ot');
+  $('useFields').classList.toggle('hide',kind!=='use');
+  $('leaveFields').classList.toggle('hide',kind!=='leave');
 }
 
 /* ── Preview: ใช้ rate จาก period ปัจจุบัน ── */
 function previewEntry(){
-  if(radVal('entryKind')==='ot'){
+  var kind=radVal('entryKind');
+  if(kind==='ot'){
     var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
     var curLabel=periodLabel(currentPeriod);
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
     $('entryPreview').innerText=pt==='money'?'= '+money(rate*h*m)+' (อัตรา '+rate.toLocaleString('th-TH',{maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
-  }else{
+  }else if(kind==='use'){
     $('entryPreview').innerText='ใช้ '+hours($('useHours').value)+' ชม.';
+  }else if(kind==='leave'){
+    var lt=$('leaveType').value;
+    var ltNames={annual:'🏖️ ลาพักร้อน',sick:'🤒 ลาป่วย',personal:'📋 ลากิจ',absent:'🚫 ขาดงาน'};
+    var ld=num($('leaveDays').value)||1;
+    $('entryPreview').innerText=(ltNames[lt]||'ลา')+' '+ld+' วัน';
   }
 }
 
@@ -54,6 +68,10 @@ function saveEntry(){
     data[activeKey]=pt==='money'
       ?{kind:'ot',payType:'money',rate:rate,hours:h,multiplier:m,total:rate*h*m,kpiBonusPctAtSave:kpiBonusPct}
       :{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h};
+  }else if(kind==='leave'){
+    var ld=num($('leaveDays').value);
+    if(ld<=0){alert('กรอกจำนวนวันให้ถูกต้อง');return}
+    data[activeKey]={kind:'leave',leaveType:$('leaveType').value,days:ld};
   }else{
     var uh=num($('useHours').value), avail=totalBank(activeKey);
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
