@@ -98,7 +98,7 @@ function getBanks(excludeKey){
 }
 
 function periodStats(p,kpiBonusPctOverride){
-  var data=getCal(), st=settings(), th=0,tp=0,otDays=0,otFoodDays=0,leaveUse=0,byDay={}, start=p.start,end=p.end;
+  var data=getCal(), st=settings(), th=0,tp=0,otDays=0,otFoodDays=0,leaveUse=0,nightShiftDays=0,byDay={}, start=p.start,end=p.end;
   var label=periodLabel(p);
   var kpiBonusPct=(kpiBonusPctOverride!==undefined)?num(kpiBonusPctOverride):getKpiBonusPct(label);
   if(isNaN(kpiBonusPct))kpiBonusPct=0;
@@ -119,6 +119,7 @@ function periodStats(p,kpiBonusPctOverride){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
     if(st.calcMode === 'realtime' && dt > todayDt) return;
     byDay[k]=en;
+    if(en.isNight) nightShiftDays++;
     if(en.kind==='ot'){
       th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
       if(en.payType==='money') tp+=num(en.hours)*num(en.multiplier)*hourlyRate;
@@ -180,7 +181,7 @@ function periodStats(p,kpiBonusPctOverride){
    * คูณจาก actual = autoDays − วันลาทุกประเภท */
   var leaveDays=ppSick+ppPersonal+ppAbsent+ppAnnual+ppSwap+ppMaternity+ppOrdination+ppFuneral+leaveUse;
   var actual=Math.max(0,autoDays-leaveDays);
-  var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightEnabled?st.nightRate*actual:0};
+  var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightRate*nightShiftDays};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
 
   var kpiDaily=isNaN(st.kpiPercent)?0:num(st.kpiPercent);

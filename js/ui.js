@@ -49,7 +49,7 @@ function checkMigration(){
 
 function renderCalendar(){
   var set=settings();
-  $('monthLabel').innerText=periodLabel(currentPeriod) + (set.nightEnabled ? ' 🌙 (กะดึก)' : '');
+  $('monthLabel').innerText=periodLabel(currentPeriod);
   var curLabel=periodLabel(currentPeriod);
   var kpiBonusPct=getKpiBonusPct(curLabel);
   if(isNaN(kpiBonusPct))kpiBonusPct=0;
@@ -65,7 +65,9 @@ function renderCalendar(){
     if(en&&en.kind==='ot'){
       cls+=' '+(en.payType==='leave'?'leave':'money');
       var multCls=num(en.multiplier)===1?' m1':(num(en.multiplier)===3?' m3':'');
-      badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
+      if (num(en.hours) > 0) {
+        badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
+      }
     }else if(en&&en.kind==='use'){
       var lt=en.leaveType||'_legacy';
       var ltCls={annual:'leave-annual',swap:'leave-swap',personal_paid:'leave-personal',personal_unpaid:'leave-personal',sick:'leave-sick',maternity:'leave-maternity',ordination:'leave-ordination',funeral:'leave-funeral'};
@@ -82,7 +84,8 @@ function renderCalendar(){
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
     cell.title=hname||'';
     var isStart=(set.startDate&&k===set.startDate);
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+'<span class="num">'+cur.getDate()+'</span>'+badge;
+    var isNight=(en&&en.isNight)?'<span style="position:absolute;top:2px;right:4px;font-size:12px;">🌙</span>':'';
+    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
     cell.onclick=(function(key){return function(){openEntry(key)}})(k);
     grid.appendChild(cell);
     cur=addDays(cur,1);

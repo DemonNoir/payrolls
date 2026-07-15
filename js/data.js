@@ -8,7 +8,7 @@ function exportData(){
       extraKeys[k]=getLS(k);
     }
   }
-  var keys=['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
+  var keys=['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
   var payload={version:3,exported_at:new Date().toISOString(),data:{},extra:extraKeys};
   keys.forEach(function(k){payload.data[k]=getLS(k)});
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -50,7 +50,7 @@ function importFile(ev){
       if(obj&&obj.version===3&&obj.data){
         /* v3: รองรับ ot_salary + extra kpi_bonus/work_days keys */
         incoming=obj.data; extraData=obj.extra||{};
-        var required=['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
+        var required=['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
         var missing=required.filter(function(k){return !(k in incoming)});
         if(missing.length)throw new Error('ข้อมูลขาดฟิลด์: '+missing.join(', '));
         cal=JSON.parse(incoming.ot_cal||'{}');hol=JSON.parse(incoming.holidays||'[]');
@@ -68,7 +68,7 @@ function importFile(ev){
       if(!confirm('นำเข้าข้อมูลจะแทนที่ข้อมูลปัจจุบันทั้งหมด ดำเนินการต่อ?'))return;
 
       setCal(cal); setHolidays(hol);
-      var allowedKeys=['ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','night_shift_enabled','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
+      var allowedKeys=['ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
       Object.keys(incoming).forEach(function(k){
         if(k==='ot_cal'||k==='holidays'||typeof incoming[k]==='undefined'||incoming[k]===null)return;
         if(allowedKeys.indexOf(k)>=0)setLS(k,incoming[k]);

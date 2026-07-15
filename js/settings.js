@@ -9,6 +9,7 @@ function openEntry(k){
   /* backward compat: old kind='leave' → treat as kind='use' */
   if(kind==='leave') kind='use';
   setRad('entryKind',kind);toggleEntryFields();
+  $('entryNight').checked = (en && en.isNight) ? true : false;
   if(en&&en.kind==='ot'){
     $('entryHours').value=en.hours;setRad('multiplier',num(en.multiplier));setRad('payType',en.payType||'money');
   }else{
@@ -80,16 +81,22 @@ function previewEntry(){
 /* ── Save Entry: lock rate ณ ตอน save ── */
 function saveEntry(){
   var data=getCal(), kind=radVal('entryKind');
+  var isNight = $('entryNight').checked;
   if(kind==='ot'){
     var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
-    if(h<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
+    if(h<=0 && !isNight){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง หรือเลือกลบรายการนี้');return}
     var curLabel=periodLabel(currentPeriod);
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
-    data[activeKey]=pt==='money'
-      ?{kind:'ot',payType:'money',rate:rate,hours:h,multiplier:m,total:rate*h*m,kpiBonusPctAtSave:kpiBonusPct}
-      :{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h};
+    
+    if(h<=0 && isNight){
+      data[activeKey]={kind:'ot',payType:'money',rate:rate,hours:0,multiplier:1,total:0,isNight:true};
+    } else {
+      data[activeKey]=pt==='money'
+        ?{kind:'ot',payType:'money',rate:rate,hours:h,multiplier:m,total:rate*h*m,kpiBonusPctAtSave:kpiBonusPct,isNight:isNight}
+        :{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h,isNight:isNight};
+    }
   }else{
     var uh=num($('useHours').value);
     var lt=$('leaveType').value;
@@ -97,7 +104,7 @@ function saveEntry(){
     var avail=(lt==='swap')?banks.ot:banks.annual;
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
     if((lt==='swap'||lt==='annual') && uh>avail){alert('วันหยุดสะสมไม่พอ (มีอยู่ '+hours(avail)+' ชม.)');return}
-    data[activeKey]={kind:'use',leaveType:lt,hours:uh};
+    data[activeKey]={kind:'use',leaveType:lt,hours:uh,isNight:isNight};
   }
   setCal(data);closeEntry();renderAll();
 }
@@ -123,7 +130,6 @@ function openSettings(){
   var lbl=$('kpiBonusLabel');
   if(lbl) lbl.innerText='KPI Bonus \u2014 '+curLabel+' (%)';
   $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
-  $('setNightEnabled').checked=st.nightEnabled;
   /* รายการหัก: โหลดตามรอบบิล */
   $('setServiceAward').value=getPerPeriod('pp_service_award',curLabel)||'';
   $('setTax').value=getPerPeriod('pp_tax',curLabel)||'';
@@ -164,7 +170,7 @@ function saveSettings(force){
   if($('setAnnualAdj')) setLS('annual_leave_adj', targetAnnual - ((monthsWorked()*4) - annualUsed));
   setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));
   setLS('kpi_percent',num($('setKpi').value));
-  setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
+  setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));
   /* รายการหัก: บันทึกตามรอบบิล */
   var curLabel=periodLabel(currentPeriod);
   savePerPeriod('pp_service_award',curLabel,num($('setServiceAward').value));
