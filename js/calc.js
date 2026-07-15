@@ -67,14 +67,7 @@ function periodLabel(p){return settings().cutoff?p.start.getDate()+' '+MS[p.star
 function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
 function inRangeDate(dt,start,end){return dt>=start&&dt<=end}
 
-function entryContribution(en){
-  if(!en)return 0;
-  if(en.kind==='ot'&&en.payType==='leave')return num(en.credit);
-  if(en.kind==='use')return -num(en.hours);
-  /* backward compat: old kind='leave' (days) → convert to hours */
-  if(en.kind==='leave')return -(num(en.days)||1)*8;
-  return 0;
-}
+/* Removed entryContribution */
 
 /* คำนวณจำนวนเดือนทำงาน (สำหรับ auto-accrual ลาพักร้อน) */
 function monthsWorked(){
@@ -86,12 +79,22 @@ function monthsWorked(){
   return Math.max(0,months);
 }
 
-function totalBank(excludeKey){
+function getBanks(excludeKey){
   var data=getCal(), st=settings();
-  /* OT bank + annual leave manual adj + auto-accrual (4 ชม./เดือน) */
-  var b=st.bankAdj+st.annualLeaveAdj+(monthsWorked()*4);
-  Object.keys(data).forEach(function(k){if(k!==excludeKey)b+=entryContribution(data[k])});
-  return b;
+  var ot = st.bankAdj;
+  var annual = st.annualLeaveAdj + (monthsWorked()*4);
+  Object.keys(data).forEach(function(k){
+    if(k!==excludeKey){
+      var en=data[k];
+      if(en.kind==='ot' && en.payType==='leave') ot += num(en.credit);
+      if(en.kind==='use'){
+        if(en.leaveType==='annual') annual -= num(en.hours);
+        else if(en.leaveType==='swap') ot -= num(en.hours);
+      }
+      if(en.kind==='leave' && en.leaveType==='annual') annual -= (num(en.days)||1)*8;
+    }
+  });
+  return { ot: Math.max(0, ot), annual: Math.max(0, annual) };
 }
 
 function periodStats(p,kpiBonusPctOverride){

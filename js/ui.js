@@ -89,7 +89,9 @@ function renderCalendar(){
 
   $('totalHours').innerText=hours(st.otHours);
   $('totalPay').innerText=money(st.otPay);
-  $('bankBox').innerText='วันหยุดสะสม: '+hours(totalBank())+' ชม.';
+  var banks = getBanks();
+  if($('valBank')) $('valBank').innerText=hours(banks.ot);
+  if($('valAnnual')) $('valAnnual').innerText=hours(banks.annual);
   $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
   $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
 
@@ -111,7 +113,8 @@ function renderDashboard(){
 
   $('dashOt').innerText=hours(st.otHours)+' ชม.';
   $('dashOtPay').innerText=money(st.otPay);
-  $('dashBank').innerText=hours(totalBank())+' ชม.';
+  var banks = getBanks();
+  $('dashBank').innerText=hours(banks.ot)+' / '+hours(banks.annual)+' ชม.';
   $('dashKpi').innerText=hours(st.kpiDailyPct)+' + '+hours(kpiBonusPct)+'%';
   $('dashKpiAmt').innerText=money(st.kpiTotalMoney)+' (KPI รวม)';
   $('dashPayday').innerText=paydayCountdown()+' วัน';
