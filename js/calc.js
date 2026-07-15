@@ -208,8 +208,11 @@ function periodStats(p,kpiBonusPctOverride){
   var kpi=kpiMoney;
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0||ppMaternity>0||ppOrdination>0||ppFuneral>0);
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
+  var proratedDiligence=isFullPeriod?diligence:Math.min(diligence,(diligence/30)*employedDaysInPeriod);
+  var proratedServiceAward=isFullPeriod?ppServiceAward:Math.min(ppServiceAward,(ppServiceAward/30)*employedDaysInPeriod);
+
   if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
-  var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
+  var base=proratedSalary+proratedHousing+proratedServiceAward+proratedDiligence+kpi;
 
   /* ── ประกันสังคม ──
    * ⚠️ 5% ของ proratedSalary, ปัดลง (Math.floor), ไม่เกิน 750 บาท
@@ -220,7 +223,7 @@ function periodStats(p,kpiBonusPctOverride){
 
   return {
     otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,
-    welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:ppServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
+    welfare:welfare,kpi:kpi,diligence:proratedDiligence,serviceAward:proratedServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
     hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney,
     ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppAnnual:ppAnnual,ppSwap:ppSwap,
     ppMaternity:ppMaternity,ppOrdination:ppOrdination,ppFuneral:ppFuneral,ppPersonalUnpaid:ppPersonalUnpaid,
