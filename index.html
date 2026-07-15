@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=26">
+<link rel="stylesheet" href="css/style.css?v=27">
 </head>
 <body>
 <main class="app">
@@ -253,8 +253,8 @@
 </div>
 <div class="group"><label>จำนวน (มีสะสม <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.5" min="0.5" inputmode="decimal" placeholder="ชม."></div>
 </div>
-<div class="group" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1)">
-<label class="check"><input type="checkbox" id="entryNight"> 🌙 เข้ากะดึก (ได้รับค่ากะดึก)</label>
+<div class="group" id="nightShiftGroup" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1)">
+<label class="check"><input type="checkbox" id="entryNight"> 🌙 เข้ากะดึก</label>
 </div>
 <div class="preview" id="entryPreview"></div>
 <div class="actions"><button class="btn danger" id="deleteEntryBtn">ลบ</button><button class="btn primary" id="saveEntryBtn">บันทึก</button></div>
@@ -380,13 +380,13 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=26"></script>
-<script src="js/calc.js?v=26"></script>
-<script src="js/ui.js?v=26"></script>
-<script src="js/settings.js?v=26"></script>
-<script src="js/data.js?v=26"></script>
-<script src="js/tutorial.js?v=26"></script>
-<script src="js/app.js?v=26"></script>
+<script src="js/utils.js?v=27"></script>
+<script src="js/calc.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
+<script src="js/settings.js?v=27"></script>
+<script src="js/data.js?v=27"></script>
+<script src="js/tutorial.js?v=27"></script>
+<script src="js/app.js?v=27"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});

@@ -41,6 +41,7 @@ function toggleEntryFields(){
   var kind=radVal('entryKind');
   $('otFields').classList.toggle('hide',kind!=='ot');
   $('useFields').classList.toggle('hide',kind!=='use');
+  if($('nightShiftGroup')) $('nightShiftGroup').style.display=(kind==='ot')?'block':'none';
 }
 
 /* ── Preview: ใช้ rate จาก period ปัจจุบัน ── */
@@ -104,7 +105,7 @@ function saveEntry(){
     var avail=(lt==='swap')?banks.ot:banks.annual;
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
     if((lt==='swap'||lt==='annual') && uh>avail){alert('วันหยุดสะสมไม่พอ (มีอยู่ '+hours(avail)+' ชม.)');return}
-    data[activeKey]={kind:'use',leaveType:lt,hours:uh,isNight:isNight};
+    data[activeKey]={kind:'use',leaveType:lt,hours:uh};
   }
   setCal(data);closeEntry();renderAll();
 }
