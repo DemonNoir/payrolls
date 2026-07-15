@@ -182,6 +182,10 @@ function showTutorial() {
   tutGoTo(0);
   $('tutorialOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+
+  /* รีเซ็ตสถานะป๊อบอัพการตั้งค่า (Settings Tutorial) 
+     เพื่อให้เด้งขึ้นมาใหม่เมื่อผู้ใช้เข้าไปกดเซฟในหน้าตั้งค่าครั้งต่อไป (ตามที่คุณกิ้งก่าบอก) */
+  localStorage.removeItem('settings_tutorial');
 }
 
 function closeTutorial() {

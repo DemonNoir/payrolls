@@ -66,12 +66,16 @@ function renderCalendar(){
       var multCls=num(en.multiplier)===1?' m1':(num(en.multiplier)===3?' m3':'');
       badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
     }else if(en&&en.kind==='use'){
-      cls+=' use'; badge='<span class="badge use">ใช้ '+hours(en.hours)+'h</span>';
+      var lt=en.leaveType||'_legacy';
+      var ltCls={annual:'leave-annual',swap:'leave-swap',personal_paid:'leave-personal',personal_unpaid:'leave-personal',sick:'leave-sick',maternity:'leave-maternity',ordination:'leave-ordination',funeral:'leave-funeral'};
+      var ltLabel={annual:'🏖️พักร้อน',swap:'🔄สลับ',personal_paid:'📋กิจ',personal_unpaid:'📋กิจ(ไม่รับ)',sick:'🤒ป่วย',maternity:'🤰คลอด',ordination:'🙏บวช',funeral:'🕯️ฌาปนกิจ'};
+      cls+=' leave-day'; badge='<span class="badge '+(ltCls[lt]||'leave-sick')+'">'+(ltLabel[lt]||'ใช้สิทธิ')+' '+hours(en.hours)+'h</span>';
     }else if(en&&en.kind==='leave'){
-      var ltCls={annual:'leave-annual',sick:'leave-sick',personal:'leave-personal',absent:'leave-absent'};
-      var ltLabel={annual:'🏖️พักร้อน',sick:'🤒ป่วย',personal:'📋กิจ',absent:'🚫ขาด'};
-      var ltype=en.leaveType||'sick';
-      cls+=' leave-day'; badge='<span class="badge '+ltCls[ltype]+'">'+(ltLabel[ltype]||'ลา')+' '+hours(en.days)+'d</span>';
+      /* backward compat: old kind='leave' */
+      var ltCls2={annual:'leave-annual',sick:'leave-sick',personal:'leave-personal',absent:'leave-absent'};
+      var ltLabel2={annual:'🏖️พักร้อน',sick:'🤒ป่วย',personal:'📋กิจ',absent:'🚫ขาด'};
+      var ltype2=en.leaveType||'sick';
+      cls+=' leave-day'; badge='<span class="badge '+(ltCls2[ltype2]||'leave-sick')+'">'+(ltLabel2[ltype2]||'ลา')+' '+hours(en.days)+'d</span>';
     }
     var cell=document.createElement('div');
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
@@ -152,9 +156,13 @@ function renderSummary(){
   if(st.leaveDays>0){
     html += '<div class="row"><span>วันลา/หยุดทั้งหมด</span><b>'+hours(st.leaveDays)+' วัน</b></div>';
     if(st.ppAnnual>0) html += '<div class="row"><span>&nbsp;&nbsp;🏖️ ลาพักร้อน</span><b>'+hours(st.ppAnnual)+' วัน</b></div>';
+    if(st.ppSwap>0) html += '<div class="row"><span>&nbsp;&nbsp;🔄 สลับหยุด</span><b>'+hours(st.ppSwap)+' วัน</b></div>';
     if(st.ppSick>0)   html += '<div class="row"><span>&nbsp;&nbsp;🤒 ลาป่วย</span><b>'+hours(st.ppSick)+' วัน</b></div>';
     if(st.ppPersonal>0) html += '<div class="row"><span>&nbsp;&nbsp;📋 ลากิจ</span><b>'+hours(st.ppPersonal)+' วัน</b></div>';
     if(st.ppAbsent>0) html += '<div class="row"><span>&nbsp;&nbsp;🚫 ขาดงาน</span><b>'+hours(st.ppAbsent)+' วัน</b></div>';
+    if(st.ppMaternity>0) html += '<div class="row"><span>&nbsp;&nbsp;🤰 ลาคลอด</span><b>'+hours(st.ppMaternity)+' วัน</b></div>';
+    if(st.ppOrdination>0) html += '<div class="row"><span>&nbsp;&nbsp;🙏 ลาบวช</span><b>'+hours(st.ppOrdination)+' วัน</b></div>';
+    if(st.ppFuneral>0) html += '<div class="row"><span>&nbsp;&nbsp;🕯️ ลาฌาปนกิจ</span><b>'+hours(st.ppFuneral)+' วัน</b></div>';
   }
 
   html += '<div class="row section-divider">💰 รายได้พื้นฐาน</div>';

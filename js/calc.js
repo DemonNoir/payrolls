@@ -27,6 +27,7 @@ function settings(){
     tax:getNum('tax','ot_tax',0),
     other:getNum('other_deduction','ot_other',0),
     serviceAward:getNum('service_award',null,0),
+    annualLeaveAdj:getNum('annual_leave_adj',null,0),
     startDate:getLS('start_date')||null,
     calcMode:getLS('calc_mode')||'realtime'
   };
@@ -70,11 +71,25 @@ function entryContribution(en){
   if(!en)return 0;
   if(en.kind==='ot'&&en.payType==='leave')return num(en.credit);
   if(en.kind==='use')return -num(en.hours);
+  /* backward compat: old kind='leave' (days) → convert to hours */
+  if(en.kind==='leave')return -(num(en.days)||1)*8;
   return 0;
 }
 
+/* คำนวณจำนวนเดือนทำงาน (สำหรับ auto-accrual ลาพักร้อน) */
+function monthsWorked(){
+  var st=settings();
+  if(!st.startDate)return 0;
+  var start=parseDateKey(st.startDate), now=new Date();
+  var months=(now.getFullYear()-start.getFullYear())*12+(now.getMonth()-start.getMonth());
+  if(now.getDate()<start.getDate()) months--;
+  return Math.max(0,months);
+}
+
 function totalBank(excludeKey){
-  var data=getCal(), b=settings().bankAdj;
+  var data=getCal(), st=settings();
+  /* OT bank + annual leave manual adj + auto-accrual (4 ชม./เดือน) */
+  var b=st.bankAdj+st.annualLeaveAdj+(monthsWorked()*4);
   Object.keys(data).forEach(function(k){if(k!==excludeKey)b+=entryContribution(data[k])});
   return b;
 }
@@ -95,8 +110,8 @@ function periodStats(p,kpiBonusPctOverride){
   var ppOther=getPerPeriod('pp_other',label);
 
   var todayDt = new Date(); todayDt.setHours(0,0,0,0);
-  /* คือนวนวันลาจากปฏิทิน (Hybrid: บวกกับยอดจากตั้งค่า) */
-  var calAnnual=0, calSick=0, calPersonal=0, calAbsent=0;
+  /* นับการลาจากปฏิทิน — 8 ประเภท */
+  var calLeave={annual:0,swap:0,personal_paid:0,personal_unpaid:0,sick:0,maternity:0,ordination:0,funeral:0};
   Object.keys(data).forEach(function(k){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
     if(st.calcMode === 'realtime' && dt > todayDt) return;
@@ -105,17 +120,29 @@ function periodStats(p,kpiBonusPctOverride){
       th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
       if(en.payType==='money') tp+=num(en.hours)*num(en.multiplier)*hourlyRate;
     }
-    if(en.kind==='use')leaveUse+=num(en.hours)/8;
+    if(en.kind==='use'){
+      var lt=en.leaveType||'_legacy';
+      var hrs=num(en.hours);
+      leaveUse+=hrs/8;
+      if(calLeave.hasOwnProperty(lt)) calLeave[lt]+=hrs/8;
+      /* old data without leaveType → count as penalty leave */
+    }
+    /* backward compat: old kind='leave' (days) */
     if(en.kind==='leave'){
       var ld=num(en.days)||1;
-      if(en.leaveType==='annual') calAnnual+=ld;
-      else if(en.leaveType==='sick') calSick+=ld;
-      else if(en.leaveType==='personal') calPersonal+=ld;
-      else if(en.leaveType==='absent') calAbsent+=ld;
+      var olt=en.leaveType||'sick';
+      if(calLeave.hasOwnProperty(olt)) calLeave[olt]+=ld;
+      leaveUse+=ld;
     }
   });
-  ppSick+=calSick; ppPersonal+=calPersonal; ppAbsent+=calAbsent;
-  var ppAnnual=calAnnual;
+  /* Hybrid: บวกกับยอดลาจากตั้งค่า (per-period) */
+  ppSick+=calLeave.sick; ppPersonal+=calLeave.personal_paid+calLeave.personal_unpaid; ppAbsent+=0;
+  var ppAnnual=calLeave.annual;
+  var ppSwap=calLeave.swap;
+  var ppMaternity=calLeave.maternity;
+  var ppOrdination=calLeave.ordination;
+  var ppFuneral=calLeave.funeral;
+  var ppPersonalUnpaid=calLeave.personal_unpaid;
 
   /* ── นับวันทำงาน (autoDays) สำหรับคำนวณสวัสดิการ ──
    * autoDays ใช้คูณ: ค่าเดินทาง, ค่าอาหาร, ค่ากะดึก
@@ -147,9 +174,8 @@ function periodStats(p,kpiBonusPctOverride){
   }
 
   /* สวัสดิการ (Welfare)
-   * คูณจาก actual = autoDays − วันลา
-   * ❗️ ลาพักร้อน (ppAnnual) ก็หักวันสวัสดิการ (แต่ไม่หักเบี้ยขยัน/เงินเดือน) */
-  var leaveDays=ppSick+ppPersonal+ppAbsent+ppAnnual+leaveUse;
+   * คูณจาก actual = autoDays − วันลาทุกประเภท */
+  var leaveDays=ppSick+ppPersonal+ppAbsent+ppAnnual+ppSwap+ppMaternity+ppOrdination+ppFuneral+leaveUse;
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightEnabled?st.nightRate*actual:0};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
@@ -164,21 +190,20 @@ function periodStats(p,kpiBonusPctOverride){
   var proratedSalary=isFullPeriod?st.salaryBase:Math.min(st.salaryBase,(st.salaryBase/30)*employedDaysInPeriod);
   var proratedHousing=isFullPeriod?st.housing:Math.min(st.housing,(st.housing/30)*employedDaysInPeriod);
 
-  /* ── หักลากิจ/ขาดงาน ──
-   * ⚠️ ลาป่วย (ppSick) ไม่หักเงินเดือน — เฉพาะลากิจ+ขาดงานเท่านั้น
-   * ⚠️ หักจาก st.salaryBase (ฐานเดิม) ไม่ใช่ proratedSalary — ตามสลิป */
-  var unpaidLeaveDays=ppPersonal+ppAbsent;
+  /* ── หักลากิจ (ไม่รับค่าจ้าง) + ขาดงาน ──
+   * ⚠️ ลาป่วย, ลากิจ (รับค่าจ้าง), ลาพักร้อน, สลับหยุด, ลาคลอด, ลาบวช, ลาฌาปนกิจ → ไม่หักเงินเดือน
+   * ⚠️ เฉพาะ ลากิจ (ไม่รับค่าจ้าง) + ขาดงาน(pp_absent settings) → หักเงินเดือน */
+  var unpaidLeaveDays=ppPersonalUnpaid+ppAbsent;
   if(unpaidLeaveDays>0) proratedSalary=Math.max(0,proratedSalary-(st.salaryBase/30)*unpaidLeaveDays);
 
   /* ── KPI ──
-   * ⚠️ KPI คำนวณจาก proratedSalary (หลัง prorate + หลังหักลา)
-   * ⚠️ ถ้ามีการลาใดๆ (ป่วย/กิจ/ขาด) → เบี้ยขยัน = 0
-   * ⚠️ ถ้ายังไม่เริ่มงาน (employedDaysInPeriod === 0) → ทุกอย่างเป็น 0 */
+   * ⚠️ เบี้ยขยัน = 0 ถ้ามีการลาที่ไม่ใช่ ลาพักร้อน/สลับหยุด
+   * กลุ่ม A (ไม่หักเบี้ยขยัน): annual, swap
+   * กลุ่ม B (หักเบี้ยขยัน): sick, personal_paid, personal_unpaid, maternity, ordination, funeral, absent, old legacy */
   var notEmployedYet = (employedDaysInPeriod === 0);
   var kpiMoney=notEmployedYet?0:proratedSalary*(kpiTotal/100);
   var kpi=kpiMoney;
-  /* ❗️ ลาพักร้อน (ไม่ใช่ ppAnnual) ไม่หักเบี้ยขยัน — เฉพาะลาป่วย/กิจ/ขาดเท่านั้น */
-  var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0);
+  var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0||ppMaternity>0||ppOrdination>0||ppFuneral>0);
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
   if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
   var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
@@ -194,7 +219,9 @@ function periodStats(p,kpiBonusPctOverride){
     otHours:th,otPay:tp,otDays:otDays,autoDays:autoDays,leaveDays:leaveDays,actualDays:actual,
     welfare:welfare,kpi:kpi,diligence:diligence,serviceAward:ppServiceAward,base:base,gross:gross,deductions:deductions,net:gross-deductions.total,
     hourlyRate:hourlyRate,kpiBonusPct:kpiBonusPct,kpiDailyPct:kpiDaily,kpiTotalPct:kpiTotal,kpiTotalMoney:kpiMoney,
-    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppAnnual:ppAnnual,ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward,
+    ppSick:ppSick,ppPersonal:ppPersonal,ppAbsent:ppAbsent,ppAnnual:ppAnnual,ppSwap:ppSwap,
+    ppMaternity:ppMaternity,ppOrdination:ppOrdination,ppFuneral:ppFuneral,ppPersonalUnpaid:ppPersonalUnpaid,
+    ppTax:ppTax,ppOther:ppOther,ppServiceAward:ppServiceAward,
     proratedSalary:proratedSalary,proratedHousing:proratedHousing,isProrated:!isFullPeriod,employedDays:employedDaysInPeriod,totalDays:totalDaysInPeriod
   };
 }

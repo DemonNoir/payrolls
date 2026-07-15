@@ -6,19 +6,25 @@ function openEntry(k){
   var d=parseDateKey(k), W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
   $('entryTitle').innerText='✏️ วัน'+W[d.getDay()]+' ที่ '+d.getDate()+' '+MN[d.getMonth()]+' '+(d.getFullYear()+543)+(holidayName(k)?' · '+holidayName(k):'');
   var en=getCal()[k], kind=en?en.kind:'ot';
+  /* backward compat: old kind='leave' → treat as kind='use' */
+  if(kind==='leave') kind='use';
   setRad('entryKind',kind);toggleEntryFields();
   if(en&&en.kind==='ot'){
     $('entryHours').value=en.hours;setRad('multiplier',num(en.multiplier));setRad('payType',en.payType||'money');
   }else{
     $('entryHours').value='';setRad('multiplier',isHolidayKey(k)?3:1.5);setRad('payType','money');
   }
-  $('useHours').value=(en&&en.kind==='use')?en.hours:'';
-  if(en&&en.kind==='leave'){
+  /* populate use/leave fields */
+  if(en&&en.kind==='use'){
     $('leaveType').value=en.leaveType||'annual';
-    $('leaveDays').value=en.days||1;
+    $('useHours').value=en.hours||'';
+  }else if(en&&en.kind==='leave'){
+    /* migrate old leave data (days→hours) */
+    $('leaveType').value=en.leaveType||'sick';
+    $('useHours').value=(num(en.days)||1)*8;
   }else{
     $('leaveType').value='annual';
-    $('leaveDays').value=1;
+    $('useHours').value='';
   }
   $('availableBank').innerText=hours(totalBank(k));
   $('deleteEntryBtn').style.display=en?'block':'none';
@@ -32,10 +38,12 @@ function toggleEntryFields(){
   var kind=radVal('entryKind');
   $('otFields').classList.toggle('hide',kind!=='ot');
   $('useFields').classList.toggle('hide',kind!=='use');
-  $('leaveFields').classList.toggle('hide',kind!=='leave');
 }
 
 /* ── Preview: ใช้ rate จาก period ปัจจุบัน ── */
+var LEAVE_NAMES={annual:'🏖️ ลาพักร้อน',swap:'🔄 สลับหยุด',personal_paid:'📋 ลากิจ (รับ)',personal_unpaid:'📋 ลากิจ (ไม่รับ)',sick:'🤒 ลาป่วย',maternity:'🤰 ลาคลอด',ordination:'🙏 ลาบวช',funeral:'🕯️ ลาฌาปนกิจ'};
+var NO_DILIGENCE_TYPES=['annual','swap'];
+
 function previewEntry(){
   var kind=radVal('entryKind');
   if(kind==='ot'){
@@ -46,12 +54,20 @@ function previewEntry(){
     var rate=getHourlyRate(kpiBonusPct);
     $('entryPreview').innerText=pt==='money'?'= '+money(rate*h*m)+' (อัตรา '+rate.toLocaleString('th-TH',{maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
   }else if(kind==='use'){
-    $('entryPreview').innerText='ใช้ '+hours($('useHours').value)+' ชม.';
-  }else if(kind==='leave'){
     var lt=$('leaveType').value;
-    var ltNames={annual:'🏖️ ลาพักร้อน',sick:'🤒 ลาป่วย',personal:'📋 ลากิจ',absent:'🚫 ขาดงาน'};
-    var ld=num($('leaveDays').value)||1;
-    $('entryPreview').innerText=(ltNames[lt]||'ลา')+' '+ld+' วัน';
+    var uh=num($('useHours').value)||0;
+    var noDiligence=NO_DILIGENCE_TYPES.indexOf(lt)>=0;
+    
+    var hr = Math.floor(uh);
+    var min = Math.round((uh - hr) * 60);
+    var timeStr = hr > 0 ? hr + ' ชม.' : '';
+    if (min > 0) timeStr += (timeStr ? ' ' : '') + min + ' นาที';
+    if (!timeStr) timeStr = '0 ชม.';
+
+    var txt=(LEAVE_NAMES[lt]||'ใช้สิทธิ')+' '+timeStr;
+    if(noDiligence) txt+=' (ไม่หักเบี้ยขยัน)';
+    else txt+=' (หักเบี้ยขยัน)';
+    $('entryPreview').innerText=txt;
   }
 }
 
@@ -68,15 +84,11 @@ function saveEntry(){
     data[activeKey]=pt==='money'
       ?{kind:'ot',payType:'money',rate:rate,hours:h,multiplier:m,total:rate*h*m,kpiBonusPctAtSave:kpiBonusPct}
       :{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h};
-  }else if(kind==='leave'){
-    var ld=num($('leaveDays').value);
-    if(ld<=0){alert('กรอกจำนวนวันให้ถูกต้อง');return}
-    data[activeKey]={kind:'leave',leaveType:$('leaveType').value,days:ld};
   }else{
     var uh=num($('useHours').value), avail=totalBank(activeKey);
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
     if(uh>avail){alert('วันหยุดสะสมไม่พอ (มีอยู่ '+hours(avail)+' ชม.)');return}
-    data[activeKey]={kind:'use',hours:uh};
+    data[activeKey]={kind:'use',leaveType:$('leaveType').value,hours:uh};
   }
   setCal(data);closeEntry();renderAll();
 }
@@ -92,6 +104,7 @@ function openSettings(){
   $('setSalaryBase').value=st.salaryBase||'';
   $('setStartDate').value=st.startDate||'';
   $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(totalBank());
+  if($('setAnnualAdj')) $('setAnnualAdj').value=st.annualLeaveAdj||'';
   if($('setCalcMode')) $('setCalcMode').value=st.calcMode||'realtime';
   $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   /* KPI Bonus โหลดตามรอบบิลที่เลือกอยู่ */
@@ -102,22 +115,22 @@ function openSettings(){
   if(lbl) lbl.innerText='KPI Bonus \u2014 '+curLabel+' (%)';
   $('setTransport').value=st.transport;$('setFood').value=st.food;$('setOtFood').value=st.otFood||'';$('setNightRate').value=st.nightRate||'';
   $('setNightEnabled').checked=st.nightEnabled;
-  /* การลา + รายการหัก: โหลดตามรอบบิล */
-  $('setSick').value=getPerPeriod('pp_sick',curLabel)||'';
-  $('setPersonal').value=getPerPeriod('pp_personal',curLabel)||'';
-  $('setAbsent').value=getPerPeriod('pp_absent',curLabel)||'';
+  /* รายการหัก: โหลดตามรอบบิล */
   $('setServiceAward').value=getPerPeriod('pp_service_award',curLabel)||'';
   $('setTax').value=getPerPeriod('pp_tax',curLabel)||'';
   $('setOther').value=getPerPeriod('pp_other',curLabel)||'';
   /* อัปเดต subhead labels */
-  var leaveSub=$('leaveSubhead'); if(leaveSub) leaveSub.innerText='\u0e01\u0e32\u0e23\u0e25\u0e32 \u2014 '+curLabel;
   var deductSub=$('deductSubhead'); if(deductSub) deductSub.innerText='\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e2b\u0e31\u0e01 \u2014 '+curLabel;
   clearHolidayForm();renderHolidayList();renderKpiInfo();$('settingsOverlay').classList.add('show');
 }
 
 function closeSettings(){$('settingsOverlay').classList.remove('show')}
 
-function saveSettings(){
+function saveSettings(force){
+  if(!force && localStorage.getItem('settings_tutorial')!=='1'){
+    $('settingsTutorialOverlay').classList.add('show');
+    return;
+  }
   var entriesSum=totalBank()-settings().bankAdj, bankInput=num($('setBank').value);
   setLS('ot_salary',num($('setSalaryBase').value));  /* เงินเดือนหลักสำหรับคำนวณ rate */
   var sd=$('setStartDate').value; if(sd)setLS('start_date',sd);else localStorage.removeItem('start_date');
@@ -125,14 +138,12 @@ function saveSettings(){
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
   if($('setCalcMode')) setLS('calc_mode', $('setCalcMode').value);
   setLS('ot_bank_adj',bankInput-entriesSum);
+  if($('setAnnualAdj')) setLS('annual_leave_adj',num($('setAnnualAdj').value));
   setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));
   setLS('kpi_percent',num($('setKpi').value));
   setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
-  /* การลา + รายการหัก: บันทึกตามรอบบิล */
+  /* รายการหัก: บันทึกตามรอบบิล */
   var curLabel=periodLabel(currentPeriod);
-  savePerPeriod('pp_sick',curLabel,num($('setSick').value));
-  savePerPeriod('pp_personal',curLabel,num($('setPersonal').value));
-  savePerPeriod('pp_absent',curLabel,num($('setAbsent').value));
   savePerPeriod('pp_service_award',curLabel,num($('setServiceAward').value));
   savePerPeriod('pp_tax',curLabel,num($('setTax').value));
   savePerPeriod('pp_other',curLabel,num($('setOther').value));

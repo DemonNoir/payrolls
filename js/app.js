@@ -44,6 +44,7 @@ $('backupWarnBtn').onclick=openSettings;
 
 /* Entry */
 $('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
+$('leaveType').onchange=previewEntry;$('useHours').oninput=previewEntry;
 
 /* Quick Entry — ซ้ำจากวัน OT ล่าสุด */
 $('repeatLastBtn').onclick=function(){
@@ -62,7 +63,14 @@ $('repeatLastBtn').onclick=function(){
 };
 
 /* Settings */
-$('closeSettingsBtn').onclick=closeSettings;$('saveSettingsBtn').onclick=saveSettings;$('settingsOverlay').onclick=function(e){if(e.target===this)closeSettings()};
+$('closeSettingsBtn').onclick=closeSettings;
+$('saveSettingsBtn').onclick=function(){saveSettings(false)};
+$('settingsOverlay').onclick=function(e){if(e.target===this)closeSettings()};
+$('settingsTutorialAckBtn').onclick=function(){
+  localStorage.setItem('settings_tutorial','1');
+  $('settingsTutorialOverlay').classList.remove('show');
+  saveSettings(true);
+};
 
 $('saveHolidayBtn').onclick=saveHoliday;$('clearHolidayBtn').onclick=clearHolidayForm;
 $('exportBtn').onclick=exportData;$('importBtn').onclick=function(){$('importFile').click()};$('importFile').onchange=importFile;

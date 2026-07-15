@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 <main class="app">
@@ -219,8 +219,7 @@
 <h2 id="entryTitle"></h2>
 <div class="group"><div class="choice">
 <label><input type="radio" name="entryKind" value="ot" checked> ทำ OT</label>
-<label><input type="radio" name="entryKind" value="use"> ใช้วันหยุดสะสม</label>
-<label><input type="radio" name="entryKind" value="leave"> ลางาน</label>
+<label><input type="radio" name="entryKind" value="use"> ใช้วันหยุด/ลางาน</label>
 </div></div>
 <div id="otFields">
 <div class="group"><label>ชม. OT</label><input type="number" id="entryHours" step="0.1" inputmode="decimal"></div>
@@ -236,18 +235,20 @@
 <button class="btn soft" id="repeatLastBtn" style="margin-bottom:8px">📋 ซ้ำจากวัน OT ล่าสุด</button>
 </div>
 <div id="useFields" class="hide">
-<div class="group"><label>ชม. ที่ใช้สิทธิ (มีอยู่ <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.1" inputmode="decimal"></div>
-</div>
-<div id="leaveFields" class="hide">
-<div class="group"><label>ประเภทการลา</label>
+<div class="group"><label>ประเภท</label>
 <select id="leaveType">
-  <option value="annual">🏖️ ลาพักร้อน (ไม่หักเบี้ยขยัน)</option>
+  <option value="annual">🏖️ ลาพักร้อน</option>
+  <option value="swap">🔄 สลับหยุด</option>
+  <option value="personal_paid">📋 ลากิจ (รับค่าจ้าง)</option>
+  <option value="personal_unpaid">📋 ลากิจ (ไม่รับค่าจ้าง)</option>
   <option value="sick">🤒 ลาป่วย</option>
-  <option value="personal">📋 ลากิจ (หักเงินเดือน)</option>
-  <option value="absent">🚫 ขาดงาน (หักเงินเดือน)</option>
+  <option value="maternity">🤰 ลาคลอด</option>
+  <option value="ordination">🙏 ลาบวช</option>
+  <option value="funeral">🕯️ ลาฌาปนกิจ</option>
+  <option value="absent">🚫 ขาดงาน</option>
 </select>
 </div>
-<div class="group"><label>จำนวนวัน</label><input type="number" id="leaveDays" step="0.5" min="0.5" value="1" inputmode="decimal"></div>
+<div class="group"><label>จำนวน (มีสะสม <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.5" min="0.5" inputmode="decimal" placeholder="ชม."></div>
 </div>
 <div class="preview" id="entryPreview"></div>
 <div class="actions"><button class="btn danger" id="deleteEntryBtn">ลบ</button><button class="btn primary" id="saveEntryBtn">บันทึก</button></div>
@@ -262,7 +263,8 @@
 <div class="group"><label>วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
 <div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
 <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
-<div class="group"><label>ยอดวันหยุดสะสม</label><input type="number" id="setBank" step="0.1" inputmode="decimal"></div>
+<div class="group"><label>ยอดวันหยุดสะสม (OT)</label><input type="number" id="setBank" step="0.5" inputmode="decimal"></div>
+<div class="group"><label>🏖️ ลาพักร้อนสะสม (ชม.)</label><input type="number" id="setAnnualAdj" step="0.5" inputmode="decimal" placeholder="ปรับด้วยมือ"></div>
 <div class="group"><label>โหมดการคำนวณ</label>
 <select id="setCalcMode">
   <option value="realtime">เรียลไทม์ (คำนวณรายได้ถึงวันปัจจุบัน)</option>
@@ -273,6 +275,7 @@
 <div class="settingsGrid">
 <div class="group"><label>ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
 <div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
+<div class="group"><label>รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
 <div class="group"><label>KPI Daily (%)</label><input type="number" id="setKpi" step="0.1" inputmode="decimal"></div>
 <div class="group"><label id="kpiBonusLabel">KPI Bonus รอบนี้ (%)</label><input type="number" id="setKpiBonus" step="0.1" inputmode="decimal" placeholder="0"></div>
 </div>
@@ -294,13 +297,6 @@
 <div class="group"><label>ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
 </div>
 <div class="group" style="margin-top:10px"><label class="check"><input type="checkbox" id="setNightEnabled"> สัปดาห์นี้เข้ากะดึก</label></div>
-<div class="subhead" id="leaveSubhead">การลา — รอบนี้</div>
-<div class="settingsGrid">
-<div class="group"><label>ลาป่วย</label><input type="number" id="setSick" step="0.5" inputmode="decimal"></div>
-<div class="group"><label>ลากิจ</label><input type="number" id="setPersonal" step="0.5" inputmode="decimal"></div>
-<div class="group"><label>ขาดงาน</label><input type="number" id="setAbsent" step="0.5" inputmode="decimal"></div>
-<div class="group"><label>รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
-</div>
 <div class="subhead" id="deductSubhead">รายการหัก — รอบนี้</div>
 <div class="settingsGrid">
 <div class="group"><label>ประกันสังคม</label><input type="text" id="setSocial" value="อัตโนมัติ (5%)" disabled style="background: transparent; border: none; color: var(--muted); text-align: right; padding-right: 0;"></div>
@@ -323,6 +319,20 @@
 <div class="actions"><button class="btn primary" id="saveSettingsBtn">บันทึก</button></div>
 <div class="actions" style="margin-top:6px"><button class="btn soft" id="showTutorialBtn">📖 ดูคู่มือการใช้งาน</button></div>
 <button class="ghost" id="closeSettingsBtn">ปิด</button>
+</div></div>
+
+<!-- Settings Tutorial Overlay -->
+<div class="overlay" id="settingsTutorialOverlay"><div class="sheet" style="text-align:center;">
+<div style="font-size:40px; margin-bottom:10px;">💡</div>
+<h2>เกร็ดความรู้การตั้งค่า</h2>
+<div style="font-size:14px;line-height:1.6;color:var(--ink);margin:15px 0 25px;text-align:left;">
+  <p>การบันทึกข้อมูลในหน้านี้ จะมีผลกับ <b>"รอบบิลปัจจุบัน"</b> และ <b>"รอบบิลในอนาคต"</b> ไปจนกว่าคุณจะเข้ามาเปลี่ยนค่าใหม่อีกครั้ง</p>
+  <p style="margin-top:10px; padding:10px; background:var(--bg); border-radius:8px;">
+    📅 <b>หากต้องการแก้ไขข้อมูลของรอบบิลเก่า:</b><br>
+    ให้คุณไปที่ปฏิทิน แล้วกดเลือกวันที่ที่อยู่ในรอบบิลเดือนนั้นๆ จากนั้นค่อยกดปุ่มตั้งค่า (⚙️) ข้อมูลที่บันทึกใหม่ก็จะไปอัปเดตเฉพาะรอบบิลนั้นเป็นต้นไปครับ
+  </p>
+</div>
+<button class="btn primary" id="settingsTutorialAckBtn" style="width:100%; padding:12px; font-size:15px;">รับทราบและบันทึกข้อมูล</button>
 </div></div>
 
 <!-- Install Guide Overlay -->
@@ -351,13 +361,13 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=11"></script>
-<script src="js/calc.js?v=11"></script>
-<script src="js/ui.js?v=11"></script>
-<script src="js/settings.js?v=11"></script>
-<script src="js/data.js?v=11"></script>
-<script src="js/tutorial.js?v=11"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/utils.js?v=16"></script>
+<script src="js/calc.js?v=16"></script>
+<script src="js/ui.js?v=16"></script>
+<script src="js/settings.js?v=16"></script>
+<script src="js/data.js?v=16"></script>
+<script src="js/tutorial.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});
