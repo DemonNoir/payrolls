@@ -113,7 +113,7 @@ function openSettings(){
   $('setSalaryBase').value=st.salaryBase||'';
   $('setStartDate').value=st.startDate||'';
   $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(getBanks().ot);
-  if($('setAnnualAdj')) $('setAnnualAdj').value=st.annualLeaveAdj||'';
+  if($('setAnnualAdj')) $('setAnnualAdj').value=hours(getBanks().annual);
   if($('setCalcMode')) $('setCalcMode').value=st.calcMode||'realtime';
   $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   /* KPI Bonus โหลดตามรอบบิลที่เลือกอยู่ */
@@ -140,14 +140,28 @@ function saveSettings(force){
     $('settingsTutorialOverlay').classList.add('show');
     return;
   }
-  var entriesSum=getBanks().ot-settings().bankAdj, bankInput=num($('setBank').value);
+  var data = getCal();
+  var otEarned = 0, otUsed = 0, annualUsed = 0;
+  Object.keys(data).forEach(function(k){
+    var en=data[k];
+    if(en.kind==='ot' && en.payType==='leave') otEarned += num(en.credit);
+    if(en.kind==='use'){
+      if(en.leaveType==='annual') annualUsed += num(en.hours);
+      else if(en.leaveType==='swap') otUsed += num(en.hours);
+    }
+    if(en.kind==='leave' && en.leaveType==='annual') annualUsed += (num(en.days)||1)*8;
+  });
+  var targetBank = num($('setBank').value);
+  var targetAnnual = num($('setAnnualAdj').value);
+  
   setLS('ot_salary',num($('setSalaryBase').value));  /* เงินเดือนหลักสำหรับคำนวณ rate */
   var sd=$('setStartDate').value; if(sd)setLS('start_date',sd);else localStorage.removeItem('start_date');
   var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
   if($('setCalcMode')) setLS('calc_mode', $('setCalcMode').value);
-  setLS('ot_bank_adj',bankInput-entriesSum);
-  if($('setAnnualAdj')) setLS('annual_leave_adj',num($('setAnnualAdj').value));
+  
+  setLS('ot_bank_adj', targetBank - (otEarned - otUsed));
+  if($('setAnnualAdj')) setLS('annual_leave_adj', targetAnnual - ((monthsWorked()*4) - annualUsed));
   setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));
   setLS('kpi_percent',num($('setKpi').value));
   setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));setBool('night_shift_enabled',$('setNightEnabled').checked);
