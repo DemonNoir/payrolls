@@ -98,6 +98,23 @@ $('setKpiBonus').addEventListener('input',function(){
   saveKpiBonusPct(label,val);
   renderKpiInfo();renderDashboard();
 });
+
+/* จัดการปุ่ม Enter ใน Input ทุกตัว เพื่อป้องกันการเลื่อนหน้าจออัตโนมัติ (Auto-scroll) ไปหาปุ่ม */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    e.preventDefault(); // ป้องกัน default behavior ที่ชอบพาเลื่อนไปหาปุ่ม submit
+    
+    // flow สำหรับฟอร์มจัดการวันหยุด (กด Enter แล้วเลื่อนไปช่องถัดไป)
+    if (e.target.id === 'holidayDate') {
+      if ($('holidayDateEnd')) $('holidayDateEnd').focus();
+    } else if (e.target.id === 'holidayDateEnd') {
+      if ($('holidayName')) $('holidayName').focus();
+    } else {
+      // ช่องอื่นๆ กด Enter ให้พับคีย์บอร์ดลง (blur) อย่างเดียว
+      e.target.blur();
+    }
+  }
+});
 $('setKpiBonus').addEventListener('change',function(){
   var label=periodLabel(currentPeriod);
   var val=num(this.value);
