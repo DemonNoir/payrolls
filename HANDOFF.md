@@ -7,11 +7,12 @@
 - **Mobile-First:** ออกแบบ UI สำหรับใช้งานบนมือถือเป็นหลัก
 
 ## 🟢 Current State
-- **เวอร์ชันล่าสุด:** `?v=24` (Network-First Strategy)
+- **เวอร์ชันล่าสุด:** `?v=25` (Network-First Strategy)
 - สถานะแอปสมบูรณ์มาก มีระบบป้องกันบั๊กถดถอยด้วยชุดทดสอบ (`tests/calc-tests.html`) และเอกสารสถาปัตยกรรม (`ARCHITECTURE.md`) ที่อธิบาย Business Rules ไว้อย่างชัดเจน
 
 ## ✨ Recent Changes (เซสชันล่าสุด)
-1. **Service Worker (Network-First):**
+1. **เพิ่ม Night Shift Indicator:** เพิ่มสัญลักษณ์ `🌙 (กะดึก)` ในหน้าปฏิทินเมื่อเปิดการตั้งค่า
+2. **Service Worker (Network-First):**
    - อัปเดต `sw.js` กลยุทธ์จาก Cache-First เป็น Network-First เพื่อให้มั่นใจว่าเมื่อมีการแก้โค้ด ผู้ใช้แค่ Refresh หน้าเว็บในมือถือก็จะได้อัปเดตทันที
 2. **Leave System Redesign (แยกระบบวันหยุด):**
    - แยกกระเป๋าวันหยุดออกเป็น **"สลับหยุด (OT Swap)"** และ **"ลาพักร้อน (Annual Leave)"** อย่างชัดเจนทั้งในหน้าปฏิทินและ Dashboard
@@ -26,6 +27,6 @@
 
 ## ⚠️ Open Issues / Notes (สำคัญมากสำหรับ Agent ถัดไป)
 1. **อ่าน `ARCHITECTURE.md` ก่อนเสมอ:** หากต้องการแก้ไข `calc.js` หรือตรรกะการคำนวณ **ต้อง** อ่านกฎในไฟล์นี้ก่อน และเมื่อแก้ไขเสร็จ ต้องรัน `tests/calc-tests.html` ให้ผ่าน 100% ทุกครั้ง
-2. **อย่าลืม Bump Version:** ทุกครั้งที่มีการแก้โค้ด JS/CSS จะต้องไปเปลี่ยน `?v=XX` ใน `index.html` และเปลี่ยนตัวแปร `CACHE` ใน `sw.js` เสมอ เพื่อบังคับให้ผู้ใช้บนมือถือโหลด Cache ใหม่ (ปัจจุบัน v24)
+2. **อย่าลืม Bump Version:** ทุกครั้งที่มีการแก้โค้ด JS/CSS จะต้องไปเปลี่ยน `?v=XX` ใน `index.html` และเปลี่ยนตัวแปร `CACHE` ใน `sw.js` เสมอ เพื่อบังคับให้ผู้ใช้บนมือถือโหลด Cache ใหม่ (ปัจจุบัน v25)
 3. **การออกแบบ UI:** ผู้ใช้ชอบดีไซน์แนว Modern, Glassmorphism และ Micro-animations (พรีเมียมระดับโลก)
 4. เมื่อทำงานเสร็จในแต่ละเซสชัน ให้ทำ Walkthrough และ Commit/Push ขึ้น GitHub ด้วยเสมอ (ตาม Project Rules)

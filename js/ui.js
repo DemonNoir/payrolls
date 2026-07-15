@@ -48,7 +48,8 @@ function checkMigration(){
 }
 
 function renderCalendar(){
-  $('monthLabel').innerText=periodLabel(currentPeriod);
+  var set=settings();
+  $('monthLabel').innerText=periodLabel(currentPeriod) + (set.nightEnabled ? ' 🌙 (กะดึก)' : '');
   var curLabel=periodLabel(currentPeriod);
   var kpiBonusPct=getKpiBonusPct(curLabel);
   if(isNaN(kpiBonusPct))kpiBonusPct=0;
