@@ -71,6 +71,16 @@ $('settingsTutorialAckBtn').onclick=function(){
   $('settingsTutorialOverlay').classList.remove('show');
   saveSettings(true);
 };
+$('annualTutorialAckBtn').onclick=function(){
+  localStorage.setItem('annual_tutorial','1');
+  $('annualTutorialOverlay').classList.remove('show');
+};
+
+$('leaveType').addEventListener('change', function(){
+  if(this.value === 'annual' && localStorage.getItem('annual_tutorial') !== '1'){
+    $('annualTutorialOverlay').classList.add('show');
+  }
+});
 
 $('saveHolidayBtn').onclick=saveHoliday;$('clearHolidayBtn').onclick=clearHolidayForm;
 $('exportBtn').onclick=exportData;$('importBtn').onclick=function(){$('importFile').click()};$('importFile').onchange=importFile;

@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=16">
+<link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
 <main class="app">
@@ -321,6 +321,20 @@
 <button class="ghost" id="closeSettingsBtn">ปิด</button>
 </div></div>
 
+<!-- Annual Leave Tutorial Overlay -->
+<div class="overlay" id="annualTutorialOverlay"><div class="sheet" style="text-align:center;">
+<div style="font-size:40px; margin-bottom:10px;">🏖️</div>
+<h2>เกร็ดความรู้: ลาพักร้อน</h2>
+<div style="font-size:14px;line-height:1.6;color:var(--ink);margin:15px 0 25px;text-align:left;">
+  <p>ระบบจะ <b>คำนวณวันลาพักร้อนให้คุณอัตโนมัติ</b> (+4 ชม./เดือน) โดยนับจาก "วันที่เริ่มงาน" ที่คุณกรอกไว้ในการตั้งค่า</p>
+  <p style="margin-top:10px; padding:10px; background:var(--bg); border-radius:8px;">
+    ✏️ <b>ก่อนใช้งานครั้งแรก:</b><br>
+    เพื่อให้ยอดคงเหลือตรงกับความจริง รบกวนเข้าไปที่ <b>ตั้งค่า (⚙️)</b> แล้วปรับช่อง <b>"ลาพักร้อนสะสม (ปรับด้วยมือ)"</b> ให้ตรงกับยอดที่คุณมีอยู่จริงก่อนนะครับ
+  </p>
+</div>
+<button class="btn primary" id="annualTutorialAckBtn" style="width:100%; padding:12px; font-size:15px;">รับทราบ</button>
+</div></div>
+
 <!-- Settings Tutorial Overlay -->
 <div class="overlay" id="settingsTutorialOverlay"><div class="sheet" style="text-align:center;">
 <div style="font-size:40px; margin-bottom:10px;">💡</div>
@@ -361,13 +375,13 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=16"></script>
-<script src="js/calc.js?v=16"></script>
-<script src="js/ui.js?v=16"></script>
-<script src="js/settings.js?v=16"></script>
-<script src="js/data.js?v=16"></script>
-<script src="js/tutorial.js?v=16"></script>
-<script src="js/app.js?v=16"></script>
+<script src="js/utils.js?v=17"></script>
+<script src="js/calc.js?v=17"></script>
+<script src="js/ui.js?v=17"></script>
+<script src="js/settings.js?v=17"></script>
+<script src="js/data.js?v=17"></script>
+<script src="js/tutorial.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});
