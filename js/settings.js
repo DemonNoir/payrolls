@@ -56,7 +56,9 @@ function previewEntry(){
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
-    $('entryPreview').innerText=pt==='money'?'= '+money(rate*h*m)+' (อัตรา '+rate.toLocaleString('th-TH',{maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
+    /* effective_rate = base × multiplier — แสดงอัตราที่ใช้จริงตามตัวคูณที่เลือก */
+    var effectiveRate=rate*m;
+    $('entryPreview').innerText=pt==='money'?'= '+money(effectiveRate*h)+' (อัตรา '+effectiveRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
   }else if(kind==='use'){
     var lt=$('leaveType').value;
     var banks = getBanks(activeKey);
