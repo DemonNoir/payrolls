@@ -146,7 +146,7 @@ function periodStats(p,kpiBonusPctOverride){
   var ppMaternity=calLeave.maternity;
   var ppOrdination=calLeave.ordination;
   var ppFuneral=calLeave.funeral;
-  var ppPersonalUnpaid=calLeave.personal_unpaid;
+  var ppPersonalUnpaid=calLeave.personal_unpaid+getPerPeriod('pp_personal',label);
 
   /* ── นับวันทำงาน (autoDays) สำหรับคำนวณสวัสดิการ ──
    * autoDays ใช้คูณ: ค่าเดินทาง, ค่าอาหาร, ค่ากะดึก
