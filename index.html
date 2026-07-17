@@ -240,18 +240,9 @@
 <div id="useFields" class="hide">
 <div class="group"><label>ประเภท</label>
 <select id="leaveType">
-  <option value="annual">🏖️ ลาพักร้อน</option>
-  <option value="swap">🔄 สลับหยุด</option>
-  <option value="personal_paid">📋 ลากิจ (รับค่าจ้าง)</option>
-  <option value="personal_unpaid">📋 ลากิจ (ไม่รับค่าจ้าง)</option>
-  <option value="sick">🤒 ลาป่วย</option>
-  <option value="maternity">🤰 ลาคลอด</option>
-  <option value="ordination">🙏 ลาบวช</option>
-  <option value="funeral">🕯️ ลาฌาปนกิจ</option>
-  <option value="absent">🚫 ขาดงาน</option>
 </select>
 </div>
-<div class="group"><label>จำนวน (มีสะสม <span id="availableBank">0</span> ชม.)</label><input type="number" id="useHours" step="0.5" min="0.5" inputmode="decimal" placeholder="ชม."></div>
+<div class="group"><label>จำนวน <span id="availableBankLabel" class="hide">(มีสะสม <span id="availableBank">0</span> <span id="availableBankUnit">ชม.</span>)</span></label><input type="number" id="useHours" step="0.5" min="0.5" inputmode="decimal" placeholder="ชม."></div>
 </div>
 <div class="group" id="nightShiftGroup" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1)">
 <label class="check"><input type="checkbox" id="entryNight"> 🌙 เข้ากะดึก</label>
@@ -269,8 +260,10 @@
 <div class="group"><label>วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
 <div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
 <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
-<div class="group"><label>ยอดวันหยุดสะสม (สลับหยุด)</label><input type="number" id="setBank" step="0.5" inputmode="decimal"></div>
-<div class="group"><label>ยอดลาพักร้อนสะสม (ชม.)</label><input type="number" id="setAnnualAdj" step="0.5" inputmode="decimal"></div>
+<div class="subhead" style="margin: 15px 0 10px;">วันหยุด & การลา</div>
+<div class="group" style="grid-column:1/-1;">
+  <button class="btn ghost" id="openLeaveSettingsBtn" style="width:100%;text-align:left;border:1px solid rgba(255,255,255,0.2);">🗂️ ตั้งค่าประเภทวันหยุด & โควตา</button>
+</div>
 <div class="group"><label>โหมดการคำนวณ</label>
 <select id="setCalcMode">
   <option value="realtime">เรียลไทม์ (คำนวณรายได้ถึงวันปัจจุบัน)</option>
@@ -375,6 +368,57 @@
   </ol>
 </div>
 <button class="ghost" id="closeInstallBtn">ปิด</button>
+</div></div>
+
+<!-- Leave Settings Overlay (Layer 2) -->
+<div class="overlay" id="leaveSettingsOverlay"><div class="sheet">
+  <h2 style="width:100%; align-items:center;">🗂️ ตั้งค่าวันหยุด <button id="closeLeaveSettingsTopBtn" style="margin-left:auto; background:rgba(128,128,128,0.15); border:none; border-radius:12px; padding:4px 12px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; transition:0.2s;">ปิด</button></h2>
+  
+  <div class="subhead">ประเภทที่มีโควตา (จำกัดวงเงิน)</div>
+  <div id="leaveSettingsQuotaList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  
+  <div class="subhead" style="margin-top:20px;">ประเภทไม่มีโควตา</div>
+  <div id="leaveSettingsNoQuotaList" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+  <div style="margin-top:20px;">
+    <button class="btn ghost" id="closeLeaveSettingsBtn" style="width:100%">ย้อนกลับ</button>
+  </div>
+</div></div>
+
+<!-- Edit Leave Type Overlay (Layer 3) -->
+<div class="overlay" id="editLeaveTypeOverlay" style="z-index: 10002"><div class="sheet">
+  <h2 style="width:100%; align-items:center;"><span id="editLeaveTypeTitle">แก้ไขประเภทการลา</span> <button id="closeEditLeaveTypeTopBtn" style="margin-left:auto; background:rgba(128,128,128,0.15); border:none; border-radius:12px; padding:4px 12px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; transition:0.2s;">ปิด</button></h2>
+  
+  <div class="settingsGrid">
+    <div class="group" style="grid-column:1/-1; display:flex; align-items:center; gap:10px;">
+      <label class="check" style="margin:0;"><input type="checkbox" id="eltVisible"> แสดงในหน้าปฏิทิน</label>
+    </div>
+    
+    <div class="group" id="eltQuotaGroup"><label>โควตาทั้งหมด (ต่อรอบ)</label><input type="number" id="eltQuotaTotal" inputmode="decimal"></div>
+    <div class="group" id="eltQuotaCurrentGroup"><label>ยอดคงเหลือปัจจุบัน</label><input type="number" id="eltQuotaCurrent" inputmode="decimal"></div>
+    
+    <div class="group"><label>หน่วย</label>
+      <select id="eltUnit">
+        <option value="hours">ชั่วโมง</option>
+        <option value="days">วัน</option>
+      </select>
+    </div>
+    <div class="group"><label>รอบการรีเซ็ต</label>
+      <select id="eltResetCycle">
+        <option value="yearly">รายปี</option>
+        <option value="monthly">รายเดือน</option>
+        <option value="never">ไม่รีเซ็ต (สะสมข้ามปี)</option>
+      </select>
+    </div>
+    <div class="group" style="grid-column:1/-1"><label>สีประจำประเภท (Tag Color)</label>
+      <input type="color" id="eltColorTag" style="width:100%; height:40px; padding:0; border:none; background:none;">
+    </div>
+  </div>
+  
+  <div class="actions" style="margin-top:20px;">
+    <button class="btn ghost" id="closeEditLeaveTypeBtn">ยกเลิก</button>
+    <button class="btn primary" id="saveEditLeaveTypeBtn">บันทึก</button>
+  </div>
 </div></div>
 
 <!-- Tutorial Overlay -->

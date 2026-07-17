@@ -108,3 +108,50 @@ function checkBackupWarning(){
   var days=(Date.now()-Number(last))/(86400000);
   el.classList.toggle('hide',days<15);
 }
+
+/* ── Leave Types Configuration ── */
+var DEFAULT_LEAVE_TYPES = [
+  /* Group 1: Has Quota */
+  { id: "annual", name_th: "วันหยุดพักร้อนประจำปี", unit: "hours", has_quota: true, quota_total: 0, reset_cycle: "yearly", color_tag: "#e05353", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 1 },
+  { id: "sick", name_th: "ลาป่วยโดยได้รับค่าจ้าง", unit: "hours", has_quota: true, quota_total: 240, color_tag: "#f2c94c", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 2 },
+  { id: "personal_paid", name_th: "ลากิจธุระโดยได้รับค่าจ้าง", unit: "hours", has_quota: true, quota_total: 24, color_tag: "#27ae60", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 3 },
+  { id: "swap", name_th: "สลับวันหยุด", unit: "hours", has_quota: true, quota_total: 0, color_tag: "#2d9cdb", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 4 },
+  { id: "military", name_th: "ลาเพื่อรับราชการทหาร", unit: "days", has_quota: true, quota_total: 60, color_tag: "#9b51e0", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 5 },
+  { id: "training", name_th: "ลาฝึกอบรม", unit: "days", has_quota: true, quota_total: 30, color_tag: "#e2b93b", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 6 },
+  { id: "spousal", name_th: "ลาเพื่อช่วยเหลือคู่สมรส", unit: "days", has_quota: true, quota_total: 15, color_tag: "#5b8ee0", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 7 },
+  { id: "parental", name_th: "ลาเลี้ยงดูบุตร", unit: "days", has_quota: true, quota_total: 15, color_tag: "#3aa87a", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 8 },
+
+  /* Group 2: No Quota */
+  { id: "sick_unpaid", name_th: "ลาป่วยโดยไม่ได้รับค่าจ้าง", unit: "hours", has_quota: false, color_tag: "#d4af37", is_paid: false, docks_diligence: true, visible_in_calendar: true, order: 9 },
+  { id: "work_injury", name_th: "ลาบาดเจ็บจากการทำงาน", unit: "days", has_quota: false, color_tag: "#e07a5f", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 10 },
+  { id: "personal_unpaid", name_th: "ลากิจธุระโดยไม่ได้รับค่าจ้าง", unit: "hours", has_quota: false, color_tag: "#81b29a", is_paid: false, docks_diligence: true, visible_in_calendar: true, order: 11 },
+  { id: "marriage", name_th: "ลาแต่งงาน", unit: "days", has_quota: false, color_tag: "#f4a261", is_paid: true, docks_diligence: false, visible_in_calendar: true, order: 12 },
+  { id: "sterilization", name_th: "ลาผ่าตัดทำหมัน", unit: "days", has_quota: false, color_tag: "#e76f51", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 13 },
+  { id: "funeral_non_direct", name_th: "ลางานศพ(ไม่ใช่ญาติสายตรง)", unit: "days", has_quota: false, color_tag: "#264653", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 14 },
+  { id: "funeral", name_th: "ลางานศพ(ญาติสายตรง)", unit: "days", has_quota: false, color_tag: "#2a9d8f", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 15 },
+  { id: "suspension", name_th: "การพักงาน", unit: "days", has_quota: false, color_tag: "#6d6875", is_paid: false, docks_diligence: true, visible_in_calendar: true, order: 16 },
+  { id: "production_stop", name_th: "การหยุดผลิต", unit: "days", has_quota: false, color_tag: "#b5838d", is_paid: true, wage_deduction: 0.25, docks_diligence: false, visible_in_calendar: true, order: 17 },
+  { id: "recovery", name_th: "ลาพักฟื้น", unit: "hours", has_quota: false, color_tag: "#e5989b", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 18 },
+  { id: "maternity", name_th: "ลาคลอด", unit: "days", has_quota: false, color_tag: "#ffb4a2", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 19 },
+  { id: "ordination", name_th: "ลาบวช", unit: "days", has_quota: false, color_tag: "#ffcdb2", is_paid: true, docks_diligence: true, visible_in_calendar: true, order: 20 },
+  { id: "absent", name_th: "ขาดงาน", unit: "days", has_quota: false, color_tag: "#d90429", is_paid: false, docks_diligence: true, visible_in_calendar: true, order: 21 }
+];
+
+function getLeaveTypes() {
+  try {
+    var stored = JSON.parse(getLS('leave_types'));
+    if (Array.isArray(stored) && stored.length > 0) {
+      var defaultMap = {};
+      DEFAULT_LEAVE_TYPES.forEach(function(dt) { defaultMap[dt.id] = dt; });
+      return stored.map(function(t) {
+        var dt = defaultMap[t.id] || {};
+        return Object.assign({}, dt, t);
+      });
+    }
+  } catch(e) {}
+  return DEFAULT_LEAVE_TYPES.slice();
+}
+
+function saveLeaveTypes(types) {
+  setLS('leave_types', JSON.stringify(types));
+}

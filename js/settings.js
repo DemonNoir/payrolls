@@ -15,25 +15,57 @@ function openEntry(k){
   }else{
     $('entryHours').value='';setRad('multiplier',isHolidayKey(k)?3:1.5);setRad('payType','money');
   }
+  /* populate leaveType dropdown dynamically */
+  var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+  var ltSelect = $('leaveType');
+  ltSelect.innerHTML = '';
+  types.filter(function(t){ return t.visible_in_calendar !== false; })
+       .sort(function(a,b){ return a.order - b.order; })
+       .forEach(function(t){
+         var opt = document.createElement('option');
+         opt.value = t.id;
+         opt.innerText = t.name_th;
+         ltSelect.appendChild(opt);
+       });
+
   /* populate use/leave fields */
   if(en&&en.kind==='use'){
     $('leaveType').value=en.leaveType||'annual';
     $('useHours').value=en.hours||'';
   }else if(en&&en.kind==='leave'){
-    /* migrate old leave data (days→hours) */
     $('leaveType').value=en.leaveType||'sick';
     $('useHours').value=(num(en.days)||1)*8;
   }else{
     $('leaveType').value='annual';
     $('useHours').value='';
   }
-  var banks=getBanks(k);
-  var avail=($('leaveType').value==='swap')?banks.ot:banks.annual;
-  $('availableBank').innerText=hours(avail);
+  updateEntryModalBank();
   $('deleteEntryBtn').style.display=en?'block':'none';
   previewEntry();
   $('entryOverlay').classList.add('show');
 }
+
+function updateEntryModalBank() {
+  var lt = $('leaveType').value;
+  var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+  var tConf = types.find(function(x){ return x.id===lt; });
+  var banks = getBanks(activeKey);
+  
+  if (tConf && tConf.has_quota) {
+    $('availableBankLabel').classList.remove('hide');
+    $('availableBank').innerText = num(banks[lt]).toLocaleString('th-TH',{maximumFractionDigits:1});
+    $('availableBankUnit').innerText = tConf.unit === 'days' ? 'วัน' : 'ชม.';
+    $('useHours').placeholder = tConf.unit === 'days' ? 'วัน' : 'ชม.';
+  } else {
+    $('availableBankLabel').classList.add('hide');
+    $('useHours').placeholder = (tConf && tConf.unit === 'days') ? 'วัน' : 'ชม.';
+  }
+}
+
+$('leaveType').addEventListener('change', function() {
+  updateEntryModalBank();
+  previewEntry();
+});
 
 function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
 
@@ -44,10 +76,6 @@ function toggleEntryFields(){
   if($('nightShiftGroup')) $('nightShiftGroup').style.display=(kind==='ot')?'block':'none';
 }
 
-/* ── Preview: ใช้ rate จาก period ปัจจุบัน ── */
-var LEAVE_NAMES={annual:'🏖️ ลาพักร้อน',swap:'🔄 สลับหยุด',personal_paid:'📋 ลากิจ (รับ)',personal_unpaid:'📋 ลากิจ (ไม่รับ)',sick:'🤒 ลาป่วย',maternity:'🤰 ลาคลอด',ordination:'🙏 ลาบวช',funeral:'🕯️ ลาฌาปนกิจ'};
-var NO_DILIGENCE_TYPES=['annual','swap'];
-
 function previewEntry(){
   var kind=radVal('entryKind');
   if(kind==='ot'){
@@ -56,25 +84,20 @@ function previewEntry(){
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
-    /* effective_rate = base × multiplier — แสดงอัตราที่ใช้จริงตามตัวคูณที่เลือก */
     var effectiveRate=rate*m;
     $('entryPreview').innerText=pt==='money'?'= '+money(effectiveRate*h)+' (อัตรา '+effectiveRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
   }else if(kind==='use'){
     var lt=$('leaveType').value;
-    var banks = getBanks(activeKey);
-    var avail = (lt==='swap') ? banks.ot : banks.annual;
-    $('availableBank').innerText=hours(avail);
+    var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+    var tConf = types.find(function(x){ return x.id===lt; });
     
     var uh=num($('useHours').value)||0;
-    var noDiligence=NO_DILIGENCE_TYPES.indexOf(lt)>=0;
+    var timeStr = uh + ((tConf && tConf.unit === 'days') ? ' วัน' : ' ชม.');
     
-    var hr = Math.floor(uh);
-    var min = Math.round((uh - hr) * 60);
-    var timeStr = hr > 0 ? hr + ' ชม.' : '';
-    if (min > 0) timeStr += (timeStr ? ' ' : '') + min + ' นาที';
-    if (!timeStr) timeStr = '0 ชม.';
-
-    var txt=(LEAVE_NAMES[lt]||'ใช้สิทธิ')+' '+timeStr;
+    var name = tConf ? tConf.name_th : 'ใช้สิทธิ';
+    var noDiligence = tConf ? !tConf.docks_diligence : false;
+    
+    var txt = name + ' ' + timeStr;
     if(noDiligence) txt+=' (ไม่หักเบี้ยขยัน)';
     else txt+=' (หักเบี้ยขยัน)';
     $('entryPreview').innerText=txt;
@@ -122,8 +145,7 @@ function openSettings(){
   var st=settings();
   $('setSalaryBase').value=st.salaryBase||'';
   $('setStartDate').value=st.startDate||'';
-  $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';$('setBank').value=hours(getBanks().ot);
-  if($('setAnnualAdj')) $('setAnnualAdj').value=hours(getBanks().annual);
+  $('setCutoff').value=st.cutoff||'';$('setPayday').value=st.payday||'';
   if($('setCalcMode')) $('setCalcMode').value=st.calcMode||'realtime';
   $('setHousing').value=st.housing||'';$('setDiligence').value=st.diligence||'';$('setKpi').value=st.kpiPercent||'';
   /* KPI Bonus โหลดตามรอบบิลที่เลือกอยู่ */
@@ -149,28 +171,11 @@ function saveSettings(force){
     $('settingsTutorialOverlay').classList.add('show');
     return;
   }
-  var data = getCal();
-  var otEarned = 0, otUsed = 0, annualUsed = 0;
-  Object.keys(data).forEach(function(k){
-    var en=data[k];
-    if(en.kind==='ot' && en.payType==='leave') otEarned += num(en.credit);
-    if(en.kind==='use'){
-      if(en.leaveType==='annual') annualUsed += num(en.hours);
-      else if(en.leaveType==='swap') otUsed += num(en.hours);
-    }
-    if(en.kind==='leave' && en.leaveType==='annual') annualUsed += (num(en.days)||1)*8;
-  });
-  var targetBank = num($('setBank').value);
-  var targetAnnual = num($('setAnnualAdj').value);
-  
   setLS('ot_salary',num($('setSalaryBase').value));  /* เงินเดือนหลักสำหรับคำนวณ rate */
   var sd=$('setStartDate').value; if(sd)setLS('start_date',sd);else localStorage.removeItem('start_date');
   var cutoff=getValidDay($('setCutoff').value); if(cutoff){setLS('ot_cutoff',cutoff);setLS('cutoff_day',cutoff)}else{localStorage.removeItem('ot_cutoff');localStorage.removeItem('cutoff_day')}
   var payday=getValidDay($('setPayday').value); if(payday)setLS('payday',payday);else localStorage.removeItem('payday');
   if($('setCalcMode')) setLS('calc_mode', $('setCalcMode').value);
-  
-  setLS('ot_bank_adj', targetBank - (otEarned - otUsed));
-  if($('setAnnualAdj')) setLS('annual_leave_adj', targetAnnual - ((monthsWorked()*4) - annualUsed));
   setLS('housing',num($('setHousing').value));setLS('diligence',num($('setDiligence').value));
   setLS('kpi_percent',num($('setKpi').value));
   setLS('transport_rate',num($('setTransport').value));setLS('food_rate',num($('setFood').value));setLS('ot_food_rate',num($('setOtFood').value));setLS('night_shift_rate',num($('setNightRate').value));
@@ -212,3 +217,129 @@ function deleteHoliday(i){
   if(!confirm('ลบวันหยุดนี้?'))return;
   var h=getHolidays();h.splice(i,1);setHolidays(h);clearHolidayForm();renderAll();
 }
+
+/* ── Leave Settings ── */
+var _editingLeaveTypeId = null;
+
+function renderLeaveSettings() {
+  var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+  var quotaList = $('leaveSettingsQuotaList');
+  var noQuotaList = $('leaveSettingsNoQuotaList');
+  if(!quotaList || !noQuotaList) return;
+  
+  quotaList.innerHTML = '';
+  noQuotaList.innerHTML = '';
+  var banks = getBanks();
+  
+  types.sort(function(a,b){return a.order - b.order;}).forEach(function(t) {
+    var el = document.createElement('div');
+    el.className = 'list-item';
+    el.style = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-radius:8px; background:rgba(255,255,255,0.05); cursor:pointer; margin-bottom:5px;';
+    
+    var unitStr = t.unit === 'days' ? 'วัน' : 'ชม.';
+    var titleHtml = '<div style="display:flex;align-items:center;gap:8px;">';
+    titleHtml += '<div style="width:12px;height:12px;border-radius:50%;background:'+(t.color_tag||'#ccc')+';"></div>';
+    titleHtml += '<div><div style="font-weight:600;font-size:14px;color:'+(t.visible_in_calendar===false?'var(--muted)':'var(--ink)')+'">'+t.name_th+(t.visible_in_calendar===false?' (ซ่อน)':'')+'</div>';
+    if(t.has_quota) {
+      var currentBank = banks[t.id] || 0;
+      titleHtml += '<div style="font-size:12px;color:var(--muted)">ทั้งหมด '+t.quota_total+' '+unitStr+' / คงเหลือ '+currentBank+' '+unitStr+'</div>';
+    } else {
+      titleHtml += '<div style="font-size:12px;color:var(--muted)">'+(t.is_paid?'ได้รับค่าจ้าง':'ไม่ได้รับค่าจ้าง')+'</div>';
+    }
+    titleHtml += '</div></div>';
+    el.innerHTML = titleHtml;
+    
+    var editIcon = document.createElement('div');
+    editIcon.innerHTML = '✏️';
+    el.appendChild(editIcon);
+    
+    el.onclick = function() { openEditLeaveType(t.id); };
+    
+    if(t.has_quota) quotaList.appendChild(el);
+    else noQuotaList.appendChild(el);
+  });
+}
+
+function openEditLeaveType(id) {
+  var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+  var t = types.find(function(x){return x.id===id;});
+  if(!t) return;
+  
+  _editingLeaveTypeId = id;
+  $('editLeaveTypeTitle').innerText = 'ตั้งค่า: ' + t.name_th;
+  $('eltVisible').checked = t.visible_in_calendar !== false;
+  $('eltUnit').value = t.unit || 'hours';
+  $('eltColorTag').value = t.color_tag || '#cccccc';
+  
+  if(t.has_quota) {
+    $('eltQuotaGroup').style.display = 'block';
+    $('eltQuotaTotal').value = t.quota_total;
+    $('eltQuotaCurrentGroup').style.display = 'block';
+    
+    // Auto-accrual special case for annual
+    if (t.id === 'annual') {
+       $('eltQuotaTotal').value = 0;
+       $('eltQuotaTotal').disabled = true;
+       $('eltQuotaGroup').querySelector('label').innerText = 'โควตาทั้งหมด (ได้รับ +4 ชม./เดือน อัตโนมัติ)';
+    } else {
+       $('eltQuotaTotal').disabled = false;
+       $('eltQuotaGroup').querySelector('label').innerText = 'โควตาทั้งหมด (ต่อรอบ)';
+    }
+    
+    var banks = getBanks();
+    $('eltQuotaCurrent').value = num(banks[t.id]);
+    
+    $('eltResetCycle').value = t.reset_cycle || 'yearly';
+    $('eltResetCycle').parentNode.style.display = 'block';
+  } else {
+    $('eltQuotaGroup').style.display = 'none';
+    $('eltQuotaCurrentGroup').style.display = 'none';
+    $('eltResetCycle').parentNode.style.display = 'none';
+  }
+  
+  $('editLeaveTypeOverlay').classList.add('show');
+}
+
+function saveEditLeaveType() {
+  if(!_editingLeaveTypeId) return;
+  var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
+  var t = types.find(function(x){return x.id===_editingLeaveTypeId;});
+  if(t) {
+    t.visible_in_calendar = $('eltVisible').checked;
+    t.unit = $('eltUnit').value;
+    t.color_tag = $('eltColorTag').value;
+    if(t.has_quota) {
+      if (t.id !== 'annual') t.quota_total = num($('eltQuotaTotal').value);
+      t.reset_cycle = $('eltResetCycle').value;
+      
+      // Handle "reverse-calculate" for current quota
+      var targetCurrent = num($('eltQuotaCurrent').value);
+      var currentBanks = getBanks();
+      var diff = targetCurrent - currentBanks[t.id];
+      if (diff !== 0) {
+        if (t.id === 'annual') {
+          setLS('annual_leave_adj', num(getLS('annual_leave_adj')) + diff);
+        } else if (t.id === 'swap') {
+          setLS('ot_bank_adj', num(getLS('ot_bank_adj')) + diff);
+        } else {
+          t.quota_total += diff; // Simple fallback
+        }
+      }
+    }
+    saveLeaveTypes(types);
+  }
+  $('editLeaveTypeOverlay').classList.remove('show');
+  renderLeaveSettings();
+}
+
+if($('openLeaveSettingsBtn')) {
+  $('openLeaveSettingsBtn').onclick = function() {
+    renderLeaveSettings();
+    $('leaveSettingsOverlay').classList.add('show');
+  };
+}
+if($('closeLeaveSettingsBtn')) $('closeLeaveSettingsBtn').onclick = function() { $('leaveSettingsOverlay').classList.remove('show'); };
+if($('closeLeaveSettingsTopBtn')) $('closeLeaveSettingsTopBtn').onclick = function() { $('leaveSettingsOverlay').classList.remove('show'); };
+if($('closeEditLeaveTypeBtn')) $('closeEditLeaveTypeBtn').onclick = function() { $('editLeaveTypeOverlay').classList.remove('show'); };
+if($('closeEditLeaveTypeTopBtn')) $('closeEditLeaveTypeTopBtn').onclick = function() { $('editLeaveTypeOverlay').classList.remove('show'); };
+if($('saveEditLeaveTypeBtn')) $('saveEditLeaveTypeBtn').onclick = saveEditLeaveType;
