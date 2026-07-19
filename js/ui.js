@@ -874,13 +874,6 @@ function initMultiSelect() {
     });
   });
   
-  $('batchHoliday').onchange = (e) => {
-    if (e.target.checked) {
-      $('batchHolidayName').classList.remove('hide');
-    } else {
-      $('batchHolidayName').classList.add('hide');
-    }
-  };
   
   $('batchClearBtn').onclick = () => {
     if(confirm('ยืนยันการล้างข้อมูลทั้งหมดใน ' + window.selectedDates.size + ' วันที่เลือก?')) {
