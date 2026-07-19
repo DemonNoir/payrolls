@@ -63,10 +63,39 @@ function renderCalendar(){
     var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k);
     if(hname)cls+=' holiday';
     if(en&&en.kind==='ot'){
-      cls+=' '+(en.payType==='leave'?'leave':'money');
-      var multCls=num(en.multiplier)===1?' m1':(num(en.multiplier)===3?' m3':'');
-      if (num(en.hours) > 0) {
-        badge='<span class="badge '+(en.payType==='leave'?'leave ':'')+multCls+'">'+hours(en.hours)+'ชม.</span>';
+      var ne = normalizeEntry(en);
+      var hasLeave = false;
+      var hasMoney = false;
+      var totalH = 0;
+      var badgeParts = [];
+      var primaryMult = 1.5;
+      
+      if(ne && ne.rates) {
+        ne.rates.forEach(function(r) {
+           var h = num(r.hours);
+           if (h > 0) {
+              totalH += h;
+              if (r.payType === 'leave') hasLeave = true;
+              else hasMoney = true;
+              
+              var m = num(r.multiplier);
+              primaryMult = m; // roughly track last mult
+              var multStr = (m !== 1.5) ? '×' + m : '';
+              badgeParts.push(hours(h) + 'h' + multStr);
+           }
+        });
+      }
+      
+      cls+=' '+(hasLeave && !hasMoney ? 'leave' : 'money');
+      var multCls = '';
+      if (ne && ne.rates && ne.rates.length === 1) {
+         multCls = primaryMult===1?' m1':(primaryMult===3?' m3':'');
+      } else if (ne && ne.rates && ne.rates.length > 1) {
+         multCls = ' m3'; // highlight mixed rates with red border for visibility
+      }
+      
+      if (totalH > 0) {
+        badge='<span class="badge '+(hasLeave && !hasMoney ? 'leave ':'')+multCls+'" style="font-size:10px">'+badgeParts.join('+')+'</span>';
       }
     }else if(en&&en.kind==='use'){
       var lt=en.leaveType||'_legacy';
@@ -665,6 +694,8 @@ let longPressTimer = null;
 let touchMoved = false;
 let startCell = null;
 let gridRect = null;
+let touchStartX = 0;
+let touchStartY = 0;
 
 function toggleMultiSelect(dateKey, cellElement) {
   if (window.selectedDates.has(dateKey)) {
@@ -743,6 +774,14 @@ function initMultiSelect() {
     
     touchMoved = false;
     startCell = cell;
+    // เก็บตำแหน่งเริ่มต้นเพื่อเช็ค threshold
+    if (e.touches && e.touches.length > 0) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    } else {
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+    }
     
     if (!window.multiSelectMode) {
       longPressTimer = setTimeout(() => {
@@ -754,10 +793,23 @@ function initMultiSelect() {
   }
   
   function handleMove(e) {
-    touchMoved = true;
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
+    // ยกเลิก timer เมื่อเคลื่อนเกิน 10px เพื่อไม่ให้การสั่นเล็กน้อยรบกวน
+    let curX, curY;
+    if (e.touches && e.touches.length > 0) {
+      curX = e.touches[0].clientX;
+      curY = e.touches[0].clientY;
+    } else {
+      curX = e.clientX;
+      curY = e.clientY;
+    }
+    const moved = Math.abs(curX - touchStartX) > 10 || Math.abs(curY - touchStartY) > 10;
+    
+    if (moved) {
+      touchMoved = true;
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
     }
     
     if (window.multiSelectMode) {
@@ -805,20 +857,22 @@ function initMultiSelect() {
   // Bind actions
   $('msCancelBtn').onclick = exitMultiSelectMode;
   $('msEditBtn').onclick = openBatchEdit;
-  $('closeBatchEditTopBtn').onclick = () => { $('batchEditOverlay').classList.remove('show'); };
-  
-  // Batch Form Toggles
-  $('batchEntryKind').parentNode.parentNode.onchange = (e) => {
-    if (e.target.name === 'batchEntryKind') {
-      if (e.target.value === 'ot') {
-        $('batchOtFields').classList.remove('hide');
-        $('batchUseFields').classList.add('hide');
-      } else {
-        $('batchOtFields').classList.add('hide');
-        $('batchUseFields').classList.remove('hide');
-      }
+  $('closeBatchEditTopBtn').onclick = () => {
+    $('batchEditOverlay').classList.remove('show');
+    if (window.multiSelectMode) {
+      $('multiSelectActionBar').classList.add('show');
     }
   };
+  
+  // Batch Form Toggles — 3 modes: ot / use / holiday
+  document.querySelectorAll('input[name="batchEntryKind"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const v = e.target.value;
+      $('batchOtFields').classList.toggle('hide', v !== 'ot');
+      $('batchUseFields').classList.toggle('hide', v !== 'use');
+      $('batchHolidayFields').classList.toggle('hide', v !== 'holiday');
+    });
+  });
   
   $('batchHoliday').onchange = (e) => {
     if (e.target.checked) {
@@ -858,7 +912,7 @@ window.onload = function() {
     types.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
-      opt.innerText = t.name;
+      opt.innerText = t.name_th || t.name || t.id;
       batchLt.appendChild(opt);
     });
   }
@@ -884,62 +938,128 @@ function openBatchEdit() {
   }
   
   $('batchEditTitle').innerText = 'แก้ไข ' + window.selectedDates.size + ' วัน';
+  
+  // Repopulate leave types every time (in case not yet loaded)
+  const batchLt = $('batchLeaveType');
+  if (batchLt) {
+    batchLt.innerHTML = '';
+    const types = getLeaveTypes();
+    types.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.innerText = t.name_th || t.name || t.id;
+      batchLt.appendChild(opt);
+    });
+  }
+
+  // Reset form to OT mode every time modal opens
+  document.querySelector('input[name="batchEntryKind"][value="ot"]').checked = true;
+  $('batchOtFields').classList.remove('hide');
+  $('batchUseFields').classList.add('hide');
+  $('batchEntryHours').value = '';
+  $('batchUseHours').value = '';
+  document.querySelector('input[name="batchMultiplier"][value="1"]').checked = true;
+  document.querySelector('input[name="batchPayType"][value="money"]').checked = true;
+  $('batchEntryNight').checked = false;
+  $('batchHolidayName').value = '';
+  // Hide holiday fields on reset
+  $('batchHolidayFields').classList.add('hide');
+
+  // ซ่อน 1.5x ถ้าทุกวันที่เลือกเป็นวันหยุด (ไม่มีค่า 1.5x ในวันหยุด)
+  const allHoliday = [...window.selectedDates].every(k => isHolidayKey(k));
+  if ($('batchMult15Label')) {
+    $('batchMult15Label').style.display = allHoliday ? 'none' : '';
+  }
+  // ถ้า 1.5x ซ่อนอยู่และยังถูก checked → reset เป็น 1x
+  if (allHoliday) {
+    document.querySelector('input[name="batchMultiplier"][value="1"]').checked = true;
+  }
+
   $('batchEditOverlay').classList.add('show');
+  $('multiSelectActionBar').classList.remove('show');
 }
 
 function saveBatchEdit() {
-  const isOT = document.querySelector('input[name="batchEntryKind"]:checked').value === 'ot';
+  const kind = document.querySelector('input[name="batchEntryKind"]:checked').value;
+  const isOT = kind === 'ot';
+  const isUse = kind === 'use';
+  const isHoliday = kind === 'holiday';
+  const isNight = $('batchEntryNight').checked;
+
+  if (isHoliday) {
+    // บันทึกวันหยุดนักขัตฤกษ์ (ไม่แตะข้อมูล OT/ลา)
+    const holidayNameStr = ($('batchHolidayName').value || '').trim() || 'วันหยุดนักขัตฤกษ์';
+    let h = getHolidays();
+    window.selectedDates.forEach(k => {
+      const ex = h.find(x => x.date === k);
+      if (ex) { ex.name = holidayNameStr; }
+      else { h.push({ date: k, name: holidayNameStr }); }
+    });
+    setHolidays(h);
+    renderCalendar();
+    $('batchEditOverlay').classList.remove('show');
+    exitMultiSelectMode();
+    return;
+  }
+
   let hoursVal = isOT ? parseFloat($('batchEntryHours').value) : parseFloat($('batchUseHours').value);
   const mult = parseFloat(document.querySelector('input[name="batchMultiplier"]:checked').value);
   const payType = document.querySelector('input[name="batchPayType"]:checked').value;
-  const isNight = $('batchEntryNight').checked;
-  const isHoliday = $('batchHoliday').checked;
-  const holidayNameStr = $('batchHolidayName').value.trim();
   const leaveType = $('batchLeaveType').value;
-  
-  if (isNaN(hoursVal) || hoursVal <= 0) hoursVal = 0; // Allow 0 hours if they just want to set night shift or holiday
-  
-  // If they are just setting holiday or night shift and OT hours = 0, that's fine.
-  // But if they picked 'use' (Leave) and hours = 0, warn them.
-  if (!isOT && hoursVal <= 0 && !isHoliday && !isNight) {
+
+  if (isNaN(hoursVal) || hoursVal <= 0) hoursVal = 0;
+
+  // ถ้าเลือก "ใช้วันหยุด" ต้องระบุชั่วโมง (ยกเว้นถ้าติ๊กกะดึกอย่างเดียว)
+  if (isUse && hoursVal <= 0 && !isNight) {
     alert('กรุณาระบุจำนวนชั่วโมงที่ใช้');
     return;
   }
 
+  // ถ้าเลือก OT แต่ไม่ได้กรอกชั่วโมงและไม่ได้ติ๊กกะดึก → ไม่ทำอะไร
+  if (isOT && hoursVal <= 0 && !isNight) {
+    alert('กรุณาระบุชั่วโมง OT หรือติ๊กเข้ากะดึก');
+    return;
+  }
+
   let data = getCal();
-  let set = settings();
-  
+  let hList = getHolidays();
+  let updatedHolidays = false;
+
   window.selectedDates.forEach(k => {
-    if (isHoliday) {
-      if (!set.holidays) set.holidays = [];
-      const ex = set.holidays.find(h => h.date === k);
-      if (ex) {
-         ex.name = holidayNameStr || 'วันหยุดนักขัตฤกษ์';
-      } else {
-         set.holidays.push({ date: k, name: holidayNameStr || 'วันหยุดนักขัตฤกษ์' });
-      }
-    }
-    
-    // The user said "Overwrite all". So we replace the entry entirely.
     if (isOT && hoursVal > 0) {
-      data[k] = { kind: 'ot', hours: hoursVal, multiplier: mult, payType: payType, isNight: isNight };
-    } else if (!isOT && hoursVal > 0) {
+      // Auto mark holiday for 1.0x or 3.0x
+      if (mult === 1 || mult === 3) {
+        if (!hList.find(x => x.date === k)) {
+          hList.push({ date: k, name: 'วันหยุดนักขัตฤกษ์' });
+          updatedHolidays = true;
+        }
+      }
+      
+      // OT mode: เขียนทับ พร้อม isNight (เซฟเป็น format rates[])
+      data[k] = { 
+        kind: 'ot', 
+        rates: [{ hours: hoursVal, multiplier: mult, payType: payType }], 
+        isNight: isNight 
+      };
+    } else if (isUse && hoursVal > 0) {
+      // ใช้วันหยุด mode: เขียนทับ พร้อม isNight
       data[k] = { kind: 'use', hours: hoursVal, leaveType: leaveType, isNight: isNight };
     } else if (isNight) {
-      // Just night shift
-      data[k] = { kind: 'ot', hours: 0, multiplier: 1, payType: 'money', isNight: true };
-    } else {
-      // If hours is 0, and not night shift, we just delete the entry. (Only holiday remains)
-      delete data[k];
+      // กะดึกอย่างเดียว: MERGE ไม่ overwrite ข้อมูลเดิม
+      if (data[k]) {
+        data[k].isNight = true;   // อัปเดตเฉพาะ flag กะดึก
+      } else {
+        // สร้างใหม่เป็นกะดึกอย่างเดียว (rates ว่างเปล่า)
+        data[k] = { kind: 'ot', rates: [], isNight: true };
+      }
     }
+    // ถ้าไม่มีอะไรเลยก็ไม่ทำอะไร (ป้องกัน delete ข้อมูลเดิม)
   });
-  
-  if (isHoliday) {
-    saveSettings(set);
-  }
-  
+
+  if (updatedHolidays) setHolidays(hList);
   saveCal(data);
   renderCalendar();
   $('batchEditOverlay').classList.remove('show');
   exitMultiSelectMode();
 }
+

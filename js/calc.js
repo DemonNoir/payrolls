@@ -93,7 +93,12 @@ function getBanks(excludeKey){
   Object.keys(data).forEach(function(k){
     if(k!==excludeKey){
       var en=data[k];
-      if(en.kind==='ot' && en.payType==='leave') banks.swap = (banks.swap||0) + num(en.credit);
+      if(en.kind==='ot') {
+        var ne = normalizeEntry(en);
+        ne.rates.forEach(function(r) {
+          if(r.payType==='leave') banks.swap = (banks.swap||0) + num(r.credit || r.hours);
+        });
+      }
       if(en.kind==='use'){
         var lt = en.leaveType || '_legacy';
         var tConf = types.find(function(x){ return x.id===lt; });
@@ -144,8 +149,16 @@ function periodStats(p,kpiBonusPctOverride){
     byDay[k]=en;
     if(en.isNight) nightShiftDays++;
     if(en.kind==='ot'){
-      th+=num(en.hours);otDays++;if(num(en.hours)>=2)otFoodDays++;
-      if(en.payType==='money') tp+=num(en.hours)*num(en.multiplier)*hourlyRate;
+      var ne = normalizeEntry(en);
+      var dayHours = 0;
+      ne.rates.forEach(function(r) {
+        dayHours += num(r.hours);
+        if(r.payType==='money') tp += num(r.hours) * num(r.multiplier) * hourlyRate;
+      });
+      th += dayHours; otDays++;
+      var isDayHoliday = typeof isHolidayKey === 'function' ? isHolidayKey(k) : false;
+      var foodThreshold = isDayHoliday ? 10 : 2;
+      if(dayHours >= foodThreshold) otFoodDays++;
     }
     if(en.kind==='use'){
       var lt=en.leaveType||'_legacy';

@@ -155,3 +155,35 @@ function getLeaveTypes() {
 function saveLeaveTypes(types) {
   setLS('leave_types', JSON.stringify(types));
 }
+
+/* ── normalizeEntry: backward-compatible adapter ──
+ * แปลง entry format เก่า (single rate) → ใหม่ (rates[])
+ * ถ้ามี rates[] แล้ว → คืนเดิม
+ * ถ้ายัง → สร้าง rates[] จาก hours/multiplier/payType เดิม
+ * ⚠️ ใช้ function นี้ทุกที่ที่ต้องอ่าน OT entry เพื่อรับประกัน compat */
+function normalizeEntry(en) {
+  if (!en || en.kind !== 'ot') return en;
+  if (en.rates && Array.isArray(en.rates)) return en;
+  // Convert old format → new format
+  var r = {
+    hours: num(en.hours),
+    multiplier: num(en.multiplier) || 1,
+    payType: en.payType || 'money'
+  };
+  if (en.rate) r.rate = en.rate;
+  if (en.total) r.total = en.total;
+  if (en.credit) r.credit = en.credit;
+  if (en.kpiBonusPctAtSave !== undefined) r.kpiBonusPctAtSave = en.kpiBonusPctAtSave;
+  var result = { kind: 'ot', rates: [r], isNight: !!en.isNight };
+  return result;
+}
+
+/* ── totalOtHours: สรุปชั่วโมง OT รวมจาก entry ──
+ * ใช้ร่วมกับ normalizeEntry */
+function totalOtHours(en) {
+  var ne = normalizeEntry(en);
+  if (!ne || !ne.rates) return 0;
+  var t = 0;
+  ne.rates.forEach(function(r) { t += num(r.hours); });
+  return t;
+}

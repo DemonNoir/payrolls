@@ -225,16 +225,24 @@
 <label><input type="radio" name="entryKind" value="use"> ใช้วันหยุด/ลางาน</label>
 </div></div>
 <div id="otFields">
-<div class="group"><label>ชม. OT</label><input type="number" id="entryHours" step="0.1" inputmode="decimal"></div>
-<div class="group"><div class="choice">
-<label><input type="radio" name="multiplier" value="1" checked> 1.0x</label>
-<label><input type="radio" name="multiplier" value="1.5"> 1.5x</label>
-<label><input type="radio" name="multiplier" value="3"> 3.0x</label>
-</div></div>
-<div class="group"><label>รับเป็น</label><div class="choice">
-<label><input type="radio" name="payType" value="money" checked> เงิน</label>
-<label><input type="radio" name="payType" value="leave"> วันหยุด</label>
-</div></div>
+<div id="rateRowsContainer">
+  <div class="rate-row" data-rate-index="0">
+    <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ 1</span>
+    </div>
+    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" id="entryHours"></div>
+    <div class="group"><div class="choice">
+      <label><input type="radio" name="multiplier_0" value="1" checked> 1.0x</label>
+      <label class="mult15Label"><input type="radio" name="multiplier_0" value="1.5"> 1.5x</label>
+      <label><input type="radio" name="multiplier_0" value="3"> 3.0x</label>
+    </div></div>
+    <div class="group"><label>รับเป็น</label><div class="choice">
+      <label><input type="radio" name="payType_0" value="money" checked> เงิน</label>
+      <label><input type="radio" name="payType_0" value="leave"> วันหยุด</label>
+    </div></div>
+  </div>
+</div>
+<button class="btn soft" id="addRateBtn" style="margin-bottom:8px; font-size:12px;">➕ เพิ่มอัตรา (เช่น 1x + 3x)</button>
 <button class="btn soft" id="repeatLastBtn" style="margin-bottom:8px">📋 ซ้ำจากวัน OT ล่าสุด</button>
 </div>
 <div id="useFields" class="hide">
@@ -429,15 +437,18 @@
   
   <p style="font-size:12px; color:var(--orange); font-weight:bold; margin-bottom:12px;" id="batchEditWarning">⚠️ การบันทึกนี้จะเขียนทับข้อมูลเดิมทั้งหมดในวันที่เลือก</p>
 
-  <div class="group"><div class="choice">
+  <!-- 3-column mode selector -->
+  <div class="group"><div class="choice" style="grid-template-columns: repeat(3, 1fr);">
   <label><input type="radio" name="batchEntryKind" value="ot" checked> ทำ OT</label>
   <label><input type="radio" name="batchEntryKind" value="use"> ใช้วันหยุด/ลางาน</label>
+  <label><input type="radio" name="batchEntryKind" value="holiday"> 🇹🇭 วันหยุดนักขัตฤกษ์</label>
   </div></div>
+
   <div id="batchOtFields">
     <div class="group"><label>ชม. OT (ต่อวัน)</label><input type="number" id="batchEntryHours" step="0.1" inputmode="decimal"></div>
     <div class="group"><div class="choice">
-    <label><input type="radio" name="batchMultiplier" value="1" checked> 1.0x</label>
-    <label><input type="radio" name="batchMultiplier" value="1.5"> 1.5x</label>
+    <label><input type="radio" name="batchMultiplier" value="1"> 1.0x</label>
+    <label id="batchMult15Label"><input type="radio" name="batchMultiplier" value="1.5" checked> 1.5x</label>
     <label><input type="radio" name="batchMultiplier" value="3"> 3.0x</label>
     </div></div>
     <div class="group"><label>รับเป็น</label><div class="choice">
@@ -445,22 +456,26 @@
     <label><input type="radio" name="batchPayType" value="leave"> วันหยุด</label>
     </div></div>
   </div>
+
   <div id="batchUseFields" class="hide">
     <div class="group"><label>ประเภท</label>
     <select id="batchLeaveType"></select>
     </div>
     <div class="group"><label>จำนวน (ชม./วัน)</label><input type="number" id="batchUseHours" step="0.5" min="0.5" inputmode="decimal" placeholder="ชม."></div>
   </div>
-  <div class="group" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1)">
-    <label class="check"><input type="checkbox" id="batchEntryNight"> 🌙 เข้ากะดึก (ทุกวันที่เลือก)</label>
+
+  <div id="batchHolidayFields" class="hide">
+    <div class="group"><label>ชื่อวันหยุด</label><input type="text" id="batchHolidayName" placeholder="เช่น สงกรานต์, รัฐธรรมนูญแห่งชาติ"></div>
+    <p style="font-size:11px; color:var(--muted); margin:0 0 8px">📌 วันที่เลือกทั้งหมดจะถูกตั้งเป็นวันหยุดนักขัตฤกษ์ และแสดงผลในปฏิทินทันที</p>
   </div>
-  <div class="group" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1)">
-    <label class="check" style="color:var(--red)"><input type="checkbox" id="batchHoliday"> 🇹🇭 ตั้งเป็นวันหยุดนักขัตฤกษ์</label>
-    <input type="text" id="batchHolidayName" class="hide" placeholder="ชื่อวันหยุด (เช่น สงกรานต์)" style="margin-top:8px">
+
+  <div class="group" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(128,128,128,0.15)">
+    <label class="check"><input type="checkbox" id="batchEntryNight"> 🌙 เข้ากะดึก (ทุกวันที่เลือก)</label>
   </div>
   
   <div class="actions" style="margin-top:15px"><button class="btn danger" id="batchClearBtn">ล้างข้อมูล</button><button class="btn primary" id="batchSaveBtn">บันทึกทับทั้งหมด</button></div>
 </div></div>
+
 
 <div class="multi-select-bar" id="multiSelectActionBar">
   <div class="ms-info">
@@ -476,13 +491,13 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=30"></script>
-<script src="js/calc.js?v=30"></script>
-<script src="js/ui.js?v=30"></script>
-<script src="js/settings.js?v=30"></script>
-<script src="js/data.js?v=30"></script>
-<script src="js/tutorial.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
+<script src="js/utils.js?v=31"></script>
+<script src="js/calc.js?v=31"></script>
+<script src="js/ui.js?v=31"></script>
+<script src="js/settings.js?v=31"></script>
+<script src="js/data.js?v=31"></script>
+<script src="js/tutorial.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});

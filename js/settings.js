@@ -10,10 +10,18 @@ function openEntry(k){
   if(kind==='leave') kind='use';
   setRad('entryKind',kind);toggleEntryFields();
   $('entryNight').checked = (en && en.isNight) ? true : false;
+  var isHol = isHolidayKey(k);
+  
+  $('rateRowsContainer').innerHTML = ''; // clear rows
   if(en&&en.kind==='ot'){
-    $('entryHours').value=en.hours;setRad('multiplier',num(en.multiplier));setRad('payType',en.payType||'money');
+    var ne = normalizeEntry(en);
+    ne.rates.forEach(function(r, i) {
+       var m = num(r.multiplier);
+       if(isHol && m===1.5) m = 3;
+       addRateRow(i, r.hours, m, r.payType, isHol);
+    });
   }else{
-    $('entryHours').value='';setRad('multiplier',isHolidayKey(k)?3:1.5);setRad('payType','money');
+    addRateRow(0, '', isHol?3:1.5, 'money', isHol);
   }
   /* populate leaveType dropdown dynamically */
   var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
@@ -69,6 +77,48 @@ $('leaveType').addEventListener('change', function() {
 
 function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
 
+/* ── Multi-Rate UI Helpers ── */
+function addRateRow(index, hours, multiplier, payType, isHol) {
+  var container = $('rateRowsContainer');
+  var div = document.createElement('div');
+  div.className = 'rate-row';
+  div.setAttribute('data-rate-index', index);
+  
+  var delBtn = index > 0 ? '<button class="btn danger" onclick="this.closest(\'.rate-row\').remove(); previewEntry();" style="padding:2px 8px; font-size:12px;">ลบ</button>' : '';
+  
+  div.innerHTML = `
+    <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; margin-top:${index>0?'12px':'0'}; border-top:${index>0?'1px solid rgba(255,255,255,0.1)':'none'}; padding-top:${index>0?'8px':'0'};">
+      <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ ${index + 1}</span>
+      ${delBtn}
+    </div>
+    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" value="${hours||''}" oninput="previewEntry()"></div>
+    <div class="group"><div class="choice">
+      <label><input type="radio" name="multiplier_${index}" value="1" ${multiplier==1?'checked':''} onchange="previewEntry()"> 1.0x</label>
+      <label class="mult15Label" style="display:${isHol?'none':''}"><input type="radio" name="multiplier_${index}" value="1.5" ${multiplier==1.5?'checked':''} onchange="previewEntry()"> 1.5x</label>
+      <label><input type="radio" name="multiplier_${index}" value="3" ${multiplier==3?'checked':''} onchange="previewEntry()"> 3.0x</label>
+    </div></div>
+    <div class="group"><label>รับเป็น</label><div class="choice">
+      <label><input type="radio" name="payType_${index}" value="money" ${payType!=='leave'?'checked':''} onchange="previewEntry()"> เงิน</label>
+      <label><input type="radio" name="payType_${index}" value="leave" ${payType==='leave'?'checked':''} onchange="previewEntry()"> วันหยุด</label>
+    </div></div>
+  `;
+  container.appendChild(div);
+}
+
+if ($('addRateBtn')) {
+  $('addRateBtn').addEventListener('click', function() {
+    var container = $('rateRowsContainer');
+    var isHol = isHolidayKey(activeKey);
+    // Find next available index
+    var maxIdx = -1;
+    container.querySelectorAll('.rate-row').forEach(function(row) {
+      var idx = parseInt(row.getAttribute('data-rate-index')||0, 10);
+      if (idx > maxIdx) maxIdx = idx;
+    });
+    addRateRow(maxIdx + 1, '', isHol ? 3 : 1.5, 'money', isHol);
+  });
+}
+
 function toggleEntryFields(){
   var kind=radVal('entryKind');
   $('otFields').classList.toggle('hide',kind!=='ot');
@@ -79,13 +129,38 @@ function toggleEntryFields(){
 function previewEntry(){
   var kind=radVal('entryKind');
   if(kind==='ot'){
-    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
     var curLabel=periodLabel(currentPeriod);
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
-    var effectiveRate=rate*m;
-    $('entryPreview').innerText=pt==='money'?'= '+money(effectiveRate*h)+' (อัตรา '+effectiveRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.)':'= '+hours(h)+' ชม. สะสม';
+    
+    var totalMoney = 0;
+    var totalLeave = 0;
+    var desc = [];
+    
+    var rows = document.querySelectorAll('#rateRowsContainer .rate-row');
+    rows.forEach(function(row) {
+       var idx = row.getAttribute('data-rate-index');
+       var h = num(row.querySelector('.rateHours').value);
+       var m = num(document.querySelector('input[name="multiplier_'+idx+'"]:checked').value);
+       var pt = document.querySelector('input[name="payType_'+idx+'"]:checked').value;
+       
+       if (h > 0) {
+         if (pt === 'money') {
+            var effectiveRate = rate * m;
+            totalMoney += effectiveRate * h;
+            desc.push(h + 'ชม.×' + m + 'x');
+         } else {
+            totalLeave += h;
+         }
+       }
+    });
+    
+    var txts = [];
+    if (totalMoney > 0) txts.push('= ' + money(totalMoney) + (desc.length ? ' (' + desc.join(', ') + ')' : ''));
+    if (totalLeave > 0) txts.push('= ' + hours(totalLeave) + ' ชม. สะสม');
+    
+    $('entryPreview').innerText = txts.length ? txts.join(' และ ') : '';
   }else if(kind==='use'){
     var lt=$('leaveType').value;
     var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
@@ -109,19 +184,50 @@ function saveEntry(){
   var data=getCal(), kind=radVal('entryKind');
   var isNight = $('entryNight').checked;
   if(kind==='ot'){
-    var h=num($('entryHours').value), m=num(radVal('multiplier')), pt=radVal('payType');
-    if(h<=0 && !isNight){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง หรือเลือกลบรายการนี้');return}
     var curLabel=periodLabel(currentPeriod);
     var kpiBonusPct=getKpiBonusPct(curLabel);
     if(isNaN(kpiBonusPct))kpiBonusPct=0;
     var rate=getHourlyRate(kpiBonusPct);
     
-    if(h<=0 && isNight){
-      data[activeKey]={kind:'ot',payType:'money',rate:rate,hours:0,multiplier:1,total:0,isNight:true};
+    var ratesArr = [];
+    var totalH = 0;
+    var hasHolidayMultiplier = false;
+    var rows = document.querySelectorAll('#rateRowsContainer .rate-row');
+    rows.forEach(function(row) {
+       var idx = row.getAttribute('data-rate-index');
+       var h = num(row.querySelector('.rateHours').value);
+       var m = num(document.querySelector('input[name="multiplier_'+idx+'"]:checked').value);
+       var pt = document.querySelector('input[name="payType_'+idx+'"]:checked').value;
+       
+       if (h > 0) {
+         if (m === 1 || m === 3) hasHolidayMultiplier = true;
+         ratesArr.push({
+            hours: h,
+            multiplier: m,
+            payType: pt,
+            rate: rate,
+            total: pt === 'money' ? (rate * h * m) : 0,
+            credit: pt === 'leave' ? h : 0,
+            kpiBonusPctAtSave: kpiBonusPct
+         });
+         totalH += h;
+       }
+    });
+    
+    if (hasHolidayMultiplier) {
+      var hList = getHolidays();
+      if (!hList.find(function(x) { return x.date === activeKey; })) {
+        hList.push({ date: activeKey, name: 'วันหยุดนักขัตฤกษ์' });
+        setHolidays(hList);
+      }
+    }
+    
+    if(totalH<=0 && !isNight){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง หรือเลือกลบรายการนี้');return}
+    
+    if(totalH<=0 && isNight){
+      data[activeKey]={kind:'ot', rates: [], isNight:true};
     } else {
-      data[activeKey]=pt==='money'
-        ?{kind:'ot',payType:'money',rate:rate,hours:h,multiplier:m,total:rate*h*m,kpiBonusPctAtSave:kpiBonusPct,isNight:isNight}
-        :{kind:'ot',payType:'leave',hours:h,multiplier:m,credit:h,isNight:isNight};
+      data[activeKey]={kind:'ot', rates: ratesArr, isNight:isNight};
     }
   }else{
     var uh=num($('useHours').value);
