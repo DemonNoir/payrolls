@@ -987,15 +987,24 @@ function saveBatchEdit() {
   const isNight = $('batchEntryNight').checked;
 
   if (isHoliday) {
-    // บันทึกวันหยุดนักขัตฤกษ์ (ไม่แตะข้อมูล OT/ลา)
     const holidayNameStr = ($('batchHolidayName').value || '').trim() || 'วันหยุดนักขัตฤกษ์';
     let h = getHolidays();
+    let data = getCal();
     window.selectedDates.forEach(k => {
+      // บันทึกวันหยุด
       const ex = h.find(x => x.date === k);
       if (ex) { ex.name = holidayNameStr; }
       else { h.push({ date: k, name: holidayNameStr }); }
+      
+      // บันทึกกะดึกถ้าเลือก
+      if (isNight) {
+        if (data[k]) { data[k].isNight = true; }
+        else { data[k] = { kind: 'ot', rates: [], isNight: true }; }
+      }
     });
     setHolidays(h);
+    if (isNight) saveCal(data);
+    
     renderCalendar();
     $('batchEditOverlay').classList.remove('show');
     exitMultiSelectMode();
