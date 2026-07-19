@@ -86,7 +86,14 @@ function renderCalendar(){
     var isStart=(set.startDate&&k===set.startDate);
     var isNight=(en&&en.isNight)?'<span style="position:absolute;top:2px;right:4px;font-size:12px;">🌙</span>':'';
     cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
-    cell.onclick=(function(key){return function(){openEntry(key)}})(k);
+    cell.setAttribute('data-date', k);
+    cell.onclick=(function(key){return function(){
+      if(window.multiSelectMode) {
+        toggleMultiSelect(key, this);
+      } else {
+        openEntry(key);
+      }
+    }})(k);
     grid.appendChild(cell);
     cur=addDays(cur,1);
   }
@@ -647,3 +654,292 @@ function drawAreaChart(canvas,labels,values,colorVar,isMoney){
   ctx.fill();
 }
 
+
+
+/* ==================================================
+   Long-Press Multi-Select Logic
+================================================== */
+window.multiSelectMode = false;
+window.selectedDates = new Set();
+let longPressTimer = null;
+let touchMoved = false;
+let startCell = null;
+let gridRect = null;
+
+function toggleMultiSelect(dateKey, cellElement) {
+  if (window.selectedDates.has(dateKey)) {
+    window.selectedDates.delete(dateKey);
+    cellElement.classList.remove('selected');
+  } else {
+    window.selectedDates.add(dateKey);
+    cellElement.classList.add('selected');
+  }
+  updateActionBar();
+}
+
+function updateActionBar() {
+  const bar = $('multiSelectActionBar');
+  if (!bar) return;
+  const count = window.selectedDates.size;
+  $('msCountLabel').innerText = 'เลือกแล้ว ' + count + ' วัน';
+  if (count === 0 && window.multiSelectMode) {
+    // Keep mode active but show 0
+  }
+}
+
+function enterMultiSelectMode(cell, dateKey) {
+  if (window.multiSelectMode) return;
+  window.multiSelectMode = true;
+  
+  if (navigator.vibrate) {
+    navigator.vibrate(50);
+  }
+  
+  $('multiSelectActionBar').classList.add('show');
+  
+  // Select the initial cell
+  if (!window.selectedDates.has(dateKey)) {
+    window.selectedDates.add(dateKey);
+    cell.classList.add('selected');
+  }
+  updateActionBar();
+}
+
+function exitMultiSelectMode() {
+  window.multiSelectMode = false;
+  window.selectedDates.clear();
+  $('multiSelectActionBar').classList.remove('show');
+  const cells = document.querySelectorAll('.cell.selected');
+  cells.forEach(c => c.classList.remove('selected'));
+}
+
+function initMultiSelect() {
+  const grid = $('calendarGrid');
+  if (!grid) return;
+  
+  function getCellFromEvent(e) {
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    const el = document.elementFromPoint(clientX, clientY);
+    if (el && el.closest('.cell')) {
+      return el.closest('.cell');
+    }
+    return null;
+  }
+  
+  function handleDown(e) {
+    if (e.touches && e.touches.length > 1) return; // ignore multi-touch
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    
+    const dateKey = cell.getAttribute('data-date');
+    if (!dateKey) return;
+    
+    touchMoved = false;
+    startCell = cell;
+    
+    if (!window.multiSelectMode) {
+      longPressTimer = setTimeout(() => {
+        enterMultiSelectMode(cell, dateKey);
+      }, 450); // 450ms long press
+    } else {
+      // already in multi-select mode, dragging will just select
+    }
+  }
+  
+  function handleMove(e) {
+    touchMoved = true;
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    
+    if (window.multiSelectMode) {
+      // Avoid default scroll ONLY if moving on calendar in multi-select mode
+      e.preventDefault(); 
+      
+      const cell = getCellFromEvent(e);
+      if (cell) {
+        const dateKey = cell.getAttribute('data-date');
+        if (dateKey && !window.selectedDates.has(dateKey)) {
+          window.selectedDates.add(dateKey);
+          cell.classList.add('selected');
+          updateActionBar();
+        }
+      }
+      
+      // Auto-scroll logic (basic)
+      let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      if (clientY < 100) {
+        window.scrollBy(0, -10);
+      } else if (clientY > window.innerHeight - 100) {
+        window.scrollBy(0, 10);
+      }
+    }
+  }
+  
+  function handleUp(e) {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  grid.addEventListener('touchstart', handleDown, { passive: false });
+  grid.addEventListener('touchmove', handleMove, { passive: false });
+  grid.addEventListener('touchend', handleUp);
+  grid.addEventListener('touchcancel', handleUp);
+  
+  grid.addEventListener('mousedown', handleDown);
+  window.addEventListener('mousemove', (e) => {
+    if (e.buttons === 1) handleMove(e); // only if mouse is down
+  });
+  window.addEventListener('mouseup', handleUp);
+  
+  // Bind actions
+  $('msCancelBtn').onclick = exitMultiSelectMode;
+  $('msEditBtn').onclick = openBatchEdit;
+  $('closeBatchEditTopBtn').onclick = () => { $('batchEditOverlay').classList.remove('show'); };
+  
+  // Batch Form Toggles
+  $('batchEntryKind').parentNode.parentNode.onchange = (e) => {
+    if (e.target.name === 'batchEntryKind') {
+      if (e.target.value === 'ot') {
+        $('batchOtFields').classList.remove('hide');
+        $('batchUseFields').classList.add('hide');
+      } else {
+        $('batchOtFields').classList.add('hide');
+        $('batchUseFields').classList.remove('hide');
+      }
+    }
+  };
+  
+  $('batchHoliday').onchange = (e) => {
+    if (e.target.checked) {
+      $('batchHolidayName').classList.remove('hide');
+    } else {
+      $('batchHolidayName').classList.add('hide');
+    }
+  };
+  
+  $('batchClearBtn').onclick = () => {
+    if(confirm('ยืนยันการล้างข้อมูลทั้งหมดใน ' + window.selectedDates.size + ' วันที่เลือก?')) {
+      let data = getCal();
+      window.selectedDates.forEach(k => {
+        delete data[k];
+      });
+      saveCal(data);
+      renderCalendar();
+      $('batchEditOverlay').classList.remove('show');
+      exitMultiSelectMode();
+    }
+  };
+  
+  $('batchSaveBtn').onclick = saveBatchEdit;
+}
+
+// Override init() to add initMultiSelect
+const originalInit = window.onload;
+window.onload = function() {
+  if (originalInit) originalInit();
+  initMultiSelect();
+  
+  // Populate leave types in batch modal
+  const batchLt = $('batchLeaveType');
+  if (batchLt) {
+    batchLt.innerHTML = '';
+    const types = getLeaveTypes();
+    types.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.innerText = t.name;
+      batchLt.appendChild(opt);
+    });
+  }
+};
+
+function openBatchEdit() {
+  if (window.selectedDates.size === 0) {
+    alert('กรุณาเลือกอย่างน้อย 1 วัน');
+    return;
+  }
+  
+  // Warning check
+  let countExisting = 0;
+  let data = getCal();
+  window.selectedDates.forEach(k => {
+    if (data[k]) countExisting++;
+  });
+  
+  if (countExisting > 0) {
+    $('batchEditWarning').innerText = '⚠️ มี ' + countExisting + ' วันที่มีข้อมูลอยู่แล้ว (การบันทึกจะเขียนทับข้อมูลเดิม)';
+  } else {
+    $('batchEditWarning').innerText = '⚠️ การบันทึกนี้จะเขียนทับข้อมูลเดิมทั้งหมดในวันที่เลือก';
+  }
+  
+  $('batchEditTitle').innerText = 'แก้ไข ' + window.selectedDates.size + ' วัน';
+  $('batchEditOverlay').classList.add('show');
+}
+
+function saveBatchEdit() {
+  const isOT = document.querySelector('input[name="batchEntryKind"]:checked').value === 'ot';
+  let hoursVal = isOT ? parseFloat($('batchEntryHours').value) : parseFloat($('batchUseHours').value);
+  const mult = parseFloat(document.querySelector('input[name="batchMultiplier"]:checked').value);
+  const payType = document.querySelector('input[name="batchPayType"]:checked').value;
+  const isNight = $('batchEntryNight').checked;
+  const isHoliday = $('batchHoliday').checked;
+  const holidayNameStr = $('batchHolidayName').value.trim();
+  const leaveType = $('batchLeaveType').value;
+  
+  if (isNaN(hoursVal) || hoursVal <= 0) hoursVal = 0; // Allow 0 hours if they just want to set night shift or holiday
+  
+  // If they are just setting holiday or night shift and OT hours = 0, that's fine.
+  // But if they picked 'use' (Leave) and hours = 0, warn them.
+  if (!isOT && hoursVal <= 0 && !isHoliday && !isNight) {
+    alert('กรุณาระบุจำนวนชั่วโมงที่ใช้');
+    return;
+  }
+
+  let data = getCal();
+  let set = settings();
+  
+  window.selectedDates.forEach(k => {
+    if (isHoliday) {
+      if (!set.holidays) set.holidays = [];
+      const ex = set.holidays.find(h => h.date === k);
+      if (ex) {
+         ex.name = holidayNameStr || 'วันหยุดนักขัตฤกษ์';
+      } else {
+         set.holidays.push({ date: k, name: holidayNameStr || 'วันหยุดนักขัตฤกษ์' });
+      }
+    }
+    
+    // The user said "Overwrite all". So we replace the entry entirely.
+    if (isOT && hoursVal > 0) {
+      data[k] = { kind: 'ot', hours: hoursVal, multiplier: mult, payType: payType, isNight: isNight };
+    } else if (!isOT && hoursVal > 0) {
+      data[k] = { kind: 'use', hours: hoursVal, leaveType: leaveType, isNight: isNight };
+    } else if (isNight) {
+      // Just night shift
+      data[k] = { kind: 'ot', hours: 0, multiplier: 1, payType: 'money', isNight: true };
+    } else {
+      // If hours is 0, and not night shift, we just delete the entry. (Only holiday remains)
+      delete data[k];
+    }
+  });
+  
+  if (isHoliday) {
+    saveSettings(set);
+  }
+  
+  saveCal(data);
+  renderCalendar();
+  $('batchEditOverlay').classList.remove('show');
+  exitMultiSelectMode();
+}
