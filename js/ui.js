@@ -80,9 +80,8 @@ function renderCalendar(){
               
               var m = num(r.multiplier);
               primaryMult = m;
-              var multStr = (m !== 1.5) ? ' (' + m + 'x)' : '';
               var bCls = (r.payType === 'leave' ? 'leave ' : '') + ((m === 1) ? 'm1' : (m === 3 ? 'm3' : ''));
-              badgeParts.push('<span class="badge '+bCls+'" style="display:block; margin-top:2px; font-size:9px">'+hours(h) + ' ชม.' + multStr+'</span>');
+              badgeParts.push('<span class="badge '+bCls+'" style="display:block; margin-top:2px; font-size:9px">'+hours(h) + ' ชม.</span>');
            }
         });
       }
@@ -944,10 +943,8 @@ function openBatchEdit() {
   document.querySelector('input[name="batchEntryKind"][value="ot"]').checked = true;
   $('batchOtFields').classList.remove('hide');
   $('batchUseFields').classList.add('hide');
-  $('batchEntryHours').value = '';
   $('batchUseHours').value = '';
-  document.querySelector('input[name="batchMultiplier"][value="1.5"]').checked = true;
-  document.querySelector('input[name="batchPayType"][value="money"]').checked = true;
+  
   $('batchEntryNight').checked = false;
   $('batchHolidayName').value = '';
   // Hide holiday fields on reset
@@ -955,12 +952,14 @@ function openBatchEdit() {
 
   // ซ่อน 1.5x ถ้าทุกวันที่เลือกเป็นวันหยุด (ไม่มีค่า 1.5x ในวันหยุด)
   const allHoliday = [...window.selectedDates].every(k => isHolidayKey(k));
-  if ($('batchMult15Label')) {
-    $('batchMult15Label').style.display = allHoliday ? 'none' : '';
-  }
-  // ถ้า 1.5x ซ่อนอยู่และยังถูก checked → reset เป็น 3x
-  if (allHoliday) {
-    document.querySelector('input[name="batchMultiplier"][value="3"]').checked = true;
+  
+  // Clear and add first default rate row for batch edit
+  const batchContainer = $('batchRateRowsContainer');
+  if (batchContainer) {
+    batchContainer.innerHTML = '';
+    if (typeof addRateRow === 'function') {
+      addRateRow(0, '', allHoliday ? 3 : 1.5, 'money', allHoliday, 'batchRateRowsContainer', 'batch_');
+    }
   }
 
   $('batchEditOverlay').classList.add('show');
@@ -999,10 +998,35 @@ function saveBatchEdit() {
     return;
   }
 
-  let hoursVal = isOT ? parseFloat($('batchEntryHours').value) : parseFloat($('batchUseHours').value);
-  const mult = parseFloat(document.querySelector('input[name="batchMultiplier"]:checked').value);
-  const payType = document.querySelector('input[name="batchPayType"]:checked').value;
+  }
+
+  let hoursVal = isUse ? parseFloat($('batchUseHours').value) : 0;
   const leaveType = $('batchLeaveType').value;
+  
+  var ratesArr = [];
+  var totalBatchH = 0;
+  var hasHolidayMultiplier = false;
+
+  if (isOT) {
+    var rows = document.querySelectorAll('#batchRateRowsContainer .rate-row');
+    rows.forEach(function(row) {
+       var idx = row.getAttribute('data-rate-index');
+       var h = num(row.querySelector('.rateHours').value);
+       var multInput = document.querySelector('input[name="batch_multiplier_'+idx+'"]:checked');
+       var payInput = document.querySelector('input[name="batch_payType_'+idx+'"]:checked');
+       if(multInput && payInput && h > 0){
+          var m = num(multInput.value);
+          var pt = payInput.value;
+          if (m === 1 || m === 3) hasHolidayMultiplier = true;
+          ratesArr.push({
+             hours: h,
+             multiplier: m,
+             payType: pt
+          });
+          totalBatchH += h;
+       }
+    });
+  }
 
   if (isNaN(hoursVal) || hoursVal <= 0) hoursVal = 0;
 
@@ -1013,7 +1037,7 @@ function saveBatchEdit() {
   }
 
   // ถ้าเลือก OT แต่ไม่ได้กรอกชั่วโมงและไม่ได้ติ๊กกะดึก → ไม่ทำอะไร
-  if (isOT && hoursVal <= 0 && !isNight) {
+  if (isOT && totalBatchH <= 0 && !isNight) {
     alert('กรุณาระบุชั่วโมง OT หรือติ๊กเข้ากะดึก');
     return;
   }
@@ -1023,9 +1047,9 @@ function saveBatchEdit() {
   let updatedHolidays = false;
 
   window.selectedDates.forEach(k => {
-    if (isOT && hoursVal > 0) {
+    if (isOT && totalBatchH > 0) {
       // Auto mark holiday for 1.0x or 3.0x
-      if (mult === 1 || mult === 3) {
+      if (hasHolidayMultiplier) {
         if (!hList.find(x => x.date === k)) {
           hList.push({ date: k, name: 'วันหยุดนักขัตฤกษ์' });
           updatedHolidays = true;
@@ -1033,9 +1057,27 @@ function saveBatchEdit() {
       }
       
       // OT mode: เขียนทับ พร้อม isNight (เซฟเป็น format rates[])
+      // Note: total / credit will be computed dynamically in getCal / periodStats if not present, or we can leave them out and let periodStats calculate them.
+      // Wait, saveEntry calculates rate and total right away. We should probably do that too.
+      var curLabel = periodLabel(currentPeriod);
+      var kpiBonusPct = typeof getKpiBonusPct === 'function' ? getKpiBonusPct(curLabel) : 0;
+      var rate = typeof getHourlyRate === 'function' ? getHourlyRate(kpiBonusPct) : 0;
+      
+      var finalRates = ratesArr.map(function(r) {
+         return {
+            hours: r.hours,
+            multiplier: r.multiplier,
+            payType: r.payType,
+            rate: rate,
+            total: r.payType === 'money' ? (rate * r.hours * r.multiplier) : 0,
+            credit: r.payType === 'leave' ? r.hours : 0,
+            kpiBonusPctAtSave: kpiBonusPct
+         };
+      });
+      
       data[k] = { 
         kind: 'ot', 
-        rates: [{ hours: hoursVal, multiplier: mult, payType: payType }], 
+        rates: finalRates, 
         isNight: isNight 
       };
     } else if (isUse && hoursVal > 0) {

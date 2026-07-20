@@ -78,28 +78,32 @@ $('leaveType').addEventListener('change', function() {
 function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
 
 /* ── Multi-Rate UI Helpers ── */
-function addRateRow(index, hours, multiplier, payType, isHol) {
-  var container = $('rateRowsContainer');
+function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefix) {
+  var container = $(containerId || 'rateRowsContainer');
+  if(!container) return;
+  var pfx = prefix || '';
   var div = document.createElement('div');
   div.className = 'rate-row';
   div.setAttribute('data-rate-index', index);
   
-  var delBtn = index > 0 ? '<button class="btn danger" onclick="this.closest(\'.rate-row\').remove(); previewEntry();" style="padding:2px 8px; font-size:12px;">ลบ</button>' : '';
+  var delBtn = index > 0 ? '<button class="btn danger" onclick="this.closest(\'.rate-row\').remove(); if(typeof previewEntry === \'function\'){previewEntry();}" style="padding:2px 8px; font-size:12px;">ลบ</button>' : '';
+  var onchangeStr = containerId === 'batchRateRowsContainer' ? '' : 'onchange="previewEntry()"';
+  var oninputStr = containerId === 'batchRateRowsContainer' ? '' : 'oninput="previewEntry()"';
   
   div.innerHTML = `
     <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; margin-top:${index>0?'12px':'0'}; border-top:${index>0?'1px solid rgba(255,255,255,0.1)':'none'}; padding-top:${index>0?'8px':'0'};">
       <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ ${index + 1}</span>
       ${delBtn}
     </div>
-    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" value="${hours||''}" oninput="previewEntry()"></div>
+    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" value="${hours||''}" ${oninputStr}></div>
     <div class="group"><div class="choice">
-      <label><input type="radio" name="multiplier_${index}" value="1" ${multiplier==1?'checked':''} onchange="previewEntry()"> 1.0x</label>
-      <label class="mult15Label" style="display:${isHol?'none':''}"><input type="radio" name="multiplier_${index}" value="1.5" ${multiplier==1.5?'checked':''} onchange="previewEntry()"> 1.5x</label>
-      <label><input type="radio" name="multiplier_${index}" value="3" ${multiplier==3?'checked':''} onchange="previewEntry()"> 3.0x</label>
+      <label><input type="radio" name="${pfx}multiplier_${index}" value="1" ${multiplier==1?'checked':''} ${onchangeStr}> 1.0x</label>
+      <label class="${pfx}mult15Label" style="display:${isHol?'none':''}"><input type="radio" name="${pfx}multiplier_${index}" value="1.5" ${multiplier==1.5?'checked':''} ${onchangeStr}> 1.5x</label>
+      <label><input type="radio" name="${pfx}multiplier_${index}" value="3" ${multiplier==3?'checked':''} ${onchangeStr}> 3.0x</label>
     </div></div>
     <div class="group"><label>รับเป็น</label><div class="choice">
-      <label><input type="radio" name="payType_${index}" value="money" ${payType!=='leave'?'checked':''} onchange="previewEntry()"> เงิน</label>
-      <label><input type="radio" name="payType_${index}" value="leave" ${payType==='leave'?'checked':''} onchange="previewEntry()"> วันหยุด</label>
+      <label><input type="radio" name="${pfx}payType_${index}" value="money" ${payType!=='leave'?'checked':''} ${onchangeStr}> เงิน</label>
+      <label><input type="radio" name="${pfx}payType_${index}" value="leave" ${payType==='leave'?'checked':''} ${onchangeStr}> วันหยุด</label>
     </div></div>
   `;
   container.appendChild(div);
@@ -116,6 +120,19 @@ if ($('addRateBtn')) {
       if (idx > maxIdx) maxIdx = idx;
     });
     addRateRow(maxIdx + 1, '', isHol ? 3 : 1.5, 'money', isHol);
+  });
+}
+
+if ($('addBatchRateBtn')) {
+  $('addBatchRateBtn').addEventListener('click', function() {
+    var container = $('batchRateRowsContainer');
+    const allHoliday = [...window.selectedDates].every(k => isHolidayKey(k));
+    var maxIdx = -1;
+    container.querySelectorAll('.rate-row').forEach(function(row) {
+      var idx = parseInt(row.getAttribute('data-rate-index')||0, 10);
+      if (idx > maxIdx) maxIdx = idx;
+    });
+    addRateRow(maxIdx + 1, '', allHoliday ? 3 : 1.5, 'money', allHoliday, 'batchRateRowsContainer', 'batch_');
   });
 }
 
