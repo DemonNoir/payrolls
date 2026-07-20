@@ -998,8 +998,6 @@ function saveBatchEdit() {
     return;
   }
 
-  }
-
   let hoursVal = isUse ? parseFloat($('batchUseHours').value) : 0;
   const leaveType = $('batchLeaveType').value;
   
