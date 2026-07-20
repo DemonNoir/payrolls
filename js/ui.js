@@ -881,7 +881,7 @@ function initMultiSelect() {
       window.selectedDates.forEach(k => {
         delete data[k];
       });
-      saveCal(data);
+      setCal(data);
       renderCalendar();
       $('batchEditOverlay').classList.remove('show');
       exitMultiSelectMode();
@@ -996,7 +996,7 @@ function saveBatchEdit() {
       }
     });
     setHolidays(h);
-    if (isNight) saveCal(data);
+    if (isNight) setCal(data);
     
     renderCalendar();
     $('batchEditOverlay').classList.remove('show');
@@ -1059,7 +1059,7 @@ function saveBatchEdit() {
   });
 
   if (updatedHolidays) setHolidays(hList);
-  saveCal(data);
+  setCal(data);
   renderCalendar();
   $('batchEditOverlay').classList.remove('show');
   exitMultiSelectMode();
