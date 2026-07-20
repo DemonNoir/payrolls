@@ -79,23 +79,18 @@ function renderCalendar(){
               else hasMoney = true;
               
               var m = num(r.multiplier);
-              primaryMult = m; // roughly track last mult
-              var multStr = (m !== 1.5) ? '×' + m : '';
-              badgeParts.push(hours(h) + 'h' + multStr);
+              primaryMult = m;
+              var multStr = (m !== 1.5) ? ' (' + m + 'x)' : '';
+              var bCls = (r.payType === 'leave' ? 'leave ' : '') + ((m === 1) ? 'm1' : (m === 3 ? 'm3' : ''));
+              badgeParts.push('<span class="badge '+bCls+'" style="display:block; margin-top:2px; font-size:9px">'+hours(h) + ' ชม.' + multStr+'</span>');
            }
         });
       }
       
       cls+=' '+(hasLeave && !hasMoney ? 'leave' : 'money');
-      var multCls = '';
-      if (ne && ne.rates && ne.rates.length === 1) {
-         multCls = primaryMult===1?' m1':(primaryMult===3?' m3':'');
-      } else if (ne && ne.rates && ne.rates.length > 1) {
-         multCls = ' m3'; // highlight mixed rates with red border for visibility
-      }
       
       if (totalH > 0) {
-        badge='<span class="badge '+(hasLeave && !hasMoney ? 'leave ':'')+multCls+'" style="font-size:10px">'+badgeParts.join('+')+'</span>';
+        badge=badgeParts.join('');
       }
     }else if(en&&en.kind==='use'){
       var lt=en.leaveType||'_legacy';
