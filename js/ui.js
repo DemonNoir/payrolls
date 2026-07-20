@@ -951,7 +951,7 @@ function openBatchEdit() {
   $('batchUseFields').classList.add('hide');
   $('batchEntryHours').value = '';
   $('batchUseHours').value = '';
-  document.querySelector('input[name="batchMultiplier"][value="1"]').checked = true;
+  document.querySelector('input[name="batchMultiplier"][value="1.5"]').checked = true;
   document.querySelector('input[name="batchPayType"][value="money"]').checked = true;
   $('batchEntryNight').checked = false;
   $('batchHolidayName').value = '';
@@ -963,9 +963,9 @@ function openBatchEdit() {
   if ($('batchMult15Label')) {
     $('batchMult15Label').style.display = allHoliday ? 'none' : '';
   }
-  // ถ้า 1.5x ซ่อนอยู่และยังถูก checked → reset เป็น 1x
+  // ถ้า 1.5x ซ่อนอยู่และยังถูก checked → reset เป็น 3x
   if (allHoliday) {
-    document.querySelector('input[name="batchMultiplier"][value="1"]').checked = true;
+    document.querySelector('input[name="batchMultiplier"][value="3"]').checked = true;
   }
 
   $('batchEditOverlay').classList.add('show');
