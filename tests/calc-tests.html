@@ -283,6 +283,73 @@ var st12 = periodStats(pFuture);
 assert('realtime mode → OT ในอนาคตไม่ถูกนับ', st12.otHours, 0);
 
 /* ═══════════════════════════════════════════════════════════
+ * TEST 8: Payday Weekend Shift — วันเสาร์/อาทิตย์ เลื่อนเป็นวันศุกร์
+ * ═══════════════════════════════════════════════════════════ */
+section('Payday Weekend Shift — วันเสาร์/อาทิตย์ เลื่อนเป็นวันศุกร์');
+
+/* 25 กรกฎาคม 2569 (2026-07-25) ตรงกับวันเสาร์ */
+var actualPaydaySat = getActualPaydayDate(2026, 6, 25);
+assert('25 ก.ค. 2026 (วันเสาร์) → เลื่อนเป็นวันศุกร์ที่ 24 ก.ค.', actualPaydaySat.getDate(), 24);
+
+/* 25 ตุลาคม 2569 (2026-10-25) ตรงกับวันอาทิตย์ */
+var actualPaydaySun = getActualPaydayDate(2026, 9, 25);
+assert('25 ต.ค. 2026 (วันอาทิตย์) → เลื่อนเป็นวันศุกร์ที่ 23 ต.ค.', actualPaydaySun.getDate(), 23);
+
+/* 25 สิงหาคม 2569 (2026-08-25) ตรงกับวันอังคาร (วันธรรมดา) */
+var actualPaydayWeekday = getActualPaydayDate(2026, 7, 25);
+assert('25 ส.ค. 2026 (วันอังคาร) → วันเดิมที่ 25 ส.ค.', actualPaydayWeekday.getDate(), 25);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 9: Dual-Mode KPI — จำนวนเงิน (฿) และ เปอร์เซ็นต์ (%)
+ * ═══════════════════════════════════════════════════════════ */
+section('Dual-Mode KPI — จำนวนเงิน (฿) และ เปอร์เซ็นต์ (%)');
+
+Storage.reset(defaultSettings());
+savePeriodSettings({ end: new Date(2026, 6, 15) }, {
+  salaryBase: 12000,
+  kpiType: 'amount',
+  kpiValue: 1500,
+  kpiBonusType: 'percent',
+  kpiBonusValue: 5
+});
+var pKpi = { start: new Date(2026, 5, 16), end: new Date(2026, 6, 15) };
+var stKpi = periodStats(pKpi);
+/* base = 12000 + 1500 (fixed THB) + (12000 * 0.05 = 600) = 14100 */
+assert('KPI Daily 1500 บาท + Bonus 5% (600) → KPI Total Money = 2100', stKpi.kpiTotalMoney, 2100);
+/* rate = ceil(14100 / 30 / 8 * 100) / 100 = ceil(58.75 * 100) / 100 = 58.75 */
+assert('Hourly rate คำนวณถูกต้องจาก KPI แบบผสม = 58.75 บาท/ชม.', stKpi.hourlyRate, 58.75);
+
+/* ═══════════════════════════════════════════════════════════
+ * TEST 10: Billing-Cycle Versioned Settings — สืบทอดไปอนาคต
+ * ═══════════════════════════════════════════════════════════ */
+section('Billing-Cycle Versioned Settings — สืบทอดไปอนาคต');
+
+Storage.reset(defaultSettings());
+/* ตั้งค่าในรอบ มิ.ย. 2026 (ตัดรอบ 15 มิ.ย. 2026): เงินเดือน = 15000 */
+var pJune = { start: new Date(2026, 4, 16), end: new Date(2026, 5, 15) };
+savePeriodSettings(pJune, { salaryBase: 15000, cutoff: 15 });
+
+/* ตรวจสอบรอบ มิ.ย. 2026 */
+var stJune = periodStats(pJune);
+assert('รอบ มิ.ย. 2026 ได้เงินเดือน 15000', stJune.proratedSalary, 15000);
+
+/* ตรวจสอบรอบ ก.ค. 2026 (ยังไม่ได้ตั้งใหม่) → ต้องสืบทอด 15000 จาก มิ.ย. */
+var pJuly2 = { start: new Date(2026, 5, 16), end: new Date(2026, 6, 15) };
+var stJuly2 = periodStats(pJuly2);
+assert('รอบ ก.ค. 2026 สืบทอดเงินเดือน 15000 จาก มิ.ย.', stJuly2.proratedSalary, 15000);
+
+/* ตั้งค่าใหม่ในรอบ ก.ค. 2026: เงินเดือน = 18000 */
+savePeriodSettings(pJuly2, { salaryBase: 18000 });
+
+/* ตรวจสอบรอบ ก.ค. 2026 หลังตั้งใหม่ → ต้องเป็น 18000 */
+var stJulyAfter = periodStats(pJuly2);
+assert('รอบ ก.ค. 2026 หลังอัปเดต ได้เงินเดือน 18000', stJulyAfter.proratedSalary, 18000);
+
+/* ตรวจสอบรอบ มิ.ย. 2026 ย้อนหลัง → ต้องยังคงเป็น 15000 ไม่ถูกกระทบ */
+var stJuneRetro = periodStats(pJune);
+assert('รอบ มิ.ย. 2026 ย้อนหลัง ไม่ถูกกระทบ ยังเป็น 15000 เท่าเดิม', stJuneRetro.proratedSalary, 15000);
+
+/* ═══════════════════════════════════════════════════════════
  * สรุปผล
  * ═══════════════════════════════════════════════════════════ */
 var total = _passed + _failed;

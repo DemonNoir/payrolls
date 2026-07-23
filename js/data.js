@@ -1,10 +1,10 @@
 /* ── Export / Import ── */
 function exportData(){
-  /* รวบรวม kpi_bonus_pct keys และ work_days keys ทั้งหมด */
+  /* รวบรวม kpi_bonus_pct, period_settings, pp_ และ work_days keys ทั้งหมด */
   var extraKeys={};
   for(var i=0;i<localStorage.length;i++){
     var k=localStorage.key(i);
-    if(k&&(k.indexOf('kpi_bonus_pct:')=== 0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0)){
+    if(k&&(k.indexOf('kpi_bonus_pct:')=== 0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0||k.indexOf('period_settings:')===0)){
       extraKeys[k]=getLS(k);
     }
   }
@@ -73,9 +73,9 @@ function importFile(ev){
         if(k==='ot_cal'||k==='holidays'||typeof incoming[k]==='undefined'||incoming[k]===null)return;
         if(allowedKeys.indexOf(k)>=0)setLS(k,incoming[k]);
       });
-      /* restore extra keys (kpi_bonus_pct / work_days / pp_*) */
+      /* restore extra keys (kpi_bonus_pct / work_days / pp_* / period_settings:*) */
       Object.keys(extraData).forEach(function(k){
-        if((k.indexOf('kpi_bonus_pct:')===0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0)&&extraData[k]!==null)setLS(k,extraData[k]);
+        if((k.indexOf('kpi_bonus_pct:')===0||k.indexOf('work_days:')===0||k.indexOf('pp_')===0||k.indexOf('period_settings:')===0)&&extraData[k]!==null)setLS(k,extraData[k]);
       });
       if(incoming.social_security!==undefined)setLS('ot_ss',incoming.social_security);
       if(incoming.tax!==undefined)setLS('ot_tax',incoming.tax);

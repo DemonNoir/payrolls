@@ -141,21 +141,28 @@ function renderCalendar(){
 
 function renderDashboard(){
   var curLabel=periodLabel(currentPeriod);
-  var kpiBonusPct=getKpiBonusPct(curLabel);
-  if(isNaN(kpiBonusPct))kpiBonusPct=0;
-  var st=periodStats(currentPeriod), s=settings();
+  var st=periodStats(currentPeriod), s=settings(currentPeriod);
 
   $('dashOt').innerText=hours(st.otHours)+' ชม.';
   $('dashOtPay').innerText=money(st.otPay);
   var banks = getBanks();
   $('dashBank').innerText=hours(banks.ot)+' / '+hours(banks.annual)+' ชม.';
-  $('dashKpi').innerText=hours(st.kpiDailyPct)+' + '+hours(kpiBonusPct)+'%';
+  
+  var kpiDailyStr = (st.kpiDailyType === 'amount') ? money(st.kpiDailyMoney) : (hours(st.kpiDailyPct) + '%');
+  var kpiBonusStr = (st.kpiBonusType === 'amount') ? money(st.kpiBonusMoney) : (hours(st.kpiBonusPct) + '%');
+  $('dashKpi').innerText = kpiDailyStr + ' + ' + kpiBonusStr;
   $('dashKpiAmt').innerText=money(st.kpiTotalMoney)+' (KPI รวม)';
-  $('dashPayday').innerText=paydayCountdown()+' วัน';
+  
+  var now = new Date();
+  var actualPayday = getActualPaydayDate(now.getFullYear(), now.getMonth(), s.payday || 25);
+  var isShifted = (actualPayday.getDate() !== (s.payday || 25));
+  var paydayDays = paydayCountdown();
+  $('dashPayday').innerText = paydayDays + ' วัน' + (isShifted ? ' (เลื่อนเป็นศุกร์ ' + actualPayday.getDate() + ' ' + MS[actualPayday.getMonth()] + ')' : '');
+  
   $('dashNet').innerText=money(st.net);
   $('dashNetSub').innerText='รายได้ประจำ '+money(st.base)+' + OT '+money(st.otPay)+' + สวัสดิการ '+money(st.welfare.total)+' - รายการหัก '+money(st.deductions.total);
   $('dashHourlyRate').innerText=s.salaryBase>0?(st.hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'— (ยังไม่ตั้งเงินเดือน)';
-  $('dashRateDetail').innerText='เงินเดือน '+money(s.salaryBase)+' · KPI Daily '+hours(st.kpiDailyPct)+'% · KPI Bonus '+hours(kpiBonusPct)+'%';
+  $('dashRateDetail').innerText='เงินเดือน '+money(s.salaryBase)+' · KPI Daily '+kpiDailyStr+' · KPI Bonus '+kpiBonusStr;
 
   drawCharts();
 }
@@ -163,24 +170,34 @@ function renderDashboard(){
 /* ── KPI Info Box ใน Settings ── */
 function renderKpiInfo(){
   var curLabel=periodLabel(currentPeriod);
-  var kpiBonusPct=num($('setKpiBonus')?$('setKpiBonus').value:0);
-  if(isNaN(kpiBonusPct))kpiBonusPct=0;
-  var s=settings();
-  var kpiDaily=isNaN(s.kpiPercent)?0:num(s.kpiPercent);
-  var kpiTotal=kpiDaily+kpiBonusPct;
-  var kpiMoney=num(s.salaryBase)*(kpiTotal/100);
-  var hourlyRate=getHourlyRate(kpiBonusPct);
-  var baseCalc=num(s.salaryBase)+kpiMoney;
+  var s=settings(currentPeriod);
+  var salaryBase = num($('setSalaryBase') ? $('setSalaryBase').value : s.salaryBase);
+  
+  var kpiDailyType = radVal('kpiType') || s.kpiType || 'percent';
+  var kpiDailyVal = num($('setKpi') ? $('setKpi').value : s.kpiValue);
+  var kpiDailyMoney = (kpiDailyType === 'amount') ? kpiDailyVal : (salaryBase * (kpiDailyVal / 100));
 
-  $('infoKpiDaily').innerText=hours(kpiDaily)+'%';
-  $('infoKpiBonus').innerText=hours(kpiBonusPct)+'%';
-  $('infoKpiTotal').innerText=hours(kpiTotal)+'%';
-  $('infoKpiMoney').innerText=money(kpiMoney);
-  $('infoBase').innerText=money(baseCalc);
-  $('infoHourlyRate').innerText=s.salaryBase>0?hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.':'— (ยังไม่ตั้งเงินเดือน)';
+  var kpiBonusType = radVal('kpiBonusType') || s.kpiBonusType || 'percent';
+  var kpiBonusVal = num($('setKpiBonus') ? $('setKpiBonus').value : s.kpiBonusValue);
+  var kpiBonusMoney = (kpiBonusType === 'amount') ? kpiBonusVal : (salaryBase * (kpiBonusVal / 100));
 
-  var lbl=$('kpiBonusLabel');
-  if(lbl) lbl.innerText='KPI Bonus — '+curLabel+' (%)';
+  var kpiTotalMoney = kpiDailyMoney + kpiBonusMoney;
+  var baseCalc = salaryBase + kpiTotalMoney;
+  var hourlyRate = Math.ceil(baseCalc / 30 / 8 * 100) / 100;
+  
+  var kpiDailyPct = salaryBase > 0 ? (kpiDailyMoney / salaryBase * 100) : 0;
+  var kpiBonusPct = salaryBase > 0 ? (kpiBonusMoney / salaryBase * 100) : 0;
+  var kpiTotalPct = salaryBase > 0 ? (kpiTotalMoney / salaryBase * 100) : 0;
+
+  $('infoKpiDaily').innerText = (kpiDailyType === 'amount') ? money(kpiDailyVal) : (hours(kpiDailyVal) + '% (' + money(kpiDailyMoney) + ')');
+  $('infoKpiBonus').innerText = (kpiBonusType === 'amount') ? money(kpiBonusVal) : (hours(kpiBonusVal) + '% (' + money(kpiBonusMoney) + ')');
+  $('infoKpiTotal').innerText = money(kpiTotalMoney) + ' (' + hours(kpiTotalPct) + '%)';
+  $('infoKpiMoney').innerText = money(kpiTotalMoney);
+  $('infoBase').innerText = money(baseCalc);
+  $('infoHourlyRate').innerText = salaryBase > 0 ? (hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.') : '— (ยังไม่ตั้งเงินเดือน)';
+
+  var lbl = $('kpiBonusLabel');
+  if (lbl) lbl.innerText = 'KPI Bonus รอบนี้';
 }
 
 function renderSummary(){

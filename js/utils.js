@@ -12,8 +12,18 @@ function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
 function money(v){return num(v).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท'}
 function hours(v){return num(v).toLocaleString('th-TH',{maximumFractionDigits:1})}
 
-function getLS(k){return localStorage.getItem(k)}
-function setLS(k,v){localStorage.setItem(k,String(v))}
+function getLS(k){
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem) return localStorage.getItem(k);
+  } catch(e) {}
+  return (typeof _store !== 'undefined' && _store.hasOwnProperty(k)) ? _store[k] : null;
+}
+function setLS(k,v){
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.setItem) { localStorage.setItem(k,String(v)); return; }
+  } catch(e) {}
+  if (typeof _store !== 'undefined') _store[k] = String(v);
+}
 function getNum(k,fb,def){
   var v=getLS(k);
   if((v===null||v==='')&&fb)v=getLS(fb);
@@ -43,13 +53,183 @@ function holidayName(k){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
-/* ── KPI Bonus per period ── */
+/* ── Payday Weekend Shift Logic ──
+ * คำนวณวันจ่ายเงินจริง: หาก targetDay ตรงกับเสาร์ ให้เลื่อนเป็นศุกร์ (targetDay-1)
+ * หากตรงกับอาทิตย์ ให้เลื่อนเป็นศุกร์ (targetDay-2)
+ */
+function getActualPaydayDate(year, month, targetDay) {
+  var maxDays = daysInMonth(year, month);
+  var dayNum = Math.min(Math.max(1, targetDay), maxDays);
+  var dt = new Date(year, month, dayNum);
+  var dow = dt.getDay(); // 0 = Sunday, 6 = Saturday
+  if (dow === 6) { // Saturday
+    return new Date(year, month, Math.max(1, dayNum - 1));
+  } else if (dow === 0) { // Sunday
+    return new Date(year, month, Math.max(1, dayNum - 2));
+  }
+  return dt;
+}
+
+/* ── Period Key & Versioned Settings Storage ── */
+function getPeriodKey(ref) {
+  if (!ref) {
+    if (typeof currentPeriod !== 'undefined' && currentPeriod && currentPeriod.end) {
+      return currentPeriod.end.getFullYear() + '-' + pad(currentPeriod.end.getMonth() + 1);
+    }
+    var now = new Date();
+    return now.getFullYear() + '-' + pad(now.getMonth() + 1);
+  }
+  if (ref.start && ref.end) {
+    return ref.end.getFullYear() + '-' + pad(ref.end.getMonth() + 1);
+  }
+  if (ref instanceof Date) {
+    var cutoff = 15;
+    try {
+      var s = getLS('ot_cutoff') || getLS('cutoff_day');
+      if (s) cutoff = parseInt(s, 10) || 15;
+    } catch(e) {}
+    var y = ref.getFullYear(), m = ref.getMonth(), d = ref.getDate();
+    var ey = y, em = m;
+    if (d > Math.min(cutoff, daysInMonth(y, m))) {
+      em++; if (em > 11) { em = 0; ey++; }
+    }
+    return ey + '-' + pad(em + 1);
+  }
+  return String(ref);
+}
+
+function getGlobalDefaultSettings() {
+  return {
+    salaryBase: getNum('ot_salary', 'salary', 12000),
+    cutoff: getValidDayValue(getLS('ot_cutoff') || getLS('cutoff_day')) || 15,
+    payday: getValidDayValue(getLS('payday')) || 25,
+    housing: getNum('housing', null, 1000),
+    diligence: getNum('diligence', null, 1000),
+    kpiType: getLS('kpi_type') || 'percent',
+    kpiValue: getNum('kpi_value', 'kpi_percent', 10),
+    kpiBonusType: getLS('kpi_bonus_type') || 'percent',
+    kpiBonusValue: getNum('kpi_bonus_value', null, 0),
+    transport: getNum('transport_rate', null, 50),
+    food: getNum('food_rate', null, 40),
+    otFood: getNum('ot_food_rate', null, 50),
+    nightRate: getNum('night_shift_rate', null, 50),
+    sick: getNum('sick_leave', null, 0),
+    personal: getNum('personal_leave', null, 0),
+    absent: getNum('absent_days', null, 0),
+    tax: getNum('tax', 'ot_tax', 0),
+    other: getNum('other_deduction', 'ot_other', 0),
+    serviceAward: getNum('service_award', null, 0),
+    annualLeaveAdj: getNum('annual_leave_adj', null, 0),
+    bankAdj: getNum('ot_bank_adj', null, 0),
+    startDate: getLS('start_date') || null,
+    calcMode: getLS('calc_mode') || 'realtime'
+  };
+}
+
+function getValidDayValue(v) {
+  var p = parseInt(v, 10);
+  return (p >= 1 && p <= 31) ? p : 0;
+}
+
+function getAllStorageKeys() {
+  var keys = [];
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.length !== undefined) {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k) keys.push(k);
+      }
+    }
+  } catch(e) {}
+  if (typeof _store !== 'undefined' && _store) {
+    Object.keys(_store).forEach(function(k) {
+      if (keys.indexOf(k) === -1) keys.push(k);
+    });
+  }
+  return keys;
+}
+
+function getEffectiveSettings(periodRef) {
+  var targetKey = getPeriodKey(periodRef);
+  var base = getGlobalDefaultSettings();
+  
+  // Search for all period_settings:* keys
+  var allKeys = getAllStorageKeys();
+  var periodKeys = [];
+  for (var i = 0; i < allKeys.length; i++) {
+    var k = allKeys[i];
+    if (k && k.indexOf('period_settings:') === 0) {
+      var pk = k.substring('period_settings:'.length);
+      periodKeys.push(pk);
+    }
+  }
+  
+  periodKeys.sort(); // Lexicographical sort works for YYYY-MM
+  
+  var activeSnapshot = null;
+  for (var j = 0; j < periodKeys.length; j++) {
+    if (periodKeys[j] <= targetKey) {
+      activeSnapshot = periodKeys[j];
+    }
+  }
+  
+  if (activeSnapshot) {
+    try {
+      var snapData = JSON.parse(getLS('period_settings:' + activeSnapshot) || '{}');
+      Object.assign(base, snapData);
+    } catch(e) {}
+  }
+  
+  // Legacy per-period overrides fallback (for pp_* and kpi_bonus_pct)
+  var label = (typeof periodLabel === 'function' && periodRef && periodRef.start) ? periodLabel(periodRef) : null;
+  if (label) {
+    var legacyKpiBonus = getLS('kpi_bonus_pct:' + label);
+    if (legacyKpiBonus !== null && legacyKpiBonus !== '' && (!activeSnapshot || snapData.kpiBonusValue === undefined)) {
+      base.kpiBonusValue = num(legacyKpiBonus);
+      base.kpiBonusType = 'percent';
+    }
+    var legacyService = getLS('pp_service_award:' + label);
+    if (legacyService !== null && legacyService !== '' && (!activeSnapshot || snapData.serviceAward === undefined)) base.serviceAward = num(legacyService);
+    var legacyTax = getLS('pp_tax:' + label);
+    if (legacyTax !== null && legacyTax !== '' && (!activeSnapshot || snapData.tax === undefined)) base.tax = num(legacyTax);
+    var legacyOther = getLS('pp_other:' + label);
+    if (legacyOther !== null && legacyOther !== '' && (!activeSnapshot || snapData.other === undefined)) base.other = num(legacyOther);
+  }
+  
+  return base;
+}
+
+function savePeriodSettings(periodRef, newSettings) {
+  var targetKey = getPeriodKey(periodRef);
+  var existing = getEffectiveSettings(periodRef);
+  var merged = Object.assign({}, existing, newSettings);
+  setLS('period_settings:' + targetKey, JSON.stringify(merged));
+  
+  // Synchronize global keys as default fallback
+  if (newSettings.salaryBase !== undefined) setLS('ot_salary', newSettings.salaryBase);
+  if (newSettings.cutoff !== undefined) { setLS('ot_cutoff', newSettings.cutoff); setLS('cutoff_day', newSettings.cutoff); }
+  if (newSettings.payday !== undefined) setLS('payday', newSettings.payday);
+  if (newSettings.calcMode !== undefined) setLS('calc_mode', newSettings.calcMode);
+  if (newSettings.housing !== undefined) setLS('housing', newSettings.housing);
+  if (newSettings.diligence !== undefined) setLS('diligence', newSettings.diligence);
+  if (newSettings.kpiType !== undefined) setLS('kpi_type', newSettings.kpiType);
+  if (newSettings.kpiValue !== undefined) { setLS('kpi_value', newSettings.kpiValue); setLS('kpi_percent', newSettings.kpiValue); }
+  if (newSettings.kpiBonusType !== undefined) setLS('kpi_bonus_type', newSettings.kpiBonusType);
+  if (newSettings.kpiBonusValue !== undefined) setLS('kpi_bonus_value', newSettings.kpiBonusValue);
+  if (newSettings.transport !== undefined) setLS('transport_rate', newSettings.transport);
+  if (newSettings.food !== undefined) setLS('food_rate', newSettings.food);
+  if (newSettings.otFood !== undefined) setLS('ot_food_rate', newSettings.otFood);
+  if (newSettings.nightRate !== undefined) setLS('night_shift_rate', newSettings.nightRate);
+  if (newSettings.tax !== undefined) setLS('ot_tax', newSettings.tax);
+  if (newSettings.other !== undefined) setLS('ot_other', newSettings.other);
+  if (newSettings.serviceAward !== undefined) setLS('service_award', newSettings.serviceAward);
+}
+
+/* ── KPI Bonus per period backward-compat adapter ── */
 function kpiBonusKey(label){return 'kpi_bonus_pct:'+label}
 function getKpiBonusPct(label){
-  var v=getLS(kpiBonusKey(label));
-  if(v===null||v==='')return 0;
-  var n=num(v);
-  return isNaN(n)?0:n;
+  var st = getEffectiveSettings(typeof currentPeriod !== 'undefined' ? currentPeriod : null);
+  return st.kpiBonusValue || 0;
 }
 function saveKpiBonusPct(label,val){
   var n=num(val);
@@ -61,6 +241,10 @@ function saveKpiBonusPct(label,val){
 var PP_KEYS=['pp_sick','pp_personal','pp_absent','pp_service_award','pp_tax','pp_other'];
 function ppKey(prefix,label){return prefix+':'+label}
 function getPerPeriod(prefix,label){
+  var st = getEffectiveSettings(typeof currentPeriod !== 'undefined' ? currentPeriod : null);
+  if (prefix === 'pp_service_award') return st.serviceAward || 0;
+  if (prefix === 'pp_tax') return st.tax || 0;
+  if (prefix === 'pp_other') return st.other || 0;
   var v=getLS(ppKey(prefix,label));
   if(v===null||v==='')return 0;
   return num(v);
