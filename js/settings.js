@@ -154,13 +154,17 @@ function previewEntry(){
     var totalMoney = 0;
     var totalLeave = 0;
     var desc = [];
+    var ratesDesc = [];
     
     var rows = document.querySelectorAll('#rateRowsContainer .rate-row');
     rows.forEach(function(row) {
        var idx = row.getAttribute('data-rate-index');
        var h = num(row.querySelector('.rateHours').value);
-       var m = num(document.querySelector('input[name="multiplier_'+idx+'"]:checked').value);
-       var pt = document.querySelector('input[name="payType_'+idx+'"]:checked').value;
+       var mInput = document.querySelector('input[name="multiplier_'+idx+'"]:checked');
+       var ptInput = document.querySelector('input[name="payType_'+idx+'"]:checked');
+       if(!mInput || !ptInput) return;
+       var m = num(mInput.value);
+       var pt = ptInput.value;
        
        if (h > 0) {
          if (pt === 'money') {
@@ -170,6 +174,10 @@ function previewEntry(){
          } else {
             totalLeave += h;
          }
+       } else {
+         if (pt === 'money') {
+            ratesDesc.push(m + 'x = ' + money(rate * m) + '/ชม.');
+         }
        }
     });
     
@@ -177,7 +185,11 @@ function previewEntry(){
     if (totalMoney > 0) txts.push('= ' + money(totalMoney) + (desc.length ? ' (' + desc.join(', ') + ')' : ''));
     if (totalLeave > 0) txts.push('= ' + hours(totalLeave) + ' ชม. สะสม');
     
-    $('entryPreview').innerText = txts.length ? txts.join(' และ ') : '';
+    if (txts.length === 0) {
+       $('entryPreview').innerText = '= 0.00' + (ratesDesc.length ? ' (' + ratesDesc.join(', ') + ')' : '');
+    } else {
+       $('entryPreview').innerText = txts.join(' และ ');
+    }
   }else if(kind==='use'){
     var lt=$('leaveType').value;
     var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
