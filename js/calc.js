@@ -76,7 +76,10 @@ function periodFor(ref){
   return {start:new Date(py,pm,pd+1),end:end};
 }
 
-function periodLabel(p){return settings().cutoff?p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543):MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543)}
+function periodLabel(p){
+  var isCalMonth = p.start.getDate() === 1 && p.end.getDate() === daysInMonth(p.start.getFullYear(), p.start.getMonth());
+  return isCalMonth ? MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543) : p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543);
+}
 function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
 function inRangeDate(dt,start,end){return dt>=start&&dt<=end}
 
