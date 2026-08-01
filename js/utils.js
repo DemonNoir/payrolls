@@ -180,6 +180,9 @@ function getEffectiveSettings(periodRef) {
     } catch(e) {}
   }
   
+  // Force calcMode to always use the global preference
+  base.calcMode = getLS('calc_mode') || 'realtime';
+  
   // Legacy per-period overrides fallback (for pp_* and kpi_bonus_pct)
   var label = (typeof periodLabel === 'function' && periodRef && periodRef.start) ? periodLabel(periodRef) : null;
   if (label) {
