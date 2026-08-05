@@ -188,9 +188,21 @@ function docsOpenFile(idx) {
   mdBody.innerHTML = '';
   docsCurrentFile = f;
 
-  /* คำนวณ base URL ที่ถูกต้องแม้ใน PWA standalone mode */
-  var base = (location.origin + location.pathname).replace(/\/[^\/]*$/, '/');
-  fetch(base + 'docs/' + f.file)
+  /* คำนวณ base URL หลายวิธีเพื่อรองรับ PWA standalone บน iOS/Android */
+  function getDocsBase() {
+    /* วิธี 1: หา base จาก script tag ของ docs.js เอง (แม่นที่สุด) */
+    var scripts = document.querySelectorAll('script[src*="docs.js"]');
+    if (scripts.length) {
+      var src = scripts[0].src;
+      return src.replace(/js\/docs\.js.*$/, '');
+    }
+    /* วิธี 2: คำนวณจาก location.href */
+    return location.href.replace(/\/[^\/]*(\?.*)?$/, '/');
+  }
+
+  var docsUrl = getDocsBase() + 'docs/' + f.file;
+
+  fetch(docsUrl)
     .then(function(res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.text();
@@ -202,9 +214,11 @@ function docsOpenFile(idx) {
     })
     .catch(function(err) {
       loadingMsg.style.display = 'none';
-      mdBody.innerHTML = '<p style="color:var(--red)">\u26A0\uFE0F โหลดไม่ได้: ' + escapeHtml(String(err)) + '</p>';
+      mdBody.innerHTML = '<p style="color:var(--red)">\u26A0\uFE0F โหลดไม่ได้: ' + escapeHtml(String(err)) + '</p>' +
+        '<p style="color:var(--muted);font-size:11px">URL: ' + escapeHtml(docsUrl) + '</p>';
     });
 }
+
 
 /* ── Wire Events ── */
 if ($('docsFab'))     $('docsFab').onclick      = openDocsOverlay;
