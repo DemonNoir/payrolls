@@ -499,6 +499,27 @@
   </div>
 </div>
 
+<!-- Docs Viewer FAB -->
+<button class="docs-fab noPrint" id="docsFab" title="อ่านเอกสาร / อัปเดต">📋</button>
+
+<!-- Docs Viewer Overlay -->
+<div class="docs-overlay" id="docsOverlay">
+  <div class="docs-modal">
+    <div class="docs-header">
+      <button class="docs-back-btn" id="docsBackBtn">←</button>
+      <span class="docs-header-title" id="docsHeaderTitle">📋 เอกสาร &amp; อัปเดต</span>
+      <button class="docs-close-btn" id="docsCloseBtn">✕</button>
+    </div>
+    <!-- File List Pane -->
+    <div class="docs-list-pane" id="docsListPane"></div>
+    <!-- Content Pane -->
+    <div class="docs-content-pane" id="docsContentPane">
+      <div class="docs-loading" id="docsLoadingMsg">⏳ กำลังโหลด...</div>
+      <div class="md-body" id="docsMdBody"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Mandatory Backup Reminder Overlay (บังคับ 100% ไม่มีปุ่มปิด) -->
 <div class="bak-reminder-overlay" id="bakReminderOverlay">
   <div class="bak-reminder-box">
@@ -514,13 +535,14 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=40"></script>
-<script src="js/calc.js?v=40"></script>
-<script src="js/ui.js?v=40"></script>
-<script src="js/settings.js?v=40"></script>
-<script src="js/data.js?v=40"></script>
-<script src="js/tutorial.js?v=40"></script>
-<script src="js/app.js?v=40"></script>
+<script src="js/utils.js?v=41"></script>
+<script src="js/calc.js?v=41"></script>
+<script src="js/ui.js?v=41"></script>
+<script src="js/settings.js?v=41"></script>
+<script src="js/data.js?v=41"></script>
+<script src="js/tutorial.js?v=41"></script>
+<script src="js/app.js?v=41"></script>
+<script src="js/docs.js?v=41"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});
