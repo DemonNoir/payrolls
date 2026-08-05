@@ -42,6 +42,9 @@ $('annualPdfBtn').onclick=function(){window.print()};
 /* Backup warning */
 $('backupWarnBtn').onclick=openSettings;
 
+/* Mandatory Backup Reminder Popup */
+if($('bakReminderExportBtn')) $('bakReminderExportBtn').onclick=exportData;
+
 /* Entry */
 $('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
 $('leaveType').onchange=previewEntry;$('useHours').oninput=previewEntry;
@@ -126,6 +129,7 @@ $('setKpiBonus').addEventListener('change',function(){
 /* Init */
 initTheme();
 renderAll();
+checkForcedBackupReminder();
 
 /* Tutorial */
 if($('showTutorialBtn')) $('showTutorialBtn').onclick = function(){ closeSettings(); showTutorial(); };

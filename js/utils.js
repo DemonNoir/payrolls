@@ -286,14 +286,38 @@ function idbRestore(cb){
   });
 }
 
-/* ── Backup Warning (15 วัน) ── */
+/* ── Backup Warning (7 วัน) ── */
 function markExported(){setLS('last_export_ts',String(Date.now()));}
 function checkBackupWarning(){
   var el=$('backupWarn'); if(!el)return;
   var last=getLS('last_export_ts');
   if(!last){el.classList.remove('hide');return;}
   var days=(Date.now()-Number(last))/(86400000);
-  el.classList.toggle('hide',days<15);
+  el.classList.toggle('hide',days<7);
+}
+
+/* ── Forced Backup Reminder (บังคับ 100% ทุก 7 วัน) ── */
+function checkForcedBackupReminder(){
+  var overlay=$('bakReminderOverlay');
+  if(!overlay)return;
+  var last=getLS('last_export_ts');
+  var daysSince=last?((Date.now()-Number(last))/86400000):999;
+  var daysLabel=$('bakReminderDaysLabel');
+  if(daysSince>=7){
+    if(daysLabel){
+      var d=Math.floor(daysSince);
+      daysLabel.textContent=last
+        ?'ยังไม่ได้สำรองมา '+d+' วันแล้ว!'
+        :'ยังไม่เคยสำรองข้อมูลเลย!';
+    }
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+  }
+}
+function closeForcedBackupReminder(){
+  var overlay=$('bakReminderOverlay');
+  if(overlay)overlay.classList.remove('show');
 }
 
 /* ── Leave Types Configuration ── */

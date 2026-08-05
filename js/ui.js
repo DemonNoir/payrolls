@@ -467,7 +467,7 @@ function renderHolidayList(){
 }
 
 function renderAll(){
-  renderInfo();renderCalendar();renderDashboard();renderSummary();renderAnnual();renderHolidayList();renderKpiInfo();checkBackupWarning();refreshHistory();
+  renderInfo();renderCalendar();renderDashboard();renderSummary();renderAnnual();renderHolidayList();renderKpiInfo();checkBackupWarning();checkForcedBackupReminder();refreshHistory();
 }
 
 function drawCharts(){

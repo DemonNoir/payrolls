@@ -15,6 +15,7 @@ function exportData(){
   a.href=url;a.download='ot-calendar-v3-'+dateKey(today)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   markExported();
   checkBackupWarning();
+  closeForcedBackupReminder();
 }
 
 function validateCal(cal){

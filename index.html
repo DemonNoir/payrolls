@@ -37,7 +37,7 @@
   </select>
 </div>
 <div id="backupWarn" class="strip alert hide noPrint">
-⚠️ ยังไม่ได้สำรองข้อมูลนาน 15 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">กด⚙ → สำรองข้อมูลเดี๋ยวนี้</b>
+⚠️ ยังไม่ได้สำรองข้อมูลนาน 7 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">กด⚙ → สำรองข้อมูลเดี๋ยวนี้</b>
 </div>
 <div id="migrationNotice" class="migration-notice hide">
 ⚠️ ระบบเปลี่ยนวิธีคำนวณค่าแรง — กรุณากรอก <b>เงินเดือน (บาท/เดือน)</b> ใหม่ในเมนูตั้งค่า
@@ -499,16 +499,28 @@
   </div>
 </div>
 
+<!-- Mandatory Backup Reminder Overlay (บังคับ 100% ไม่มีปุ่มปิด) -->
+<div class="bak-reminder-overlay" id="bakReminderOverlay">
+  <div class="bak-reminder-box">
+    <span class="bak-reminder-icon">🔒</span>
+    <h2 class="bak-reminder-title">ถึงเวลาสำรองข้อมูลแล้ว!</h2>
+    <p class="bak-reminder-subtitle">ข้อมูลของคุณเก็บอยู่ใน Browser เท่านั้น<br>หาก Browser ล้างข้อมูลหรือลบแอปออก<br><strong>ข้อมูลจะหายถาวร</strong></p>
+    <span class="bak-reminder-days" id="bakReminderDaysLabel">ยังไม่ได้สำรองมา 7+ วันแล้ว</span>
+    <button class="bak-reminder-btn" id="bakReminderExportBtn">📤 สำรองข้อมูลเดี๋ยวนี้</button>
+    <p class="bak-reminder-note">ไฟล์ .json จะถูกบันทึกลงเครื่องของคุณ<br>เก็บไว้ใน iCloud / Google Drive เพื่อความปลอดภัยสูงสุด</p>
+  </div>
+</div>
+
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=39"></script>
-<script src="js/calc.js?v=39"></script>
-<script src="js/ui.js?v=39"></script>
-<script src="js/settings.js?v=39"></script>
-<script src="js/data.js?v=39"></script>
-<script src="js/tutorial.js?v=39"></script>
-<script src="js/app.js?v=39"></script>
+<script src="js/utils.js?v=40"></script>
+<script src="js/calc.js?v=40"></script>
+<script src="js/ui.js?v=40"></script>
+<script src="js/settings.js?v=40"></script>
+<script src="js/data.js?v=40"></script>
+<script src="js/tutorial.js?v=40"></script>
+<script src="js/app.js?v=40"></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});
