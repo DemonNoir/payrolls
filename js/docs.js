@@ -188,7 +188,9 @@ function docsOpenFile(idx) {
   mdBody.innerHTML = '';
   docsCurrentFile = f;
 
-  fetch('./docs/' + f.file)
+  /* คำนวณ base URL ที่ถูกต้องแม้ใน PWA standalone mode */
+  var base = (location.origin + location.pathname).replace(/\/[^\/]*$/, '/');
+  fetch(base + 'docs/' + f.file)
     .then(function(res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.text();
