@@ -1,11 +1,11 @@
 /* ── Light Theme ── */
 :root{
---ink:#172033;--muted:#61708a;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
---nav:#18233a;--orange:#d98f2b;--blue:#3b6fd1;--purple:#7a4fc7;--red:#d64b45;
+--ink:#172033;--muted:#526178;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
+--nav:#18233a;--orange:#9a6009;--blue:#3b6fd1;--purple:#7a4fc7;--red:#c0392b;
 --green:#22865f;--teal:#087a89;--yellow:#f1c40f;
 --hero-bg:#18233a;--hero-text:#fff;--strip-bg:#dcecff;--strip-text:#1b4e9a;
 --strip-warn-bg:#ffe8dc;--strip-warn-text:#9d451c;
---canvas-bg:#ffffff;--canvas-label:#61708a;
+--canvas-bg:#ffffff;--canvas-label:#526178;
 }
 
 /* ── Dark Theme ── */
