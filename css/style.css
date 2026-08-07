@@ -2,7 +2,6 @@
 :root{
 --ink:#172033;--muted:#526178;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
 --nav:#18233a;--orange:#9a6009;--orange-bg:#e8960e;--blue:#3b6fd1;--purple:#7a4fc7;--red:#c0392b;
---badge-ot-text:#000;--badge-leave-text:#fff;--badge-use-text:#fff;
 --green:#22865f;--teal:#087a89;--yellow:#f1c40f;
 --hero-bg:#18233a;--hero-text:#fff;--strip-bg:#dcecff;--strip-text:#1b4e9a;
 --strip-warn-bg:#ffe8dc;--strip-warn-text:#9d451c;
@@ -13,7 +12,6 @@
 [data-theme="dark"]{
 --ink:#e6edf3;--muted:#8b949e;--line:#30363d;--bg:#0d1117;--panel:#161b22;
 --nav:#010409;--orange:#ffa657;--orange-bg:#d1800a;--blue:#79c0ff;--purple:#d2a8ff;--red:#ff7b72;
---badge-ot-text:#0d1117;--badge-leave-text:#0d1117;--badge-use-text:#0d1117;
 --green:#3fb950;--teal:#39d3d3;--yellow:#e3b341;
 --hero-bg:#010409;--hero-text:#e6edf3;--strip-bg:#1f2937;--strip-text:#93c5fd;
 --strip-warn-bg:#431407;--strip-warn-text:#fdba74;
@@ -25,7 +23,6 @@
   [data-theme="auto"]{
     --ink:#e6edf3;--muted:#8b949e;--line:#30363d;--bg:#0d1117;--panel:#161b22;
     --nav:#010409;--orange:#ffa657;--orange-bg:#d1800a;--blue:#79c0ff;--purple:#d2a8ff;--red:#ff7b72;
-    --badge-ot-text:#0d1117;--badge-leave-text:#0d1117;--badge-use-text:#0d1117;
     --green:#3fb950;--teal:#39d3d3;--yellow:#e3b341;
     --hero-bg:#010409;--hero-text:#e6edf3;--strip-bg:#1f2937;--strip-text:#93c5fd;
     --strip-warn-bg:#431407;--strip-warn-text:#fdba74;
@@ -278,9 +275,9 @@ button,input,select{font:inherit}
 .cell.use{background:#e7defa;border-color:#c8b2ef}
 .cell.holiday{background:#ffe1df;border-color:#efaaa5}
 .cell.today{outline:2.5px solid var(--blue);outline-offset:-1px}
-.cell .badge{font-size:9px;font-weight:900;background:var(--orange-bg);color:var(--badge-ot-text);border-radius:6px;padding:1px 4px;margin-top:2px;max-width:94%;white-space:nowrap}
-.cell .badge.leave{background:var(--blue);color:var(--badge-leave-text)}
-.cell .badge.use{background:var(--purple);color:var(--badge-use-text)}
+.cell .badge{font-size:9px;font-weight:900;background:var(--orange-bg);color:#fff;border-radius:6px;padding:1px 4px;margin-top:2px;max-width:94%;white-space:nowrap}
+.cell .badge.leave{background:var(--blue)}
+.cell .badge.use{background:var(--purple)}
 .cell .badge.m1{box-shadow:0 0 0 2px var(--yellow)}
 .cell .badge.m3{box-shadow:0 0 0 2px var(--red)}
 /* Leave type badges */
