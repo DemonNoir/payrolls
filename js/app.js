@@ -45,6 +45,9 @@ $('backupWarnBtn').onclick=openSettings;
 /* Mandatory Backup Reminder Popup */
 if($('bakReminderExportBtn')) $('bakReminderExportBtn').onclick=exportData;
 
+/* Docs Viewer */
+if($('docsBtn')) $('docsBtn').onclick=openDocsOverlay;
+
 /* Entry */
 $('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
 $('leaveType').onchange=previewEntry;$('useHours').oninput=previewEntry;

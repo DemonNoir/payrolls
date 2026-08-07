@@ -220,8 +220,7 @@ function docsOpenFile(idx) {
 }
 
 
-/* ── Wire Events ── */
-if ($('docsFab'))     $('docsFab').onclick      = openDocsOverlay;
+/* ── Wire Events (close/back/backdrop — open wired ใน app.js) ── */
 if ($('docsCloseBtn'))$('docsCloseBtn').onclick  = closeDocsOverlay;
 if ($('docsBackBtn')) $('docsBackBtn').onclick   = docsShowList;
 if ($('docsOverlay')) $('docsOverlay').onclick   = function(e) {
