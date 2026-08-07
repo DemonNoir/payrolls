@@ -5,10 +5,34 @@ function wireInputEvents(root,fn){
   Array.prototype.forEach.call(root.querySelectorAll('input'),function(el){el.addEventListener('input',fn);el.addEventListener('change',fn)});
 }
 
+/* ── Navbar Button Animation Helper ── */
+function animateIcon(el, cls) {
+  if (!el) return;
+  el.classList.remove(cls);
+  /* force reflow เพื่อ restart animation */
+  void el.offsetWidth;
+  el.classList.add(cls);
+  el.addEventListener('animationend', function handler() {
+    el.classList.remove(cls);
+    el.removeEventListener('animationend', handler);
+  });
+}
+
 /* ── Event Wiring ── */
-$('prevBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.start,-1));renderAll()};
-$('nextBtn').onclick=function(){currentPeriod=periodFor(addDays(currentPeriod.end,1));renderAll()};
-$('settingsBtn').onclick=openSettings;
+$('prevBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-left');
+  currentPeriod = periodFor(addDays(currentPeriod.start, -1));
+  renderAll();
+};
+$('nextBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-right');
+  currentPeriod = periodFor(addDays(currentPeriod.end, 1));
+  renderAll();
+};
+$('settingsBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-spin');
+  openSettings();
+};
 if($('topRateInfo')) $('topRateInfo').onclick=openSettings;
 
 if($('calcModeSelect')) {
@@ -20,14 +44,17 @@ if($('calcModeSelect')) {
   };
 }
 
-/* Dark Mode */
-$('themeBtn').onclick=toggleTheme;
+/* Dark Mode — animate flip on toggle */
+$('themeBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-flip');
+  toggleTheme();
+};
 
-/* Install Guide */
-$('installBtn').onclick=function(){$('installOverlay').classList.add('show')};
-$('closeInstallBtn').onclick=function(){$('installOverlay').classList.remove('show')};
-$('installOverlay').onclick=function(e){if(e.target===this)$('installOverlay').classList.remove('show')};
-
+/* Docs Viewer */
+if($('docsBtn')) $('docsBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-bounce');
+  openDocsOverlay();
+};
 /* Tabs */
 $('tabCalendar').onclick=function(){showPage('calendar')};
 $('tabDashboard').onclick=function(){showPage('dashboard')};
@@ -45,8 +72,9 @@ $('backupWarnBtn').onclick=openSettings;
 /* Mandatory Backup Reminder Popup */
 if($('bakReminderExportBtn')) $('bakReminderExportBtn').onclick=exportData;
 
-/* Docs Viewer */
-if($('docsBtn')) $('docsBtn').onclick=openDocsOverlay;
+/* Install Guide — เข้าถึงได้จาก Settings และ overlay เดิม */
+if($('closeInstallBtn')) $('closeInstallBtn').onclick=function(){$('installOverlay').classList.remove('show')};
+if($('installOverlay'))  $('installOverlay').onclick=function(e){if(e.target===this)$('installOverlay').classList.remove('show')};
 
 /* Entry */
 $('closeEntryBtn').onclick=closeEntry;$('saveEntryBtn').onclick=saveEntry;$('deleteEntryBtn').onclick=deleteEntry;$('entryOverlay').onclick=function(e){if(e.target===this)closeEntry()};
