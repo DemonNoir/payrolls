@@ -292,12 +292,20 @@ button,input,select{font:inherit}
 .cell .badge.leave-funeral{background:#546e7a}
 .cell .holidayMark{position:absolute;top:2px;right:3px;font-size:9px;color:var(--red);font-weight:900}
 .cell .startMark{position:absolute;top:2px;left:3px;font-size:9px;color:var(--green);font-weight:900}
-/* Dark mode overrides for cells */
-[data-theme="dark"] .cell.money{background:#3a2410;border-color:#6e4a18}
-[data-theme="dark"] .cell.leave{background:#0f2240;border-color:#1e4a8a}
-[data-theme="dark"] .cell.use{background:#2a1550;border-color:#5a3090}
-[data-theme="dark"] .cell.leave-day{background:#0a2415;border-color:#1a5a30}
-[data-theme="dark"] .cell.holiday{background:#3a0f0e;border-color:#7a2520}
+/* Dark mode overrides for cells — harmonized with GitHub Dark palette */
+[data-theme="dark"] .cell.money{background:#1f1608;border-color:#3d2e10}
+[data-theme="dark"] .cell.leave{background:#0a1628;border-color:#162845}
+[data-theme="dark"] .cell.use{background:#190e30;border-color:#312060}
+[data-theme="dark"] .cell.leave-day{background:#0b1f10;border-color:#163a20}
+[data-theme="dark"] .cell.holiday{background:#1f0a09;border-color:#3d1518}
+/* Auto dark mode overrides for cells */
+@media(prefers-color-scheme:dark){
+  [data-theme="auto"] .cell.money{background:#1f1608;border-color:#3d2e10}
+  [data-theme="auto"] .cell.leave{background:#0a1628;border-color:#162845}
+  [data-theme="auto"] .cell.use{background:#190e30;border-color:#312060}
+  [data-theme="auto"] .cell.leave-day{background:#0b1f10;border-color:#163a20}
+  [data-theme="auto"] .cell.holiday{background:#1f0a09;border-color:#3d1518}
+}
 .rate-footer{text-align:center;font-size:11px;color:var(--muted);margin:6px 0 4px;font-weight:600}
 .legend{
   background:var(--panel);border:1px solid var(--line);border-radius:14px;
