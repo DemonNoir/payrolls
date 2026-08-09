@@ -24,9 +24,18 @@ function validateCal(cal){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return 'พบวันที่ไม่ถูกต้อง: '+k;
     var e=cal[k]; if(!e||typeof e!=='object')return 'ข้อมูลวันที่ '+k+' ไม่ถูกต้อง';
     if(e.kind==='ot'){
-      if(num(e.hours)<=0)return 'ชั่วโมง OT ของ '+k+' ไม่ถูกต้อง';
-      if(['money','leave'].indexOf(e.payType)<0)return 'ประเภท OT ของ '+k+' ไม่ถูกต้อง';
-      if([1,1.5,3].indexOf(num(e.multiplier))<0)return 'เรท OT ของ '+k+' ไม่ถูกต้อง';
+      if(e.rates && Array.isArray(e.rates)){
+        for(var i=0; i<e.rates.length; i++){
+          var r=e.rates[i];
+          if(num(r.hours)<=0)return 'ชั่วโมง OT ของ '+k+' (ลำดับ '+(i+1)+') ไม่ถูกต้อง';
+          if(['money','leave'].indexOf(r.payType)<0)return 'ประเภท OT ของ '+k+' (ลำดับ '+(i+1)+') ไม่ถูกต้อง';
+          if([1,1.5,3].indexOf(num(r.multiplier))<0)return 'เรท OT ของ '+k+' (ลำดับ '+(i+1)+') ไม่ถูกต้อง';
+        }
+      }else{
+        if(num(e.hours)<=0)return 'ชั่วโมง OT ของ '+k+' ไม่ถูกต้อง';
+        if(['money','leave'].indexOf(e.payType)<0)return 'ประเภท OT ของ '+k+' ไม่ถูกต้อง';
+        if([1,1.5,3].indexOf(num(e.multiplier))<0)return 'เรท OT ของ '+k+' ไม่ถูกต้อง';
+      }
     }else if(e.kind==='use'){
       if(num(e.hours)<=0)return 'ชั่วโมงใช้วันหยุดของ '+k+' ไม่ถูกต้อง';
     }else return 'kind ของ '+k+' ไม่ถูกต้อง';
