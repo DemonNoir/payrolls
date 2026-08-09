@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=33">
+<link rel="stylesheet" href="css/style.css?v=134">
 </head>
 <body>
 <main class="app">
@@ -271,7 +271,16 @@
 <div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
 <div class="subhead" style="margin: 15px 0 10px;">วันหยุด & การลา</div>
 <div class="group" style="grid-column:1/-1;">
-  <button class="btn ghost" id="openLeaveSettingsBtn" style="width:100%;text-align:left;border:1px solid rgba(255,255,255,0.2);">🗂️ ตั้งค่าประเภทวันหยุด & โควตา</button>
+  <button id="openLeaveSettingsBtn" class="leave-settings-btn">
+    <span class="leave-settings-btn-left">
+      <span class="leave-settings-btn-icon">🗂️</span>
+      <span class="leave-settings-btn-text">
+        <strong>ตั้งค่าประเภทวันหยุด &amp; โควตา</strong>
+        <small>กำหนดประเภทการลา, วันหยุดพักร้อน, โควตา</small>
+      </span>
+    </span>
+    <span class="leave-settings-btn-arrow">›</span>
+  </button>
 </div>
 <div class="group"><label>โหมดการคำนวณ</label>
 <select id="setCalcMode">
