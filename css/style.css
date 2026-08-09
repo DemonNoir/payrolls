@@ -8,25 +8,25 @@
 --canvas-bg:#ffffff;--canvas-label:#526178;
 }
 
-/* ── Dark Theme (GitHub Dark palette) ── */
+/* ── Dark Theme (Raycast-inspired) ── */
 [data-theme="dark"]{
---ink:#e6edf3;--muted:#8b949e;--line:#30363d;--bg:#0d1117;--panel:#161b22;
---nav:#010409;--orange:#ffa657;--orange-bg:#d1800a;--blue:#79c0ff;--purple:#d2a8ff;--red:#ff7b72;
---green:#3fb950;--teal:#39d3d3;--yellow:#e3b341;
---hero-bg:#010409;--hero-text:#e6edf3;--strip-bg:#1f2937;--strip-text:#93c5fd;
---strip-warn-bg:#431407;--strip-warn-text:#fdba74;
---canvas-bg:#161b22;--canvas-label:#8b949e;
+--ink:#f5f5f7;--muted:#98989f;--line:#3a3a3c;--bg:#1c1c1e;--panel:#2c2c2e;
+--nav:#141414;--orange:#ff9f0a;--orange-bg:#bf6a02;--blue:#64d2ff;--purple:#bf5af2;--red:#ff453a;
+--green:#30d158;--teal:#5ac8fa;--yellow:#ffd60a;
+--hero-bg:#141414;--hero-text:#f5f5f7;--strip-bg:#3a3a3c;--strip-text:#64d2ff;
+--strip-warn-bg:#3a1e00;--strip-warn-text:#ff9f0a;
+--canvas-bg:#2c2c2e;--canvas-label:#98989f;
 }
 
-/* ── auto dark from system (GitHub Dark palette) ── */
+/* ── auto dark from system (Raycast-inspired) ── */
 @media(prefers-color-scheme:dark){
   [data-theme="auto"]{
-    --ink:#e6edf3;--muted:#8b949e;--line:#30363d;--bg:#0d1117;--panel:#161b22;
-    --nav:#010409;--orange:#ffa657;--orange-bg:#d1800a;--blue:#79c0ff;--purple:#d2a8ff;--red:#ff7b72;
-    --green:#3fb950;--teal:#39d3d3;--yellow:#e3b341;
-    --hero-bg:#010409;--hero-text:#e6edf3;--strip-bg:#1f2937;--strip-text:#93c5fd;
-    --strip-warn-bg:#431407;--strip-warn-text:#fdba74;
-    --canvas-bg:#161b22;--canvas-label:#8b949e;
+    --ink:#f5f5f7;--muted:#98989f;--line:#3a3a3c;--bg:#1c1c1e;--panel:#2c2c2e;
+    --nav:#141414;--orange:#ff9f0a;--orange-bg:#bf6a02;--blue:#64d2ff;--purple:#bf5af2;--red:#ff453a;
+    --green:#30d158;--teal:#5ac8fa;--yellow:#ffd60a;
+    --hero-bg:#141414;--hero-text:#f5f5f7;--strip-bg:#3a3a3c;--strip-text:#64d2ff;
+    --strip-warn-bg:#3a1e00;--strip-warn-text:#ff9f0a;
+    --canvas-bg:#2c2c2e;--canvas-label:#98989f;
   }
 }
 *{box-sizing:border-box}
@@ -292,19 +292,19 @@ button,input,select{font:inherit}
 .cell .badge.leave-funeral{background:#546e7a}
 .cell .holidayMark{position:absolute;top:2px;right:3px;font-size:9px;color:var(--red);font-weight:900}
 .cell .startMark{position:absolute;top:2px;left:3px;font-size:9px;color:var(--green);font-weight:900}
-/* Dark mode overrides for cells — harmonized with GitHub Dark palette */
-[data-theme="dark"] .cell.money{background:#1f1608;border-color:#3d2e10}
-[data-theme="dark"] .cell.leave{background:#0a1628;border-color:#162845}
-[data-theme="dark"] .cell.use{background:#190e30;border-color:#312060}
-[data-theme="dark"] .cell.leave-day{background:#0b1f10;border-color:#163a20}
-[data-theme="dark"] .cell.holiday{background:#1f0a09;border-color:#3d1518}
+/* Dark mode overrides for cells — harmonized with Raycast palette */
+[data-theme="dark"] .cell.money{background:#2a1f00;border-color:#4a3500}
+[data-theme="dark"] .cell.leave{background:#001a2e;border-color:#003050}
+[data-theme="dark"] .cell.use{background:#220040;border-color:#400070}
+[data-theme="dark"] .cell.leave-day{background:#002210;border-color:#004020}
+[data-theme="dark"] .cell.holiday{background:#2a0800;border-color:#4a1200}
 /* Auto dark mode overrides for cells */
 @media(prefers-color-scheme:dark){
-  [data-theme="auto"] .cell.money{background:#1f1608;border-color:#3d2e10}
-  [data-theme="auto"] .cell.leave{background:#0a1628;border-color:#162845}
-  [data-theme="auto"] .cell.use{background:#190e30;border-color:#312060}
-  [data-theme="auto"] .cell.leave-day{background:#0b1f10;border-color:#163a20}
-  [data-theme="auto"] .cell.holiday{background:#1f0a09;border-color:#3d1518}
+  [data-theme="auto"] .cell.money{background:#2a1f00;border-color:#4a3500}
+  [data-theme="auto"] .cell.leave{background:#001a2e;border-color:#003050}
+  [data-theme="auto"] .cell.use{background:#220040;border-color:#400070}
+  [data-theme="auto"] .cell.leave-day{background:#002210;border-color:#004020}
+  [data-theme="auto"] .cell.holiday{background:#2a0800;border-color:#4a1200}
 }
 .rate-footer{text-align:center;font-size:11px;color:var(--muted);margin:6px 0 4px;font-weight:600}
 .legend{
