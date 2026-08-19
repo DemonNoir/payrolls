@@ -252,12 +252,15 @@ function periodStats(p,kpiBonusPctOverride){
 
   /* ── KPI Calculation (Dual Mode) ── */
   var notEmployedYet = (employedDaysInPeriod === 0);
+  /* ⚠️ realtime mode: ถ้ารอบบิลยังไม่มาถึง (start > today) → ยังไม่ได้รับ KPI */
+  var isFuturePeriod = (st.calcMode !== 'overall') && (start > todayDt);
+  var skipKpi = notEmployedYet || isFuturePeriod;
   var kpiDailyType = st.kpiType || 'percent';
   var kpiDailyVal = num(st.kpiValue !== undefined ? st.kpiValue : st.kpiPercent);
-  var kpiDailyMoney = notEmployedYet ? 0 : ((kpiDailyType === 'amount') ? kpiDailyVal : (proratedSalary * (kpiDailyVal / 100)));
+  var kpiDailyMoney = skipKpi ? 0 : ((kpiDailyType === 'amount') ? kpiDailyVal : (proratedSalary * (kpiDailyVal / 100)));
 
   var kpiBonusType = st.kpiBonusType || 'percent';
-  var kpiBonusMoney = notEmployedYet ? 0 : ((kpiBonusType === 'amount') ? kpiBonusVal : (proratedSalary * (kpiBonusVal / 100)));
+  var kpiBonusMoney = skipKpi ? 0 : ((kpiBonusType === 'amount') ? kpiBonusVal : (proratedSalary * (kpiBonusVal / 100)));
 
   var kpiTotalMoney = kpiDailyMoney + kpiBonusMoney;
   var kpi = kpiTotalMoney;
