@@ -268,7 +268,9 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .strip.split span:first-child{border-right:1px solid rgba(0,0,0,0.1)}
 [data-theme="dark"] .strip.split span:first-child, [data-theme="auto"] .strip.split span:first-child{border-right:1px solid rgba(255,255,255,0.1)}
 .strip.warn{background:var(--strip-warn-bg);color:var(--strip-warn-text)}
-.strip.probation{background:rgba(255,179,64,0.15);color:var(--orange);border-left:3px solid var(--orange)}
+.strip.probation{background:rgba(255,179,64,0.15);color:var(--orange);border-left:3px solid var(--orange);position:relative;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;height:32px;}
+.probation-fill{position:absolute;top:0;left:0;height:100%;background:rgba(255,179,64,0.25);transition:width 0.3s ease;}
+.probation-text{position:relative;z-index:2;font-size:12px;font-weight:600;}
 .probationMark{display:block;font-size:10px;font-weight:700;color:var(--orange);position:absolute;top:20px;left:4px;white-space:nowrap;z-index:2}
 .strip.alert{background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:10px}
 [data-theme="dark"] .strip.alert,[data-theme="auto"] .strip.alert{background:#2a220a;color:#e8c85a;border-color:#7a5f00}

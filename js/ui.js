@@ -121,9 +121,9 @@ function renderCalendar(){
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
     cell.title=hname||'';
     var isStart=(set.startDate&&k===set.startDate);
-    var isProbDay=(probationEnd && cur>=parseDateKey(set.startDate) && cur<=probationEnd);
+    var isProbationEndDay=(probationEnd && k===dateKey(probationEnd));
     var isNight=(en&&en.isNight)?'<span style="position:absolute;top:2px;right:4px;font-size:12px;">🌙</span>':'';
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+(isProbDay&&!isStart?'<span class="probationMark">⏳ ทดลองงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
+    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+(isProbationEndDay&&!isStart?'<span class="probationMark">🏅 สิ้นสุดทดลองงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
     cell.setAttribute('data-date', k);
     cell.onclick=(function(key){return function(){
       if(window.multiSelectMode) {
@@ -146,7 +146,10 @@ function renderCalendar(){
   var pBox = $('probationBox');
   if(pBox){
     if(isProbation){
-      pBox.innerText = '🏅 ผ่านทดลองงานอีก ' + probationDaysLeft + ' วัน';
+      var totalDays = 119;
+      var daysPassed = totalDays - probationDaysLeft;
+      var pct = Math.max(0, Math.min(100, (daysPassed / totalDays) * 100));
+      pBox.innerHTML = '<div class="probation-fill" style="width:'+pct+'%"></div><div class="probation-text">🏅 ผ่านทดลองงานอีก ' + probationDaysLeft + ' วัน</div>';
       pBox.classList.remove('hide');
     } else {
       pBox.classList.add('hide');
