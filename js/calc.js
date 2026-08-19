@@ -278,6 +278,8 @@ function periodStats(p,kpiBonusPctOverride){
   
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
   if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
+  /* ⚠️ รางวัลอายุงาน: ไม่นับถ้ายังไม่เริ่มงาน หรือรอบบิลยังไม่มาถึง */
+  if(skipKpi) ppServiceAward = 0;
   var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
 
   /* ── ประกันสังคม ── */
