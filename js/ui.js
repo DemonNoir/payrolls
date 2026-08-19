@@ -59,6 +59,20 @@ function renderCalendar(){
   for(var i=0;i<currentPeriod.start.getDay();i++){var blank=document.createElement('div');blank.className='cell empty';grid.appendChild(blank)}
 
   var cur=new Date(currentPeriod.start), st=periodStats(currentPeriod), set=settings();
+  
+  var probationEnd = null;
+  var isProbation = false;
+  var probationDaysLeft = 0;
+  if(set.startDate){
+    var sd = parseDateKey(set.startDate);
+    probationEnd = addDays(sd, 118); // 119 days total (start date + 118)
+    var todayDt = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if(todayDt <= probationEnd){
+      isProbation = true;
+      probationDaysLeft = Math.floor((probationEnd - todayDt) / (1000 * 60 * 60 * 24));
+    }
+  }
+
   while(cur<=currentPeriod.end){
     var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k);
     if(hname)cls+=' holiday';
@@ -107,8 +121,9 @@ function renderCalendar(){
     cell.className='cell'+cls+(k===dateKey(today)?' today':'');
     cell.title=hname||'';
     var isStart=(set.startDate&&k===set.startDate);
+    var isProbDay=(probationEnd && cur>=parseDateKey(set.startDate) && cur<=probationEnd);
     var isNight=(en&&en.isNight)?'<span style="position:absolute;top:2px;right:4px;font-size:12px;">🌙</span>':'';
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
+    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+(isProbDay&&!isStart?'<span class="probationMark">⏳ ทดลองงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
     cell.setAttribute('data-date', k);
     cell.onclick=(function(key){return function(){
       if(window.multiSelectMode) {
@@ -127,6 +142,17 @@ function renderCalendar(){
   if($('valBank')) $('valBank').innerText=hours(banks.ot);
   if($('valAnnual')) $('valAnnual').innerText=hours(banks.annual);
   $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
+  
+  var pBox = $('probationBox');
+  if(pBox){
+    if(isProbation){
+      pBox.innerText = '🏅 ผ่านทดลองงานอีก ' + probationDaysLeft + ' วัน';
+      pBox.classList.remove('hide');
+    } else {
+      pBox.classList.add('hide');
+    }
+  }
+  
   $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
 
   /* Rate footer */
