@@ -8,29 +8,52 @@
 --canvas-bg:#ffffff;--canvas-label:#526178;
 }
 
-/* ── Dark Theme (Raycast-inspired) ── */
+/* ── Dark Theme (Obsidian Dark — deep navy with cold accents) ── */
 [data-theme="dark"]{
---ink:#f5f5f7;--muted:#98989f;--line:#3a3a3c;--bg:#1c1c1e;--panel:#2c2c2e;
---nav:#141414;--orange:#ff9f0a;--orange-bg:#bf6a02;--blue:#64d2ff;--purple:#bf5af2;--red:#ff453a;
---green:#30d158;--teal:#5ac8fa;--yellow:#ffd60a;
---hero-bg:#141414;--hero-text:#f5f5f7;--strip-bg:#3a3a3c;--strip-text:#64d2ff;
---strip-warn-bg:#3a1e00;--strip-warn-text:#ff9f0a;
---canvas-bg:#2c2c2e;--canvas-label:#98989f;
+  --ink:#e8eaf0;--muted:#8b92a5;--line:#252836;--bg:#0d0f14;--panel:#161820;
+  --nav:#0a0c10;--orange:#ffb340;--orange-bg:#9a5800;--blue:#7eb8ff;--purple:#c77dff;--red:#ff6b6b;
+  --green:#4cd964;--teal:#64d2ff;--yellow:#ffd60a;
+  --hero-bg:#0f1219;--hero-text:#e8eaf0;--strip-bg:#1a1d2e;--strip-text:#7eb8ff;
+  --strip-warn-bg:#2a1800;--strip-warn-text:#ffb340;
+  --canvas-bg:#161820;--canvas-label:#8b92a5;
+  /* extra tokens for dark-specific depth */
+  --cell-bg:#1c1f2b;--cell-border:#252836;
 }
 
-/* ── auto dark from system (Raycast-inspired) ── */
+/* ── auto dark from system (Obsidian Dark) ── */
 @media(prefers-color-scheme:dark){
   [data-theme="auto"]{
-    --ink:#f5f5f7;--muted:#98989f;--line:#3a3a3c;--bg:#1c1c1e;--panel:#2c2c2e;
-    --nav:#141414;--orange:#ff9f0a;--orange-bg:#bf6a02;--blue:#64d2ff;--purple:#bf5af2;--red:#ff453a;
-    --green:#30d158;--teal:#5ac8fa;--yellow:#ffd60a;
-    --hero-bg:#141414;--hero-text:#f5f5f7;--strip-bg:#3a3a3c;--strip-text:#64d2ff;
-    --strip-warn-bg:#3a1e00;--strip-warn-text:#ff9f0a;
-    --canvas-bg:#2c2c2e;--canvas-label:#98989f;
+    --ink:#e8eaf0;--muted:#8b92a5;--line:#252836;--bg:#0d0f14;--panel:#161820;
+    --nav:#0a0c10;--orange:#ffb340;--orange-bg:#9a5800;--blue:#7eb8ff;--purple:#c77dff;--red:#ff6b6b;
+    --green:#4cd964;--teal:#64d2ff;--yellow:#ffd60a;
+    --hero-bg:#0f1219;--hero-text:#e8eaf0;--strip-bg:#1a1d2e;--strip-text:#7eb8ff;
+    --strip-warn-bg:#2a1800;--strip-warn-text:#ffb340;
+    --canvas-bg:#161820;--canvas-label:#8b92a5;
+    --cell-bg:#1c1f2b;--cell-border:#252836;
   }
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,'Segoe UI',sans-serif;display:flex;justify-content:center;padding:14px 8px;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,sans-serif;
+  margin:0;padding:0;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  background-image: radial-gradient(circle at 15% 15%, rgba(59, 111, 209, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(255, 107, 43, 0.03) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+/* Custom Scrollbar for sleekness */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.5); }
+/* Dark Mode: deeper ambient gradients */
+[data-theme="dark"] body,
+[data-theme="dark"] {
+  background-image: radial-gradient(ellipse at 10% 0%, rgba(100, 140, 255, 0.10) 0%, transparent 50%),
+                    radial-gradient(ellipse at 90% 100%, rgba(150, 80, 255, 0.07) 0%, transparent 50%);
+  background-attachment: fixed;
+}
 button,input,select{font:inherit}
 .app{width:100%;max-width:480px}
 
@@ -292,19 +315,23 @@ button,input,select{font:inherit}
 .cell .badge.leave-funeral{background:#546e7a}
 .cell .holidayMark{position:absolute;top:2px;right:3px;font-size:9px;color:var(--red);font-weight:900}
 .cell .startMark{position:absolute;top:2px;left:3px;font-size:9px;color:var(--green);font-weight:900}
-/* Dark mode overrides for cells — harmonized with Raycast palette */
-[data-theme="dark"] .cell.money{background:#2a1f00;border-color:#4a3500}
-[data-theme="dark"] .cell.leave{background:#001a2e;border-color:#003050}
-[data-theme="dark"] .cell.use{background:#220040;border-color:#400070}
-[data-theme="dark"] .cell.leave-day{background:#002210;border-color:#004020}
-[data-theme="dark"] .cell.holiday{background:#2a0800;border-color:#4a1200}
+/* Dark mode overrides for cells — harmonized with Obsidian Dark palette */
+[data-theme="dark"] .cell{background:var(--cell-bg, #1c1f2b);border-color:var(--cell-border, #252836)}
+[data-theme="dark"] .cell .num{color:#8b92a5}
+[data-theme="dark"] .cell.money{background:#241c00;border-color:#4a3a00}
+[data-theme="dark"] .cell.leave{background:#0c1a35;border-color:#1a3060}
+[data-theme="dark"] .cell.use{background:#1a0d35;border-color:#341866}
+[data-theme="dark"] .cell.leave-day{background:#0a2015;border-color:#1a4030}
+[data-theme="dark"] .cell.holiday{background:#2a0a0a;border-color:#501010}
 /* Auto dark mode overrides for cells */
 @media(prefers-color-scheme:dark){
-  [data-theme="auto"] .cell.money{background:#2a1f00;border-color:#4a3500}
-  [data-theme="auto"] .cell.leave{background:#001a2e;border-color:#003050}
-  [data-theme="auto"] .cell.use{background:#220040;border-color:#400070}
-  [data-theme="auto"] .cell.leave-day{background:#002210;border-color:#004020}
-  [data-theme="auto"] .cell.holiday{background:#2a0800;border-color:#4a1200}
+  [data-theme="auto"] .cell{background:var(--cell-bg, #1c1f2b);border-color:var(--cell-border, #252836)}
+  [data-theme="auto"] .cell .num{color:#8b92a5}
+  [data-theme="auto"] .cell.money{background:#241c00;border-color:#4a3a00}
+  [data-theme="auto"] .cell.leave{background:#0c1a35;border-color:#1a3060}
+  [data-theme="auto"] .cell.use{background:#1a0d35;border-color:#341866}
+  [data-theme="auto"] .cell.leave-day{background:#0a2015;border-color:#1a4030}
+  [data-theme="auto"] .cell.holiday{background:#2a0a0a;border-color:#501010}
 }
 .rate-footer{text-align:center;font-size:11px;color:var(--muted);margin:6px 0 4px;font-weight:600}
 .legend{
