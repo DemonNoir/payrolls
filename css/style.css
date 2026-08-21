@@ -761,7 +761,6 @@ canvas{width:100%;display:block}
 @media(min-width:700px){
 body{padding:22px 12px}
 .app,.sheet{max-width:640px}
-.calendarDesk{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:12px;align-items:start}
 }
 @media(max-width:380px){
 body{padding-left:6px;padding-right:6px}
