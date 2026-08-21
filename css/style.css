@@ -290,6 +290,7 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .period-kpi-row .group{flex:1;margin-bottom:0}
 
 /* ── Calendar Grid ── */
+.calendarDesk{max-width:440px;margin:0 auto;width:100%}
 .weekdays,.grid{display:grid;grid-template-columns:repeat(7,1fr)}
 .weekdays{text-align:center;font-size:11px;color:var(--muted);margin:10px 0 6px;font-weight:700}
 .grid{gap:5px}
