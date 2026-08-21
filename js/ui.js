@@ -142,9 +142,38 @@ function renderCalendar(){
   if($('valBank')) $('valBank').innerText=hours(banks.ot);
   if($('valAnnual')) $('valAnnual').innerText=hours(banks.annual);
   $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
-  
+  $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
+
+  /* Rate footer */
+  var rf=$('rateFooter');
+  if(rf){
+    var s=settings();
+    rf.innerText=s.salaryBase>0?('💼 ค่าจ้างฐาน: '+hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'';
+  }
+
+  checkMigration();
+}
+
+function renderDashboard(){
+  var curLabel=periodLabel(currentPeriod);
+  var st=periodStats(currentPeriod), s=settings(currentPeriod);
+
+  /* ── Probation Status Card ── */
   var pBox = $('probationBox');
   if(pBox){
+    var probationEnd = null;
+    var isProbation = false;
+    var probationDaysLeft = 0;
+    if(s.startDate){
+      var sd = parseDateKey(s.startDate);
+      probationEnd = addDays(sd, 118); // 119 days total (start date + 118)
+      var todayDt = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if(todayDt <= probationEnd){
+        isProbation = true;
+        probationDaysLeft = Math.floor((probationEnd - todayDt) / (1000 * 60 * 60 * 24));
+      }
+    }
+
     if(isProbation){
       var totalDays = 119;
       var daysPassed = totalDays - probationDaysLeft;
@@ -164,22 +193,6 @@ function renderCalendar(){
       pBox.classList.add('hide');
     }
   }
-  
-  $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
-
-  /* Rate footer */
-  var rf=$('rateFooter');
-  if(rf){
-    var s=settings();
-    rf.innerText=s.salaryBase>0?('💼 ค่าจ้างฐาน: '+hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'';
-  }
-
-  checkMigration();
-}
-
-function renderDashboard(){
-  var curLabel=periodLabel(currentPeriod);
-  var st=periodStats(currentPeriod), s=settings(currentPeriod);
 
   $('dashOt').innerText=hours(st.otHours)+' ชม.';
   $('dashOtPay').innerText=money(st.otPay);
