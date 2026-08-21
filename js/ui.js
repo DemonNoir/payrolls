@@ -148,10 +148,19 @@ function renderCalendar(){
     if(isProbation){
       var totalDays = 119;
       var daysPassed = totalDays - probationDaysLeft;
-      var pct = Math.max(0, Math.min(100, (daysPassed / totalDays) * 100));
-      pBox.innerHTML = '<div class="probation-fill" style="width:'+pct+'%"></div><div class="probation-text">🏅 ผ่านทดลองงานอีก ' + probationDaysLeft + ' วัน</div>';
+      var pct = Math.max(2, Math.min(100, (daysPassed / totalDays) * 100));
+      var daysLabel = probationDaysLeft === 0 ? 'วันสุดท้าย! 🎉' : ('เหลืออีก <b>' + probationDaysLeft + '</b> วัน');
+      pBox.innerHTML =
+        '<div class="probation-card__header">' +
+          '<span class="probation-card__label">🏅 ทดลองงาน</span>' +
+          '<span class="probation-card__days">' + daysLabel + '</span>' +
+        '</div>' +
+        '<div class="probation-bar-track">' +
+          '<div class="probation-bar-fill" style="width:' + pct + '%"></div>' +
+        '</div>';
       pBox.classList.remove('hide');
     } else {
+      /* ผ่านทดลองงานแล้ว — ซ่อนถาวร */
       pBox.classList.add('hide');
     }
   }

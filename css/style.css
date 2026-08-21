@@ -268,9 +268,14 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .strip.split span:first-child{border-right:1px solid rgba(0,0,0,0.1)}
 [data-theme="dark"] .strip.split span:first-child, [data-theme="auto"] .strip.split span:first-child{border-right:1px solid rgba(255,255,255,0.1)}
 .strip.warn{background:var(--strip-warn-bg);color:var(--strip-warn-text)}
-.strip.probation{background:rgba(255,179,64,0.15);color:var(--orange);border-left:3px solid var(--orange);position:relative;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;height:32px;}
-.probation-fill{position:absolute;top:0;left:0;height:100%;background:rgba(255,179,64,0.25);transition:width 0.3s ease;}
-.probation-text{position:relative;z-index:2;font-size:12px;font-weight:600;}
+.probation-card{background:linear-gradient(135deg,rgba(255,179,64,0.10) 0%,rgba(255,149,0,0.06) 100%);border:1px solid rgba(255,179,64,0.28);border-radius:14px;padding:12px 14px 10px;margin-bottom:8px;}
+[data-theme="dark"] .probation-card{background:linear-gradient(135deg,rgba(255,179,64,0.08) 0%,rgba(255,149,0,0.04) 100%);border-color:rgba(255,179,64,0.22);}
+.probation-card__header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.probation-card__label{font-size:11px;font-weight:700;color:var(--orange);letter-spacing:0.03em;}
+.probation-card__days{font-size:11px;color:var(--muted);}
+.probation-card__days b{font-size:22px;font-weight:800;color:var(--orange);line-height:1;margin-right:2px;font-variant-numeric:tabular-nums;}
+.probation-bar-track{height:4px;background:rgba(255,179,64,0.18);border-radius:2px;overflow:hidden;}
+.probation-bar-fill{height:100%;background:var(--orange);border-radius:2px;transition:width 0.6s cubic-bezier(0.22,1,0.36,1);}
 .probationMark{display:block;font-size:10px;font-weight:700;color:var(--orange);position:absolute;top:20px;left:4px;white-space:nowrap;z-index:2}
 .strip.alert{background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:10px}
 [data-theme="dark"] .strip.alert,[data-theme="auto"] .strip.alert{background:#2a220a;color:#e8c85a;border-color:#7a5f00}
