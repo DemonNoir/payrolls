@@ -294,6 +294,35 @@ function closeCloudModal(){
   if(overlay) overlay.classList.remove('show');
 }
 
+function copyToClipboard(text, successMsg){
+  if(!text) return false;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      if(successMsg) alert(successMsg);
+    }).catch(function(){
+      fallbackCopy(text, successMsg);
+    });
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg){
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    if(successMsg) alert(successMsg);
+  } catch(e) {
+    prompt('กรุณาคัดลอกข้อความด้านล่าง:', text);
+  }
+  document.body.removeChild(ta);
+}
+
 function initCloudEvents(){
   /* Secret Trigger 1: Secret glass button in settings */
   var secretBtn = $('secretCloudBtn');
@@ -335,6 +364,27 @@ function initCloudEvents(){
     };
   }
 
+  /* Copy Buttons */
+  if($('copyGistIdBtn')) $('copyGistIdBtn').onclick = function(){
+    var id = $('cloudGistId') ? $('cloudGistId').value.trim() : '';
+    if(!id){ alert('⚠️ ยังไม่มี Gist ID ให้คัดลอก (กดสำรองข้อมูลครั้งแรกก่อนเพื่อสร้าง Gist)'); return; }
+    copyToClipboard(id, '📋 คัดลอก Gist ID เรียบร้อยแล้ว:\n\n' + id);
+  };
+
+  if($('copyTokenBtn')) $('copyTokenBtn').onclick = function(){
+    var token = $('cloudGistToken') ? $('cloudGistToken').value.trim() : '';
+    if(!token){ alert('⚠️ ยังไม่มี Token ให้คัดลอก'); return; }
+    copyToClipboard(token, '📋 คัดลอก GitHub Token เรียบร้อยแล้ว');
+  };
+
+  if($('copyMigrationKeyBtn')) $('copyMigrationKeyBtn').onclick = function(){
+    var token = $('cloudGistToken') ? $('cloudGistToken').value.trim() : '';
+    var id = $('cloudGistId') ? $('cloudGistId').value.trim() : '';
+    if(!token && !id){ alert('⚠️ ยังไม่มีข้อมูลเชื่อมต่อให้คัดลอก'); return; }
+    var text = '🔑 ข้อมูลเชื่อมต่อ Cloud Sync (Payroll App)\nToken: ' + (token || '(ยังไม่มี)') + '\nGist ID: ' + (id || '(ยังไม่มี)');
+    copyToClipboard(text, '📋 คัดลอกข้อมูลสำหรับย้ายเครื่องเรียบร้อยแล้ว!\n\nคุณสามารถนำข้อความนี้ไปวางในเครื่องใหม่ หรือส่งเข้า LINE / Notes ได้เลยครับ');
+  };
+
   /* Actions */
   if($('cloudBackupBtn')) $('cloudBackupBtn').onclick = function(){ cloudBackup(false); };
   if($('cloudRestoreBtn')) $('cloudRestoreBtn').onclick = function(){ cloudRestore(); };
@@ -374,3 +424,4 @@ function initCloudEvents(){
     if(e.target === this) closeCloudModal();
   };
 }
+

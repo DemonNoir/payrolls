@@ -1798,6 +1798,15 @@ body{background:#fff;display:block;padding:0}
 .cloud-link.token-help:hover {
   background: rgba(122, 79, 199, 0.2);
 }
+.cloud-link.copy-btn {
+  color: var(--teal);
+  background: rgba(8, 122, 137, 0.12);
+  border: none;
+  cursor: pointer;
+}
+.cloud-link.copy-btn:hover {
+  background: rgba(8, 122, 137, 0.22);
+}
 
 /* Form */
 .cloud-form {
@@ -1813,23 +1822,38 @@ body{background:#fff;display:block;padding:0}
 }
 .cloud-input-wrap input {
   width: 100%;
-  padding-right: 40px !important;
+  padding-right: 70px !important;
   font-family: monospace;
   font-size: 13px;
 }
-.cloud-eye-btn {
+.cloud-input-btns {
   position: absolute;
-  right: 8px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 4px;
-  border-radius: 6px;
-  opacity: 0.7;
-  transition: opacity 0.15s;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.cloud-eye-btn:hover { opacity: 1; }
+.cloud-input-action-btn {
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(128, 128, 128, 0.15);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.85;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cloud-input-action-btn:hover {
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.22);
+  transform: scale(1.05);
+}
+.cloud-input-action-btn:active {
+  transform: scale(0.95);
+}
 .cloud-hint {
   display: block;
   font-size: 11px;
