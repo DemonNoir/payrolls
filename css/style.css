@@ -1582,6 +1582,24 @@ body{background:#fff;display:block;padding:0}
 .avatar-ctx-item.danger { color: var(--red); }
 .avatar-ctx-item.danger:hover { background: rgba(255,69,58,0.08); }
 .avatar-ctx-item-icon { font-size: 16px; width: 20px; text-align: center; }
+.avatar-ctx-check {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green);
+  background: rgba(34, 134, 95, 0.12);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.avatar-ctx-check.off {
+  color: var(--muted);
+  background: rgba(128, 128, 128, 0.1);
+  opacity: 0.5;
+}
 .avatar-ctx-divider { height: 1px; background: var(--line); margin: 4px 0; }
 
 /* ── Tooltip for avatar ── */

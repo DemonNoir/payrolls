@@ -158,24 +158,48 @@ $('setKpiBonus').addEventListener('change',function(){
  * ══════════════════════════════════════════════════════════════ */
 (function() {
   var AVATAR_KEY = 'user_avatar';
+  var AVATAR_ICON_KEY = 'user_avatar_as_icon';
   var MAX_SIZE = 200; // px — ย่อรูปให้เหลือสูงสุด 200×200
   var ctx_open = false;
 
-  var btn       = $('avatarBtn');
-  var imgEl     = $('avatarImg');
-  var defaultEl = $('avatarDefault');
-  var fileInput = $('avatarFileInput');
-  var ctxMenu   = $('avatarCtxMenu');
-  var ctxUpload = $('avatarCtxUpload');
-  var ctxDelete = $('avatarCtxDelete');
-  var ctxDivider= $('avatarCtxDivider');
+  var btn           = $('avatarBtn');
+  var imgEl         = $('avatarImg');
+  var defaultEl     = $('avatarDefault');
+  var fileInput     = $('avatarFileInput');
+  var ctxMenu       = $('avatarCtxMenu');
+  var ctxUpload     = $('avatarCtxUpload');
+  var ctxToggleIcon = $('avatarCtxToggleIcon');
+  var ctxCheck      = $('avatarCtxCheck');
+  var ctxDelete     = $('avatarCtxDelete');
+  var ctxDivider    = $('avatarCtxDivider');
 
   if (!btn) return;
 
+  function isAvatarAsIconEnabled() {
+    var val = localStorage.getItem(AVATAR_ICON_KEY);
+    return val === null ? true : val === '1'; // default true เมื่อมีรูป
+  }
+
+  function setAvatarAsIcon(enabled) {
+    localStorage.setItem(AVATAR_ICON_KEY, enabled ? '1' : '0');
+    renderAvatarIconState();
+    var currentAvatar = localStorage.getItem(AVATAR_KEY);
+    updateDynamicIcons(currentAvatar);
+  }
+
+  function renderAvatarIconState() {
+    var enabled = isAvatarAsIconEnabled();
+    if (ctxCheck) {
+      ctxCheck.innerText = enabled ? '✓' : '—';
+      ctxCheck.className = 'avatar-ctx-check' + (enabled ? '' : ' off');
+    }
+  }
+
   /* ── Dynamic Favicon & Apple Touch Icon ── */
   function updateDynamicIcons(dataUrl) {
+    var enabled = isAvatarAsIconEnabled();
     var defaultIcon = 'icons/icon-192.png';
-    var iconUrl = dataUrl || defaultIcon;
+    var iconUrl = (enabled && dataUrl) ? dataUrl : defaultIcon;
 
     var fav = $('dynamicFavicon');
     if (!fav) {
@@ -203,6 +227,7 @@ $('setKpiBonus').addEventListener('change',function(){
       imgEl.classList.add('has-photo');
       defaultEl.classList.add('hidden');
       btn.classList.add('has-photo');
+      if (ctxToggleIcon) { ctxToggleIcon.style.display = 'flex'; }
       if (ctxDelete) { ctxDelete.style.display = 'flex'; }
       if (ctxDivider) { ctxDivider.style.display = 'block'; }
     } else {
@@ -210,9 +235,11 @@ $('setKpiBonus').addEventListener('change',function(){
       imgEl.classList.remove('has-photo');
       defaultEl.classList.remove('hidden');
       btn.classList.remove('has-photo');
+      if (ctxToggleIcon) { ctxToggleIcon.style.display = 'none'; }
       if (ctxDelete) { ctxDelete.style.display = 'none'; }
       if (ctxDivider) { ctxDivider.style.display = 'none'; }
     }
+    renderAvatarIconState();
     updateDynamicIcons(dataUrl);
   }
 
@@ -324,6 +351,12 @@ $('setKpiBonus').addEventListener('change',function(){
   if (ctxUpload) ctxUpload.addEventListener('click', function() {
     closeCtxMenu();
     fileInput.click();
+  });
+
+  if (ctxToggleIcon) ctxToggleIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var current = isAvatarAsIconEnabled();
+    setAvatarAsIcon(!current);
   });
 
   if (ctxDelete) ctxDelete.addEventListener('click', function() {

@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=150">
+<link rel="stylesheet" href="css/style.css?v=151">
 </head>
 <body>
 <main class="app">
@@ -33,6 +33,11 @@
 <!-- Avatar Context Menu -->
 <div class="avatar-ctx-menu" id="avatarCtxMenu">
   <button class="avatar-ctx-item" id="avatarCtxUpload"><span class="avatar-ctx-item-icon">📷</span>เปลี่ยนรูปโปรไฟล์</button>
+  <button class="avatar-ctx-item" id="avatarCtxToggleIcon" style="display:none">
+    <span class="avatar-ctx-item-icon">🖼️</span>
+    <span style="flex:1">ใช้เป็นไอคอนแอป</span>
+    <span class="avatar-ctx-check" id="avatarCtxCheck">✓</span>
+  </button>
   <div class="avatar-ctx-divider" id="avatarCtxDivider" style="display:none"></div>
   <button class="avatar-ctx-item danger" id="avatarCtxDelete" style="display:none"><span class="avatar-ctx-item-icon">🗑️</span>ลบรูปโปรไฟล์</button>
 </div>
@@ -649,7 +654,7 @@
 <script src="js/data.js?v=46"></script>
 <script src="js/cloud.js?v=3"></script>
 <script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=47"></script>
+<script src="js/app.js?v=48"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){
