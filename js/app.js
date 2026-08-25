@@ -172,6 +172,30 @@ $('setKpiBonus').addEventListener('change',function(){
 
   if (!btn) return;
 
+  /* ── Dynamic Favicon & Apple Touch Icon ── */
+  function updateDynamicIcons(dataUrl) {
+    var defaultIcon = 'icons/icon-192.png';
+    var iconUrl = dataUrl || defaultIcon;
+
+    var fav = $('dynamicFavicon');
+    if (!fav) {
+      fav = document.createElement('link');
+      fav.id = 'dynamicFavicon';
+      fav.rel = 'icon';
+      document.head.appendChild(fav);
+    }
+    fav.href = iconUrl;
+
+    var appleIcon = $('dynamicAppleIcon');
+    if (!appleIcon) {
+      appleIcon = document.createElement('link');
+      appleIcon.id = 'dynamicAppleIcon';
+      appleIcon.rel = 'apple-touch-icon';
+      document.head.appendChild(appleIcon);
+    }
+    appleIcon.href = iconUrl;
+  }
+
   /* ── Apply avatar to UI ── */
   function applyAvatar(dataUrl) {
     if (dataUrl) {
@@ -189,11 +213,12 @@ $('setKpiBonus').addEventListener('change',function(){
       if (ctxDelete) { ctxDelete.style.display = 'none'; }
       if (ctxDivider) { ctxDivider.style.display = 'none'; }
     }
+    updateDynamicIcons(dataUrl);
   }
 
   /* ── Load saved avatar on boot ── */
   var saved = localStorage.getItem(AVATAR_KEY);
-  if (saved) applyAvatar(saved);
+  applyAvatar(saved || null);
 
   /* ── Resize + compress image via Canvas ── */
   function processImage(file, callback) {
