@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=148">
+<link rel="stylesheet" href="css/style.css?v=149">
 </head>
 <body>
 <main class="app">
@@ -365,6 +365,11 @@
 <button class="btn primary" id="exportBtn">📤 สำรองข้อมูล</button>
 <button class="btn primary" id="importBtn">📥 กู้คืนข้อมูล</button>
 </div>
+<div class="cloud-secret-container">
+  <button class="btn cloud-secret-btn" id="secretCloudBtn" type="button" title="ระบบ Cloud Sync ส่วนตัว">
+    <span class="cloud-icon-glow">☁️</span> คลาวด์ซิงค์ (GitHub Gist) <span class="secret-tag">PRIVATE</span>
+  </button>
+</div>
 <input type="file" id="importFile" accept="application/json,.json" class="hide">
 <div class="actions"><button class="btn primary" id="saveSettingsBtn">บันทึก</button></div>
 <div class="actions" style="margin-top:6px"><button class="btn soft" id="showTutorialBtn">📖 ดูคู่มือการใช้งาน</button></div>
@@ -555,6 +560,76 @@
   </div>
 </div>
 
+<!-- Cloud Sync Overlay (GitHub Gist) -->
+<div class="overlay" id="cloudSyncOverlay">
+  <div class="sheet cloud-sheet">
+    <div class="cloud-header">
+      <div class="cloud-title-group">
+        <div class="cloud-badge" id="cloudStatusBadge">
+          <span class="cloud-dot offline"></span> <b>ยังไม่ได้เชื่อมต่อ</b>
+        </div>
+        <h2>☁️ Cloud Sync</h2>
+        <p class="cloud-subtitle">สำรองและกู้คืนข้อมูลผ่าน GitHub Gist ส่วนตัว (ฟรี 100%)</p>
+      </div>
+      <button class="cloud-close-icon" id="closeCloudTopBtn" type="button" onclick="closeCloudModal()">✕</button>
+    </div>
+
+    <!-- Info Card -->
+    <div class="cloud-info-card">
+      <div class="cloud-info-row">
+        <span class="cloud-info-label">สถานะซิงค์:</span>
+        <span class="cloud-info-val" id="cloudLastSyncInfo">ยังไม่มีการซิงค์</span>
+      </div>
+      <div class="cloud-info-actions">
+        <a id="cloudGistLink" class="cloud-link" href="#" target="_blank" rel="noopener noreferrer" style="display:none">🔗 ดูไฟล์บน Gist</a>
+        <a class="cloud-link token-help" href="https://github.com/settings/tokens/new?scopes=gist&description=Payroll%20App%20Sync" target="_blank" rel="noopener noreferrer">🔑 สร้าง Token บน GitHub</a>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="cloud-form">
+      <div class="group">
+        <label>GitHub Personal Access Token (PAT) <span style="color:var(--red)">*</span></label>
+        <div class="cloud-input-wrap">
+          <input type="password" id="cloudGistToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+          <button type="button" class="cloud-eye-btn" id="toggleTokenVisibility" title="แสดง/ซ่อนรหัส">👁️</button>
+        </div>
+        <small class="cloud-hint">ต้องการสิทธิ์เฉพาะ <code>[x] gist</code> เท่านั้น ข้อมูลปลอดภัยอยู่ในบัญชีคุณ 100%</small>
+      </div>
+
+      <div class="group">
+        <label>Gist ID <small>(เว้นว่างได้ ระบบจะสร้างให้อัตโนมัติ)</small></label>
+        <input type="text" id="cloudGistId" placeholder="เช่น a1b2c3d4e5f6..." autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="cloud-toggle-row">
+        <label class="cloud-toggle-label" for="cloudAutoSyncToggle">
+          <span>⚡ <b>Auto-Sync อัตโนมัติ</b></span>
+          <small>สำรองข้อมูลขึ้นคลาวด์อัตโนมัติเมื่อบันทึกข้อมูล</small>
+        </label>
+        <input type="checkbox" id="cloudAutoSyncToggle" class="cloud-switch">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="cloud-actions-grid">
+      <button class="btn cloud-btn-primary" id="cloudBackupBtn" type="button">
+        <span>📤</span> สำรองข้อมูลขึ้น Cloud
+      </button>
+      <button class="btn cloud-btn-secondary" id="cloudRestoreBtn" type="button">
+        <span>📥</span> ดึงข้อมูลกลับ (Restore)
+      </button>
+    </div>
+
+    <div class="cloud-sub-actions">
+      <button class="btn soft" id="cloudTestBtn" type="button">🧪 ทดสอบการเชื่อมต่อ</button>
+      <button class="btn danger-soft" id="cloudClearBtn" type="button">🗑️ ล้างการเชื่อมต่อ</button>
+    </div>
+
+    <button class="ghost" id="closeCloudBtn" type="button">ปิดหน้าต่าง</button>
+  </div>
+</div>
+
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
@@ -562,9 +637,10 @@
 <script src="js/calc.js?v=47"></script>
 <script src="js/ui.js?v=48"></script>
 <script src="js/settings.js?v=44"></script>
-<script src="js/data.js?v=45"></script>
+<script src="js/data.js?v=46"></script>
+<script src="js/cloud.js?v=1"></script>
 <script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=45"></script>
+<script src="js/app.js?v=46"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){

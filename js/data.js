@@ -112,4 +112,7 @@ function refreshHistory(){
   localStorage.setItem('monthly_history',JSON.stringify(months));
   localStorage.setItem('weekly_history',JSON.stringify(weeks));
   idbSave(); /* auto-backup ทุกครั้งที่มีการเปลี่ยนแปลง */
+  if(typeof getCloudConfig === 'function' && getCloudConfig().autoSync && typeof cloudBackup === 'function'){
+    cloudBackup(true);
+  }
 }

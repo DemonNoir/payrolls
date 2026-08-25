@@ -325,6 +325,7 @@ $('setKpiBonus').addEventListener('change',function(){
 initTheme();
 renderAll();
 checkForcedBackupReminder();
+if(typeof initCloudEvents === 'function') initCloudEvents();
 
 /* Tutorial */
 if($('showTutorialBtn')) $('showTutorialBtn').onclick = function(){ closeSettings(); showTutorial(); };
