@@ -324,25 +324,38 @@ function fallbackCopy(text, successMsg){
 }
 
 function initCloudEvents(){
-  /* Secret Trigger 1: Secret glass button in settings */
-  var secretBtn = $('secretCloudBtn');
-  if(secretBtn) secretBtn.onclick = function(){
-    animateIcon(this, 'icon-anim-spin');
-    openCloudModal();
-  };
-
-  /* Secret Trigger 2: Triple Click on Month Label (Easter Egg) */
-  var headerClicks = 0, headerClickTimer = null;
-  var monthEl = $('monthLabel');
-  if(monthEl){
-    monthEl.addEventListener('click', function(){
-      headerClicks++;
-      clearTimeout(headerClickTimer);
-      if(headerClicks >= 3){
-        headerClicks = 0;
+  /* 🕵️‍♂️ Secret Easter Egg Gestures (แตะ 3 ครั้ง) */
+  function bindTripleTap(elementId){
+    var el = $(elementId);
+    if(!el) return;
+    var clicks = 0, timer = null;
+    el.addEventListener('click', function(e){
+      clicks++;
+      clearTimeout(timer);
+      if(clicks >= 3){
+        clicks = 0;
         openCloudModal();
       } else {
-        headerClickTimer = setTimeout(function(){ headerClicks = 0; }, 600);
+        timer = setTimeout(function(){ clicks = 0; }, 500);
+      }
+    });
+  }
+
+  /* แตะ 3 ครั้งที่ชื่อเดือน (หน้าหลัก) */
+  bindTripleTap('monthLabel');
+
+  /* แตะ 3 ครั้งที่หัวข้อ "⚙️ ตั้งค่า" ในหน้าต่างตั้งค่า */
+  var settingsH2 = document.querySelector('#settingsOverlay h2');
+  if(settingsH2){
+    var sClicks = 0, sTimer = null;
+    settingsH2.addEventListener('click', function(){
+      sClicks++;
+      clearTimeout(sTimer);
+      if(sClicks >= 3){
+        sClicks = 0;
+        openCloudModal();
+      } else {
+        sTimer = setTimeout(function(){ sClicks = 0; }, 500);
       }
     });
   }
