@@ -164,7 +164,7 @@ function periodStats(p,kpiBonusPctOverride){
       var dayHours = 0;
       ne.rates.forEach(function(r) {
         dayHours += num(r.hours);
-        if(r.payType==='money') tp += num(r.hours) * num(r.multiplier) * hourlyRate;
+        if(r.payType==='money') tp += Math.round(num(r.hours) * num(r.multiplier) * hourlyRate * 100) / 100;
       });
       th += dayHours; otDays++;
       var isDayHoliday = typeof isHolidayKey === 'function' ? isHolidayKey(k) : false;
