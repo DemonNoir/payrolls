@@ -1,10 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
- * calc.js — สูตรคำนวณเงินเดือน OT สวัสดิการ และรายการหัก
- *
- * ⚠️ คำเตือนสำหรับนักพัฒนา / AI Agent:
- * ไฟล์นี้คือหัวใจของแอป — แก้ผิดแม้บรรทัดเดียวจะทำให้ยอดเงินผิดทั้งหมด
- * ก่อนแก้ไข ต้องอ่าน ARCHITECTURE.md และรัน tests/calc-tests.html ทุกครั้ง
- * ══════════════════════════════════════════════════════════════ */
+   calc.js — สูตรคำนวณเงินเดือน OT สวัสดิการ และรายการหัก
+   ⚠️ คำเตือนสำหรับนักพัฒนา / AI Agent:
+   ไฟล์นี้คือหัวใจของแอป — แก้ผิดแม้บรรทัดเดียวจะทำให้ยอดเงินผิดทั้งหมด
+   ก่อนแก้ไข ต้องอ่าน ARCHITECTURE.md และรัน tests/calc-tests.html ทุกครั้ง
+══════════════════════════════════════════════════════════════ */
 
 /* ── Settings ── */
 function settings(periodRef){
@@ -43,26 +42,23 @@ function settings(periodRef){
 function getValidDay(v){v=parseInt(v,10);return (v>=1&&v<=31)?v:0}
 
 /* ── คำนวณค่าแรง/ชม. จากเงินเดือน + KPI ── */
-/* สูตร: (เงินเดือน + KPI เงิน) ÷ 30 ÷ 8 แล้ว ceil ทศนิยม 2 ตำแหน่ง
- * ⚠️ Math.ceil ปัดขึ้น ตามสลิปบริษัท — อย่าเปลี่ยนเป็น Math.round/floor
- * ⚠️ หาร 30 เสมอ (ไม่ใช่จำนวนวันในเดือน) — ตามสูตรบริษัท
- * ⚠️ หาร 8 คือ 8 ชม./วัน — ค่าคงที่ตามกฎหมายแรงงาน */
+/* สูตร: (เงินเดือน + KPI เงิน) ÷ 30 ÷ 8 แล้ว round ทศนิยม 2 ตำแหน่ง
+   ⚠️ Math.round ปัดปกติ ตามสลิปบริษัท (ยืนยันจากสลิปจริง 2 เดือน)
+   ⚠️ หาร 30 เสมอ (ไม่ใช่จำนวนวันในเดือน) — ตามสูตรบริษัท
+   ⚠️ หาร 8 คือ 8 ชม./วัน — ค่าคงที่ตามกฎหมายแรงงาน */
 function getHourlyRate(kpiBonusOverride, periodRef){
   var st=settings(periodRef);
   var salaryBase=st.salaryBase;
   if(isNaN(salaryBase)||salaryBase<=0)return 0;
-  
   var kpiDailyType = st.kpiType || 'percent';
   var kpiDailyVal = num(st.kpiValue !== undefined ? st.kpiValue : st.kpiPercent);
   var kpiDailyMoney = (kpiDailyType === 'amount') ? kpiDailyVal : (salaryBase * (kpiDailyVal / 100));
-
   var kpiBonusType = st.kpiBonusType || 'percent';
   var kpiBonusVal = (kpiBonusOverride !== undefined) ? num(kpiBonusOverride) : num(st.kpiBonusValue);
   var kpiBonusMoney = (kpiBonusType === 'amount') ? kpiBonusVal : (salaryBase * (kpiBonusVal / 100));
-
   var totalKpiMoney = kpiDailyMoney + kpiBonusMoney;
   var base = salaryBase + totalKpiMoney;
-  return Math.ceil(base / 30 / 8 * 100) / 100; /* ← ห้ามเปลี่ยน ceil/30/8 */
+  return Math.round(base / 30 / 8 * 100) / 100; /* ← ใช้ round ตามสลิปบริษัท */
 }
 
 function periodFor(ref){
@@ -80,7 +76,9 @@ function periodLabel(p){
   var isCalMonth = p.start.getDate() === 1 && p.end.getDate() === daysInMonth(p.start.getFullYear(), p.start.getMonth());
   return isCalMonth ? MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543) : p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543);
 }
+
 function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
+
 function inRangeDate(dt,start,end){return dt>=start&&dt<=end}
 
 /* Removed entryContribution */
@@ -99,13 +97,11 @@ function getBanks(excludeKey){
   var data=getCal(), st=settings();
   var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
   var banks = {};
-  
   types.forEach(function(t) {
     if (t.has_quota) banks[t.id] = num(t.quota_total);
   });
   banks.swap = (banks.swap || 0) + num(st.bankAdj);
   if ('annual' in banks) banks.annual = num(st.annualLeaveAdj) + (monthsWorked()*4);
-
   Object.keys(data).forEach(function(k){
     if(k!==excludeKey){
       var en=data[k];
@@ -119,17 +115,16 @@ function getBanks(excludeKey){
         var lt = en.leaveType || '_legacy';
         var tConf = types.find(function(x){ return x.id===lt; });
         if(tConf && tConf.has_quota) {
-           banks[lt] -= num(en.hours);
+          banks[lt] -= num(en.hours);
         } else if (lt === 'annual') {
-           banks.annual = (banks.annual||0) - num(en.hours);
+          banks.annual = (banks.annual||0) - num(en.hours);
         } else if (lt === 'swap') {
-           banks.swap = (banks.swap||0) - num(en.hours);
+          banks.swap = (banks.swap||0) - num(en.hours);
         }
       }
       if(en.kind==='leave' && en.leaveType==='annual') banks.annual = (banks.annual||0) - (num(en.days)||1)*8;
     }
   });
-  
   var res = {};
   Object.keys(banks).forEach(function(k) { res[k] = Math.max(0, banks[k]); });
   res.ot = res.swap || 0; // backward compat
@@ -151,6 +146,7 @@ function periodStats(p,kpiBonusPctOverride){
   var ppOther=getPerPeriod('pp_other',label);
 
   var todayDt = new Date(); todayDt.setHours(0,0,0,0);
+
   /* นับการลาจากปฏิทินแบบ Dynamic */
   var leaveTypesConfig = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
   var calLeave={};
@@ -181,7 +177,6 @@ function periodStats(p,kpiBonusPctOverride){
       var tConf = leaveTypesConfig.find(function(x){ return x.id===lt; });
       var isDays = tConf && tConf.unit === 'days';
       var daysValue = isDays ? hrs : (hrs/8);
-      
       leaveUse += daysValue;
       if(lt in calLeave) calLeave[lt] += daysValue;
     }
@@ -192,7 +187,7 @@ function periodStats(p,kpiBonusPctOverride){
       leaveUse+=ld;
     }
   });
-  
+
   /* Hybrid: บวกกับยอดลาจากตั้งค่า (per-period) */
   ppSick+=calLeave.sick; ppPersonal+=calLeave.personal_paid+calLeave.personal_unpaid; ppAbsent+=calLeave.absent;
   var ppAnnual=calLeave.annual;
@@ -211,9 +206,7 @@ function periodStats(p,kpiBonusPctOverride){
     totalDaysInPeriod++;
     var countForRealtime = (st.calcMode === 'overall') || (cur <= todayDt);
     var isEmployed = !dStart || cur >= dStart;
-    
     if (isEmployed && countForRealtime) employedDaysInPeriod++;
-
     var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
     var isWorkingDay = (cur.getDay()!==0 && !isHolidayKey(k));
     if((isWorkingDay || hasOt) && isEmployed && countForRealtime) autoDays++;
@@ -223,13 +216,11 @@ function periodStats(p,kpiBonusPctOverride){
   /* สวัสดิการ (Welfare) */
   var legacyLeaveDays=ppSick+ppPersonal+ppAbsent+ppAnnual+ppSwap+ppMaternity+ppOrdination+ppFuneral;
   var leaveDays = legacyLeaveDays;
-  
   leaveTypesConfig.forEach(function(t) {
     if (legacyTypes.indexOf(t.id) === -1 && calLeave[t.id]) {
       leaveDays += calLeave[t.id];
     }
   });
-  
   var actual=Math.max(0,autoDays-leaveDays);
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightRate*nightShiftDays};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
@@ -247,7 +238,6 @@ function periodStats(p,kpiBonusPctOverride){
       else if (t.wage_deduction) unpaidLeaveDays += calLeave[t.id] * t.wage_deduction;
     }
   });
-  
   if(unpaidLeaveDays>0) proratedSalary=Math.max(0,proratedSalary-(st.salaryBase/30)*unpaidLeaveDays);
 
   /* ── KPI Calculation (Dual Mode) ── */
@@ -258,24 +248,20 @@ function periodStats(p,kpiBonusPctOverride){
   var kpiDailyType = st.kpiType || 'percent';
   var kpiDailyVal = num(st.kpiValue !== undefined ? st.kpiValue : st.kpiPercent);
   var kpiDailyMoney = skipKpi ? 0 : ((kpiDailyType === 'amount') ? kpiDailyVal : (proratedSalary * (kpiDailyVal / 100)));
-
   var kpiBonusType = st.kpiBonusType || 'percent';
   var kpiBonusMoney = skipKpi ? 0 : ((kpiBonusType === 'amount') ? kpiBonusVal : (proratedSalary * (kpiBonusVal / 100)));
-
   var kpiTotalMoney = kpiDailyMoney + kpiBonusMoney;
   var kpi = kpiTotalMoney;
-  
   var kpiDailyPct = proratedSalary > 0 ? (kpiDailyMoney / proratedSalary * 100) : 0;
   var kpiBonusPct = proratedSalary > 0 ? (kpiBonusMoney / proratedSalary * 100) : 0;
   var kpiTotalPct = proratedSalary > 0 ? (kpiTotalMoney / proratedSalary * 100) : 0;
-  
+
   var hasLeavePenalty=(ppSick>0||ppPersonal>0||ppAbsent>0||ppMaternity>0||ppOrdination>0||ppFuneral>0);
   leaveTypesConfig.forEach(function(t) {
     if (legacyTypes.indexOf(t.id) === -1 && calLeave[t.id] > 0 && t.docks_diligence) {
       hasLeavePenalty = true;
     }
   });
-  
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
   if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
   /* ⚠️ รางวัลอายุงาน: ไม่นับถ้ายังไม่เริ่มงาน หรือรอบบิลยังไม่มาถึง */
@@ -313,8 +299,8 @@ function paydayCountdown(){
 }
 
 /* ── monthStats: ใช้ periodFor เพื่อตัดตามวันตัดยอดบิล ──
- * refDate = วันอ้างอิง (cutoff+1 ของเดือนนั้น) เพื่อให้ periodFor คืน billing period ที่ถูกต้อง
- * ⚠️ เดิมใช้ calendar month (1-สิ้นเดือน) ซึ่งผิดเมื่อตั้งวันตัดรอบ */
+   refDate = วันอ้างอิง (cutoff+1 ของเดือนนั้น) เพื่อให้ periodFor คืน billing period ที่ถูกต้อง
+   ⚠️ เดิมใช้ calendar month (1-สิ้นเดือน) ซึ่งผิดเมื่อตั้งวันตัดรอบ */
 function monthStats(y,m){
   var cutoff=settings().cutoff;
   if(!cutoff) return periodStats({start:new Date(y,m,1),end:new Date(y,m+1,0)});
