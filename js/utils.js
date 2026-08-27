@@ -180,8 +180,11 @@ function getEffectiveSettings(periodRef) {
     } catch(e) {}
   }
   
-  // Force calcMode to always use the global preference
+  // Force global preferences to bypass snapshots
   base.calcMode = getLS('calc_mode') || 'realtime';
+  base.annualLeaveAdj = getNum('annual_leave_adj', null, 0);
+  base.bankAdj = getNum('ot_bank_adj', null, 0);
+  base.startDate = getLS('start_date') || null;
   
   // Legacy per-period overrides fallback (for pp_* and kpi_bonus_pct)
   var label = (typeof periodLabel === 'function' && periodRef && periodRef.start) ? periodLabel(periodRef) : null;
