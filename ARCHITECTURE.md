@@ -29,6 +29,9 @@ payrolls/
 │   ├── ui.js           ← Render หน้า (ปฏิทิน, แดชบอร์ด, สรุป, รายปี)
 │   ├── settings.js     ← เปิด/ปิด/บันทึกหน้าตั้งค่า + entry overlay
 │   ├── data.js         ← Import/Export ข้อมูล + validation
+│   ├── cloud.js        ← Cloud sync (Google Sheets)
+│   ├── tutorial.js     ← Tutorial / onboarding flow
+│   ├── docs.js         ← สลิปเงินเดือน / PDF export
 │   └── app.js          ← Event wiring + initialization
 ├── icons/              ← ไอคอน PWA
 └── tests/
@@ -128,12 +131,14 @@ socialSecurity = Min(750, Math.floor(proratedSalary × 0.05))
 ## ลำดับการโหลดไฟล์ JS
 
 ```
-utils.js → calc.js → ui.js → settings.js → data.js → app.js
+utils.js → calc.js → ui.js → settings.js → data.js
+→ cloud.js → tutorial.js → app.js → docs.js
 ```
 
 ทุกไฟล์ใช้ Global Scope — ลำดับสำคัญมาก!
 - `calc.js` ต้องมาหลัง `utils.js` (ใช้ `num()`, `getLS()`, `dateKey()`, etc.)
-- `app.js` ต้องมาสุดท้าย (wire events + init)
+- `app.js` ต้องมาใกล้สุดท้าย (wire events + init)
+- `docs.js` โหลดหลังสุด (payslip generation ไม่ต้องใช้ตอน init)
 
 ---
 
