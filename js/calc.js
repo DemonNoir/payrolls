@@ -1,7 +1,7 @@
 /* ═════════════════════════════════════════════════════════════=
    calc.js — สูตรคำนวณเงินเดือน OT สวัสดิการ และรายการหัก
    ⚠️ คำเตือนสำหรับนักพัฒนา / AI Agent:
-   ไฟล์นี้คือหัวใจของแอป — แก้ผิดแม้บรรทัดเดียวจะทำให้ยอดเงินผิดทั้งห[...]
+   ไฟล์นี้คือหัวใจของแอป — แก้ผิดแม้บรรทัดเดียวจะทำให้ยอดเงินผิดทั้งหมด
    ก่อนแก้ไข ต้องอ่าน ARCHITECTURE.md และรัน tests/calc-tests.html ทุกครั้ง
 ══════════════════════════════════════════════════════════════ */
 
@@ -74,7 +74,7 @@ function periodFor(ref){
 
 function periodLabel(p){
   var isCalMonth = p.start.getDate() === 1 && p.end.getDate() === daysInMonth(p.start.getFullYear(), p.start.getMonth());
-  return isCalMonth ? MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543) : p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+[...]
+  return isCalMonth ? MN[p.start.getMonth()]+' '+(p.start.getFullYear()+543) : p.start.getDate()+' '+MS[p.start.getMonth()]+' - '+p.end.getDate()+' '+MS[p.end.getMonth()]+' '+(p.end.getFullYear()+543);
 }
 
 function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
