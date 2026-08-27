@@ -487,7 +487,8 @@ function saveEditLeaveType() {
       // Handle "reverse-calculate" for current quota
       var targetCurrent = num($('eltQuotaCurrent').value);
       var currentBanks = getBanks();
-      var diff = targetCurrent - currentBanks[t.id];
+      var unclamped = (currentBanks._unclamped && currentBanks._unclamped[t.id] !== undefined) ? currentBanks._unclamped[t.id] : currentBanks[t.id];
+      var diff = targetCurrent - unclamped;
       if (diff !== 0) {
         if (t.id === 'annual') {
           setLS('annual_leave_adj', num(getLS('annual_leave_adj')) + diff);
