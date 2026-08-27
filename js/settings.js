@@ -86,12 +86,12 @@ function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefi
   div.className = 'rate-row';
   div.setAttribute('data-rate-index', index);
   
-  var delBtn = index > 0 ? '<button class="btn danger" onclick="this.closest(\'.rate-row\').remove(); if(typeof previewEntry === \'function\'){previewEntry();}" style="padding:2px 8px; font-size:12px;">ลบ</button>' : '';
+  var delBtn = index > 0 ? '<button class="btn danger" onclick="this.closest(\'.rate-row\').remove(); if(typeof previewEntry === \'function\'){previewEntry();}" style="padding:2px 8px; font-size:12px;">✕</button>' : '';
   var onchangeStr = containerId === 'batchRateRowsContainer' ? '' : 'onchange="previewEntry()"';
   var oninputStr = containerId === 'batchRateRowsContainer' ? '' : 'oninput="previewEntry()"';
   
   div.innerHTML = `
-    <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; margin-top:${index>0?'12px':'0'}; border-top:${index>0?'1px solid rgba(255,255,255,0.1)':'none'}; padding-top:${index>0?'8px':'0'};">
+    <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; margin-top:${index>0?'12px':'0'}; border-top:${index>0?'1px solid rgba(255,255,255,0.1)':''}; padding-top:${index>0?'12px':'0'};">
       <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ ${index + 1}</span>
       ${delBtn}
     </div>
@@ -261,11 +261,12 @@ function saveEntry(){
   }else{
     var uh=num($('useHours').value);
     var lt=$('leaveType').value;
+    var isNight = $('entryNight').checked;
     var banks=getBanks(activeKey);
     var avail=(lt==='swap')?banks.ot:banks.annual;
     if(uh<=0){alert('กรอกจำนวนชั่วโมงให้ถูกต้อง');return}
     if((lt==='swap'||lt==='annual') && uh>avail){alert('วันหยุดสะสมไม่พอ (มีอยู่ '+hours(avail)+' ชม.)');return}
-    data[activeKey]={kind:'use',leaveType:lt,hours:uh};
+    data[activeKey]={kind:'use',leaveType:lt,hours:uh,isNight:isNight};
   }
   setCal(data);closeEntry();renderAll();
 }
@@ -407,8 +408,8 @@ function renderLeaveSettings() {
     
     var unitStr = t.unit === 'days' ? 'วัน' : 'ชม.';
     var titleHtml = '<div style="display:flex;align-items:center;gap:8px;">';
-    titleHtml += '<div style="width:12px;height:12px;border-radius:50%;background:'+(t.color_tag||'#ccc')+';"></div>';
-    titleHtml += '<div><div style="font-weight:600;font-size:14px;color:'+(t.visible_in_calendar===false?'var(--muted)':'var(--ink)')+'">'+t.name_th+(t.visible_in_calendar===false?' (ซ่อน)':'')+'</div>';
+    titleHtml += '<div style="width:12px;height:12px;border-radius:50%;background:'+(t.color_tag||'#ccc')+';">' + '</div>';
+    titleHtml += '<div><div style="font-weight:600;font-size:14px;color:'+(t.visible_in_calendar===false?'var(--muted)':'var(--ink)')+'">'+t.name_th+(t.visible_in_calendar===false?' (ซ่อน)':'')+' </div>';
     if(t.has_quota) {
       var currentBank = banks[t.id] || 0;
       titleHtml += '<div style="font-size:12px;color:var(--muted)">ทั้งหมด '+t.quota_total+' '+unitStr+' / คงเหลือ '+currentBank+' '+unitStr+'</div>';
@@ -450,9 +451,11 @@ function openEditLeaveType(id) {
        $('eltQuotaTotal').value = 0;
        $('eltQuotaTotal').disabled = true;
        $('eltQuotaGroup').querySelector('label').innerText = 'โควตาทั้งหมด (ได้รับ +4 ชม./เดือน อัตโนมัติ)';
+       $('eltQuotaCurrent').disabled = false;  // ← เปิดให้แก้ไขได้
     } else {
        $('eltQuotaTotal').disabled = false;
        $('eltQuotaGroup').querySelector('label').innerText = 'โควตาทั้งหมด (ต่อรอบ)';
+       $('eltQuotaCurrent').disabled = false;
     }
     
     var banks = getBanks();
