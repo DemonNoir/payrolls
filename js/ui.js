@@ -148,17 +148,17 @@ function renderCalendar(){
 }
 
 /* ── Goal Calculator ── */
-function countRemainingWorkDays(fromDate, endDate) {
-  /* นับวันทำงาน (จันทร์-เสาร์ ไม่ใช่วันหยุดนักขัตฤกษ์) จาก fromDate+1 ถึง endDate */
-  var count = 0;
+function countRemainingDaysBreakdown(fromDate, endDate) {
+  var workDays = 0, holidayDays = 0;
   var cur = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 1);
   var end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
   while (cur <= end) {
     var k = dateKey(cur);
-    if (cur.getDay() !== 0 && !isHolidayKey(k)) count++;
+    if (cur.getDay() !== 0 && !isHolidayKey(k)) workDays++;
+    else holidayDays++;
     cur = addDays(cur, 1);
   }
-  return count;
+  return { workDays: workDays, holidayDays: holidayDays };
 }
 
 function renderGoalCalc() {
@@ -176,15 +176,22 @@ function renderGoalCalc() {
   /* ถ้าพ้นตัดรอบแล้ว ซ่อน card */
   if (todayDt > cutoffEnd) { gc.style.display = 'none'; return; }
 
-  var remainWorkDays = countRemainingWorkDays(todayDt, cutoffEnd);
+  var breakdown = countRemainingDaysBreakdown(todayDt, cutoffEnd);
+  var remainWorkDays = breakdown.workDays;
+  var remainHolidays = breakdown.holidayDays;
   var cutoffDateStr = cutoffEnd.getDate() + ' ' + MS[cutoffEnd.getMonth()];
   var currentNet = st.net;
   var rate = st.hourlyRate;
+  var ot15Rate = Math.round(rate * 1.5 * 100) / 100;
+  var otFood = num(st.otFood !== undefined ? st.otFood : 50);
 
   /* Update header */
   if ($('goalCurrentNet')) $('goalCurrentNet').innerText = 'สุทธิตอนนี้ ' + money(currentNet);
   if ($('goalRemainingDays')) {
-    $('goalRemainingDays').innerText = 'เหลือวันทำงาน ' + remainWorkDays + ' วัน (ถึงตัดรอบ ' + cutoffDateStr + ')';
+    var remainTxt = 'เหลือวันทำงานปกติ ' + remainWorkDays + ' วัน';
+    if (remainHolidays > 0) remainTxt += ' · วันหยุด ' + remainHolidays + ' วัน';
+    remainTxt += ' (ถึงตัดรอบ ' + cutoffDateStr + ')';
+    $('goalRemainingDays').innerText = remainTxt;
   }
 
   /* คำนวณผล */
@@ -198,51 +205,85 @@ function renderGoalCalc() {
   var needed = goal - currentNet;
 
   if (needed <= 0) {
-    resultEl.innerHTML = '<div class="goal-achieved">✅ บรรลุเป้าหมายแล้ว! (' + money(currentNet) + ')</div>';
+    resultEl.innerHTML = '<div class="goal-achieved">🎉 บรรลุเป้าหมายแล้ว! (' + money(currentNet) + ')</div>';
     return;
   }
 
-  /* OT ชม. ที่ต้องทำเพิ่ม (per multiplier) */
-  var hrs15 = needed / (rate * 1.5);
-  var hrs30 = needed / (rate * 3.0);
-  /* แปลง → วัน (สมมติวันละ 2 ชม.) */
-  var days15 = hrs15 / 2;
-  var days30 = hrs30 / 2;
+  /* 1) แผนกะมาตรฐาน วันละ 2 ชม. (ได้รับค่าอาหาร OT วันละ otFood) */
+  var earnPerDay2h = (ot15Rate * 2) + otFood;
+  var daysPlan2h = Math.ceil(needed / earnPerDay2h);
+  var canFit2h = (remainWorkDays > 0) && (daysPlan2h <= remainWorkDays);
 
-  function rowClass(days) {
-    if (days > remainWorkDays) return 'danger';
-    if (days > remainWorkDays * 0.75) return 'warn';
-    return 'ok';
+  /* 2) แผนเฉลี่ยทุกวันทำงานปกติที่เหลือ */
+  var avgHrs = 0;
+  if (remainWorkDays > 0) {
+    var pureAvg = needed / (ot15Rate * remainWorkDays);
+    if (pureAvg < 2.0) {
+      avgHrs = pureAvg;
+    } else {
+      var neededAfterFood = Math.max(0, needed - (remainWorkDays * otFood));
+      avgHrs = Math.max(2.0, neededAfterFood / (ot15Rate * remainWorkDays));
+    }
   }
-  function daysLabel(days, hrs) {
-    var d = Math.ceil(days);
-    var h = hrs.toFixed(1);
-    var suffix = days > remainWorkDays
-      ? ' ⚠ เกินวันที่เหลือ'
-      : ' (จาก ' + remainWorkDays + ' วัน)';
-    return h + ' ชม. · ≈ ' + d + ' วัน × 2 ชม.' + suffix;
+  var avgHrsStr = avgHrs.toFixed(1);
+
+  /* ข้อความประเมินสถานการณ์ (Feasibility) */
+  var noteHtml = '';
+  if (canFit2h) {
+    noteHtml = '<div class="goal-note ok">✨ <b>เป้าหมายเป็นไปได้:</b> ทำ OT วันละ 2 ชม. เพียง ' + daysPlan2h + ' วัน (จาก ' + remainWorkDays + ' วันทำงานที่เหลือ) ก็จะบรรลุเป้าหมาย</div>';
+  } else if (remainWorkDays > 0 && avgHrs <= 4.0) {
+    noteHtml = '<div class="goal-note warn">⚡ <b>ต้องเพิ่มชั่วโมง:</b> ทำวันละ 2 ชม. อาจไม่ทันรอบนี้ ต้องเฉลี่ยทำวันละประมาณ ' + avgHrsStr + ' ชม. ในทุกวันทำงานปกติที่เหลือ</div>';
+  } else {
+    noteHtml = '<div class="goal-note danger">📌 <b>วันทำงานปกติไม่เพียงพอ:</b> วันทำงานปกติที่เหลือ (' + remainWorkDays + ' วัน) มีชั่วโมงไม่พอกับเป้าหมายนี้ — ต้องรอให้บริษัทมีประกาศเปิดกะ OT วันหยุดพิเศษ (3 เท่า) เพิ่มเติม</div>';
   }
 
-  var html = '<div class="goal-needed">ต้องหาเพิ่ม <b>' + money(needed) + '</b></div>';
-  html += '<div class="goal-row ' + rowClass(days15) + '">' +
-    '<span class="goal-row__rate">OT 1.5×</span>' +
-    '<div class="goal-row__right">' +
-      '<div class="goal-row__hrs">' + hrs15.toFixed(1) + ' ชม.</div>' +
-      '<div class="goal-row__days">' + daysLabel(days15, hrs15) + '</div>' +
-    '</div></div>';
-  html += '<div class="goal-row ' + rowClass(days30) + '">' +
-    '<span class="goal-row__rate">OT 3.0×</span>' +
-    '<div class="goal-row__right">' +
-      '<div class="goal-row__hrs">' + hrs30.toFixed(1) + ' ชม.</div>' +
-      '<div class="goal-row__days">' + daysLabel(days30, hrs30) + '</div>' +
-    '</div></div>';
+  var html = '<div class="goal-needed-box">' +
+    '<div class="goal-needed-main">ต้องหาเพิ่มอีก <b>' + money(needed) + '</b></div>' +
+    '<div class="goal-rate-info">เรต OT วันปกติ (1.5×): <b>' + money(ot15Rate) + '/ชม.</b></div>' +
+  '</div>';
 
-  /* ถ้า 1.5x ทำไม่ทัน แต่ 3x ทำทัน */
-  if (days15 > remainWorkDays && days30 <= remainWorkDays) {
-    html += '<div class="goal-impossible" style="background:rgba(245,158,11,0.1);color:#f59e0b;">💡 OT 1.5× ไม่ทัน แต่ถ้าเปลี่ยนเป็น 3× ยังทำได้</div>';
-  } else if (days30 > remainWorkDays) {
-    html += '<div class="goal-impossible">❌ เป้าหมายนี้ไม่สามารถทำได้ทันในรอบนี้แล้ว</div>';
+  html += '<div class="goal-plans">';
+
+  /* แผน 1: กะมาตรฐาน 2 ชม. */
+  var plan1Class = canFit2h ? 'ok' : 'warn';
+  var plan1Badge = canFit2h ? 'แนะนำ · ทำได้' : 'วันไม่พอ';
+  var plan1Sub = canFit2h
+    ? 'ทำเพียง ' + daysPlan2h + ' วัน (จาก ' + remainWorkDays + ' วันที่เหลือ) · ได้ค่าอาหาร OT วันละ ' + money(otFood)
+    : 'ต้องการ ' + daysPlan2h + ' วัน (แต่วันทำงานปกติเหลือเพียง ' + remainWorkDays + ' วัน)';
+
+  html += '<div class="goal-plan-card ' + plan1Class + '">' +
+    '<div class="goal-plan-header">' +
+      '<span class="goal-plan-title">⏱ แผนกะมาตรฐาน (วันละ 2 ชม.)</span>' +
+      '<span class="goal-plan-badge">' + plan1Badge + '</span>' +
+    '</div>' +
+    '<div class="goal-plan-body">' +
+      '<div class="goal-plan-val">' + daysPlan2h + ' <span>วัน (' + (daysPlan2h * 2) + ' ชม.)</span></div>' +
+      '<div class="goal-plan-sub">' + plan1Sub + '</div>' +
+    '</div>' +
+  '</div>';
+
+  /* แผน 2: เฉลี่ยทุกวันทำงานที่เหลือ */
+  if (remainWorkDays > 0) {
+    var plan2Class = avgHrs <= 3.0 ? 'ok' : (avgHrs <= 4.5 ? 'warn' : 'danger');
+    var plan2Badge = avgHrs <= 3.0 ? 'กำลังพอดี' : (avgHrs <= 4.5 ? 'ค่อนข้างหนัก' : 'หนักเกินไป');
+    var plan2Sub = avgHrs <= 4.5
+      ? 'ทำต่อเนื่องทุกวันทำงานปกติที่เหลือ ' + remainWorkDays + ' วัน'
+      : 'เกินเวลาทำงานปกติที่ทำได้ต่อวันในวันทำงานปกติที่เหลือ (' + remainWorkDays + ' วัน)';
+
+    html += '<div class="goal-plan-card ' + plan2Class + '">' +
+      '<div class="goal-plan-header">' +
+        '<span class="goal-plan-title">📅 แผนเกลี่ยทุกวันทำงานที่เหลือ</span>' +
+        '<span class="goal-plan-badge">' + plan2Badge + '</span>' +
+      '</div>' +
+      '<div class="goal-plan-body">' +
+        '<div class="goal-plan-val">' + avgHrsStr + ' <span>ชม./วัน</span></div>' +
+        '<div class="goal-plan-sub">' + plan2Sub + '</div>' +
+      '</div>' +
+    '</div>';
   }
+
+  html += '</div>';
+  html += noteHtml;
 
   resultEl.innerHTML = html;
 }
