@@ -4,9 +4,9 @@
 โปรเจกต์ปฏิทิน OT (Overtime Calendar) เป็นแอปพลิเคชันบนเว็บสำหรับให้พนักงานบันทึกเวลาทำงานล่วงเวลา (OT), ลางาน, เข้ากะดึก, และวันหยุดนักขัตฤกษ์ โดยระบบจะคำนวณเงินเดือน, สวัสดิการ (ค่าเดินทาง, ค่าอาหาร, ค่ากะดึก, ค่าอาหาร OT) ให้อัตโนมัติ รองรับการบันทึกแบบ Single-day และ Batch Edit (หลายวัน)
 
 ## Current State
-- บันทึกโค้ดเวอร์ชันล่าสุดขึ้น GitHub เรียบร้อยแล้ว (`main` branch commit `4fae4ad`)
+- บันทึกโค้ดเวอร์ชันล่าสุดขึ้น GitHub เรียบร้อยแล้ว (`main` branch commit `8ebff1d`)
 - ผ่านการทดสอบอัตโนมัติ 100% (29/29 assertions ใน `tests/calc-tests.html`)
-- Cache version ล่าสุด: `sw.js` (`ot-v69`), `style.css` (`?v=154`), `ui.js` (`?v=52`)
+- Cache version ล่าสุด: `sw.js` (`ot-v70`), `style.css` (`?v=155`), `ui.js` (`?v=53`)
 
 ## Recent Changes (เซสชันล่าสุด)
 1. **OT Goal Calculator (ระบบวางแผน OT อัจฉริยะในแดชบอร์ด):**
