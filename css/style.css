@@ -1990,142 +1990,248 @@ body{background:#fff;display:block;padding:0}
 
 
 /* ═══════════════════════════════════
-   Goal Calculator Card
+   Goal Calculator Card (Matching .dash-rate-card)
    ═══════════════════════════════════ */
-.goal-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 18px 16px;
-  margin: 12px 0;
-  backdrop-filter: blur(10px);
-  transition: border-color 0.2s ease;
+.dash-goal-card::before {
+  background: linear-gradient(180deg, var(--orange), var(--yellow));
 }
-.goal-card:focus-within { border-color: rgba(251,191,36,0.4); }
-.goal-card__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.goal-card__title { font-weight: 700; font-size: 15px; color: var(--text); }
-.goal-card__sub { font-size: 12px; color: var(--text2); }
-.goal-card__remaining { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
-.goal-card__input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.goal-card__label, .goal-card__unit { font-size: 14px; color: var(--text2); white-space: nowrap; }
+.goal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.goal-header-row .rate-title {
+  margin-bottom: 0;
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.goal-net-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dash-goal-card .rate-detail {
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+/* Input Area (Mobile Safe, No Overflow) */
+.goal-input-wrap {
+  margin: 8px 0 10px;
+  padding-left: 8px;
+}
+.goal-input-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.goal-input-box {
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 10px;
+  transition: all .2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+.goal-input-box:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(232, 150, 14, 0.18);
+  background: var(--panel);
+}
+.goal-input-currency {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--orange);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
 .goal-input {
   flex: 1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 700;
-  padding: 8px 12px;
-  text-align: right;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  padding: 8px 0;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
+  font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
 }
 .goal-input::-webkit-outer-spin-button,
-.goal-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.goal-input:focus { border-color: rgba(251,191,36,0.5); background: rgba(255,255,255,0.09); }
-.goal-result { display: flex; flex-direction: column; gap: 10px; }
-.goal-needed-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  flex-wrap: wrap;
-  gap: 6px;
+.goal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
-.goal-needed-main { font-size: 13px; color: var(--text2); }
-.goal-needed-main b { color: var(--text); font-size: 16px; margin-left: 4px; }
-.goal-rate-info { font-size: 12px; color: var(--text2); background: rgba(255,255,255,0.04); padding: 3px 8px; border-radius: 6px; }
-.goal-rate-info b { color: #f59e0b; }
+.goal-input-unit {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-left: 6px;
+  flex-shrink: 0;
+}
 
-.goal-plans { display: flex; flex-direction: column; gap: 8px; }
-.goal-plan-card {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-.goal-plan-card:hover {
-  background: rgba(255,255,255,0.06);
-}
-.goal-plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.goal-plan-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-.goal-plan-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-.goal-plan-card.ok .goal-plan-badge {
-  background: rgba(48,209,88,0.15);
-  color: #30d158;
-}
-.goal-plan-card.warn .goal-plan-badge {
-  background: rgba(245,158,11,0.15);
-  color: #f59e0b;
-}
-.goal-plan-card.danger .goal-plan-badge {
-  background: rgba(255,69,58,0.15);
-  color: var(--red);
-}
-.goal-plan-body {
+/* Result Area */
+.goal-result {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  padding-left: 8px;
 }
-.goal-plan-val {
-  font-size: 17px;
+.goal-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.goal-stat-item {
+  min-width: 0;
+}
+.goal-stat-label {
+  font-size: 10.5px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.goal-plan-val span {
-  font-size: 13px;
-  font-weight: normal;
-  color: var(--text2);
+.goal-stat-val {
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.goal-plan-sub {
-  font-size: 11.5px;
-  color: var(--text2);
-  line-height: 1.4;
+.text-orange { color: var(--orange); }
+.text-blue { color: var(--blue); }
+
+.goal-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.goal-plan-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  transition: all .2s ease;
+  box-sizing: border-box;
+}
+.goal-plan-card.ok {
+  border-left: 3px solid var(--green);
+}
+.goal-plan-card.warn {
+  border-left: 3px solid var(--orange);
+}
+.goal-plan-card.danger {
+  border-left: 3px solid var(--red);
+}
+.goal-plan-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.goal-plan-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.goal-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.goal-badge.badge-ok {
+  background: rgba(34, 134, 95, 0.12);
+  color: var(--green);
+}
+.goal-badge.badge-warn {
+  background: var(--strip-warn-bg);
+  color: var(--strip-warn-text);
+}
+.goal-badge.badge-danger {
+  background: rgba(192, 57, 43, 0.1);
+  color: var(--red);
+}
+.goal-plan-main {
+  margin: 2px 0;
+}
+.goal-plan-value {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.goal-plan-unit {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.goal-plan-hrs {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 3px;
+}
+.goal-plan-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .goal-note {
-  font-size: 12px;
-  line-height: 1.45;
-  padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 .goal-note.ok {
-  background: rgba(48,209,88,0.1);
-  color: #30d158;
+  background: rgba(34, 134, 95, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(34, 134, 95, 0.2);
 }
 .goal-note.warn {
-  background: rgba(245,158,11,0.1);
-  color: #f59e0b;
+  background: var(--strip-warn-bg);
+  color: var(--strip-warn-text);
+  border: 1px solid rgba(232, 150, 14, 0.25);
 }
 .goal-note.danger {
-  background: rgba(255,69,58,0.1);
+  background: rgba(192, 57, 43, 0.1);
   color: var(--red);
+  border: 1px solid rgba(192, 57, 43, 0.2);
 }
 
 .goal-achieved {
   text-align: center;
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(48,209,88,0.12);
-  color: #30d158;
-  font-weight: 700;
-  font-size: 14px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(34, 134, 95, 0.12);
+  color: var(--green);
+  font-weight: 800;
+  font-size: 12.5px;
+  border: 1px solid rgba(34, 134, 95, 0.2);
 }
+

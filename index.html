@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=153">
+<link rel="stylesheet" href="css/style.css?v=154">
 </head>
 <body>
 <main class="app">
@@ -139,16 +139,19 @@
 </div>
 
 <!-- Goal Calculator Card -->
-<div class="goal-card" id="goalCard">
-  <div class="goal-card__header">
-    <span class="goal-card__title">🎯 วางแผน OT สิ้นรอบบิล</span>
-    <span class="goal-card__sub" id="goalCurrentNet"></span>
+<div class="dash-rate-card dash-goal-card" id="goalCard">
+  <div class="goal-header-row">
+    <div class="rate-title">🎯 วางแผน OT สิ้นรอบบิล</div>
+    <div class="goal-net-badge" id="goalCurrentNet"></div>
   </div>
-  <div class="goal-card__remaining" id="goalRemainingDays"></div>
-  <div class="goal-card__input-row">
-    <span class="goal-card__label">เป้าหมายเงินสุทธิ</span>
-    <input type="number" id="goalIncome" class="goal-input" placeholder="20000" min="0" step="1000">
-    <span class="goal-card__unit">บาท</span>
+  <div class="rate-detail" id="goalRemainingDays"></div>
+  <div class="goal-input-wrap">
+    <div class="goal-input-label">เป้าหมายเงินสุทธิที่ต้องการ</div>
+    <div class="goal-input-box">
+      <span class="goal-input-currency">฿</span>
+      <input type="number" id="goalIncome" class="goal-input" placeholder="เช่น 20000" min="0" step="500" inputmode="numeric">
+      <span class="goal-input-unit">บาท</span>
+    </div>
   </div>
   <div id="goalResult" class="goal-result"></div>
 </div>
@@ -664,7 +667,7 @@
 
 <script src="js/utils.js?v=45"></script>
 <script src="js/calc.js?v=48"></script>
-<script src="js/ui.js?v=51"></script>
+<script src="js/ui.js?v=52"></script>
 <script src="js/settings.js?v=45"></script>
 <script src="js/data.js?v=46"></script>
 <script src="js/cloud.js?v=3"></script>

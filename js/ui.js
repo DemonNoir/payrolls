@@ -237,48 +237,59 @@ function renderGoalCalc() {
     noteHtml = '<div class="goal-note danger">📌 <b>วันทำงานปกติไม่เพียงพอ:</b> วันทำงานปกติที่เหลือ (' + remainWorkDays + ' วัน) มีชั่วโมงไม่พอกับเป้าหมายนี้ — ต้องรอให้บริษัทมีประกาศเปิดกะ OT วันหยุดพิเศษ (3 เท่า) เพิ่มเติม</div>';
   }
 
-  var html = '<div class="goal-needed-box">' +
-    '<div class="goal-needed-main">ต้องหาเพิ่มอีก <b>' + money(needed) + '</b></div>' +
-    '<div class="goal-rate-info">เรต OT วันปกติ (1.5×): <b>' + money(ot15Rate) + '/ชม.</b></div>' +
+  var html = '<div class="goal-stats-grid">' +
+    '<div class="goal-stat-item">' +
+      '<div class="goal-stat-label">ต้องหาเพิ่มอีก</div>' +
+      '<div class="goal-stat-val text-orange">' + money(needed) + '</div>' +
+    '</div>' +
+    '<div class="goal-stat-item">' +
+      '<div class="goal-stat-label">เรต OT วันปกติ (1.5×)</div>' +
+      '<div class="goal-stat-val text-blue">' + money(ot15Rate) + '/ชม.</div>' +
+    '</div>' +
   '</div>';
 
   html += '<div class="goal-plans">';
 
   /* แผน 1: กะมาตรฐาน 2 ชม. */
   var plan1Class = canFit2h ? 'ok' : 'warn';
+  var plan1BadgeClass = canFit2h ? 'badge-ok' : 'badge-warn';
   var plan1Badge = canFit2h ? 'แนะนำ · ทำได้' : 'วันไม่พอ';
   var plan1Sub = canFit2h
     ? 'ทำเพียง ' + daysPlan2h + ' วัน (จาก ' + remainWorkDays + ' วันที่เหลือ) · ได้ค่าอาหาร OT วันละ ' + money(otFood)
     : 'ต้องการ ' + daysPlan2h + ' วัน (แต่วันทำงานปกติเหลือเพียง ' + remainWorkDays + ' วัน)';
 
   html += '<div class="goal-plan-card ' + plan1Class + '">' +
-    '<div class="goal-plan-header">' +
-      '<span class="goal-plan-title">⏱ แผนกะมาตรฐาน (วันละ 2 ชม.)</span>' +
-      '<span class="goal-plan-badge">' + plan1Badge + '</span>' +
+    '<div class="goal-plan-head">' +
+      '<span class="goal-plan-name">⏱ กะปกติ (วันละ 2 ชม.)</span>' +
+      '<span class="goal-badge ' + plan1BadgeClass + '">' + plan1Badge + '</span>' +
     '</div>' +
-    '<div class="goal-plan-body">' +
-      '<div class="goal-plan-val">' + daysPlan2h + ' <span>วัน (' + (daysPlan2h * 2) + ' ชม.)</span></div>' +
-      '<div class="goal-plan-sub">' + plan1Sub + '</div>' +
+    '<div class="goal-plan-main">' +
+      '<span class="goal-plan-value">' + daysPlan2h + '</span> ' +
+      '<span class="goal-plan-unit">วัน</span> ' +
+      '<span class="goal-plan-hrs">(' + (daysPlan2h * 2) + ' ชม.)</span>' +
     '</div>' +
+    '<div class="goal-plan-desc">' + plan1Sub + '</div>' +
   '</div>';
 
   /* แผน 2: เฉลี่ยทุกวันทำงานที่เหลือ */
   if (remainWorkDays > 0) {
     var plan2Class = avgHrs <= 3.0 ? 'ok' : (avgHrs <= 4.5 ? 'warn' : 'danger');
+    var plan2BadgeClass = avgHrs <= 3.0 ? 'badge-ok' : (avgHrs <= 4.5 ? 'badge-warn' : 'badge-danger');
     var plan2Badge = avgHrs <= 3.0 ? 'กำลังพอดี' : (avgHrs <= 4.5 ? 'ค่อนข้างหนัก' : 'หนักเกินไป');
     var plan2Sub = avgHrs <= 4.5
       ? 'ทำต่อเนื่องทุกวันทำงานปกติที่เหลือ ' + remainWorkDays + ' วัน'
       : 'เกินเวลาทำงานปกติที่ทำได้ต่อวันในวันทำงานปกติที่เหลือ (' + remainWorkDays + ' วัน)';
 
     html += '<div class="goal-plan-card ' + plan2Class + '">' +
-      '<div class="goal-plan-header">' +
-        '<span class="goal-plan-title">📅 แผนเกลี่ยทุกวันทำงานที่เหลือ</span>' +
-        '<span class="goal-plan-badge">' + plan2Badge + '</span>' +
+      '<div class="goal-plan-head">' +
+        '<span class="goal-plan-name">📅 เฉลี่ยทุกวันที่เหลือ</span>' +
+        '<span class="goal-badge ' + plan2BadgeClass + '">' + plan2Badge + '</span>' +
       '</div>' +
-      '<div class="goal-plan-body">' +
-        '<div class="goal-plan-val">' + avgHrsStr + ' <span>ชม./วัน</span></div>' +
-        '<div class="goal-plan-sub">' + plan2Sub + '</div>' +
+      '<div class="goal-plan-main">' +
+        '<span class="goal-plan-value">' + avgHrsStr + '</span> ' +
+        '<span class="goal-plan-unit">ชม./วัน</span>' +
       '</div>' +
+      '<div class="goal-plan-desc">' + plan2Sub + '</div>' +
     '</div>';
   }
 
