@@ -32,6 +32,10 @@ $('settingsBtn').onclick = function() {
   animateIcon(this, 'icon-anim-spin');
   openSettings();
 };
+if ($('shiftPatternBtn')) $('shiftPatternBtn').onclick = function() {
+  animateIcon(this, 'icon-anim-spin');
+  openShiftPatternModal();
+};
 if($('topRateInfo')) $('topRateInfo').onclick=openSettings;
 
 if($('calcModeSelect')) {
@@ -378,6 +382,29 @@ $('setKpiBonus').addEventListener('change',function(){
     if (e.key === 'Escape' && ctx_open) closeCtxMenu();
   });
 })();
+
+/* ── Shift Pattern Modal Event Wiring ── */
+if ($('closeShiftPatternTopBtn')) $('closeShiftPatternTopBtn').onclick = closeShiftPatternModal;
+
+document.querySelectorAll('.pattern-preset-btn').forEach(function(btn) {
+  btn.onclick = function() {
+    setShiftPreset(btn.getAttribute('data-preset'));
+  };
+});
+
+if ($('patternAddDayBtn')) $('patternAddDayBtn').onclick = addShiftStep;
+if ($('patternRemoveDayBtn')) $('patternRemoveDayBtn').onclick = removeShiftStep;
+
+if ($('patternIncludeOt')) {
+  $('patternIncludeOt').onchange = function() {
+    if ($('patternOtFields')) {
+      $('patternOtFields').classList.toggle('hide', !this.checked);
+    }
+  };
+}
+
+if ($('patternGenerateBtn')) $('patternGenerateBtn').onclick = executeGenerateShiftPattern;
+if ($('patternUndoBtn')) $('patternUndoBtn').onclick = executeUndoShiftPattern;
 
 /* ── Init ── */
 initTheme();

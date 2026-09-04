@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=155">
+<link rel="stylesheet" href="css/style.css?v=156">
 </head>
 <body>
 <main class="app">
@@ -22,6 +22,7 @@
 <button class="icon" id="nextBtn" title="ถัดไป">›</button>
 <button class="icon" id="docsBtn" title="เอกสาร & อัปเดต">📋</button>
 <button class="icon" id="themeBtn" title="สลับธีม">🌙</button>
+<button class="icon" id="shiftPatternBtn" title="สร้างตารางกะวนลูปอัตโนมัติ">🔁</button>
 <button class="icon" id="settingsBtn" title="ตั้งค่า">⚙</button>
 <button class="icon avatar-btn" id="avatarBtn" title="กดเพื่อเปลี่ยนรูปโปรไฟล์">
   <img class="avatar-img" id="avatarImg" src="" alt="โปรไฟล์">
@@ -536,6 +537,95 @@
   <div class="actions" style="margin-top:15px"><button class="btn danger" id="batchClearBtn">ล้างข้อมูล</button><button class="btn primary" id="batchSaveBtn">บันทึกทับทั้งหมด</button></div>
 </div></div>
 
+<!-- Shift Pattern Engine Overlay -->
+<div class="overlay" id="shiftPatternOverlay">
+  <div class="sheet">
+    <h2 style="width:100%; align-items:center;">
+      <span>🔁 สร้างตารางกะวนลูป</span>
+      <button id="closeShiftPatternTopBtn" style="margin-left:auto; background:rgba(128,128,128,0.15); border:none; border-radius:12px; padding:4px 12px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; transition:0.2s;">ปิด</button>
+    </h2>
+
+    <p style="font-size:12px; color:var(--muted); margin-bottom:12px; line-height:1.4;">
+      เลือกรูปแบบรอบกะ (Shift Cycle) เพื่อสร้างตารางงานทั้งรอบบิลหรือล่วงหน้าอัตโนมัติในคลิกเดียว
+    </p>
+
+    <!-- 1. Presets -->
+    <div class="group">
+      <label>เลือกรูปแบบรอบกะสำเร็จรูป</label>
+      <div class="pattern-preset-grid">
+        <button type="button" class="pattern-preset-btn active" data-preset="4-2">4 ทำ 2 หยุด<br><span class="pattern-preset-desc">เช้า 2 · ดึก 2 · หยุด 2</span></button>
+        <button type="button" class="pattern-preset-btn" data-preset="6-2">6 ทำ 2 หยุด<br><span class="pattern-preset-desc">เช้า 3 · ดึก 3 · หยุด 2</span></button>
+        <button type="button" class="pattern-preset-btn" data-preset="weekly-rot">สลับรายสัปดาห์<br><span class="pattern-preset-desc">เช้า 7 วัน · ดึก 7 วัน</span></button>
+        <button type="button" class="pattern-preset-btn" data-preset="custom">กำหนดเอง ⚙️<br><span class="pattern-preset-desc">จัดลำดับวันในรอบเอง</span></button>
+      </div>
+    </div>
+
+    <!-- 2. Step Editor (Interactive cycle sequence) -->
+    <div class="group">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <label style="margin-bottom:0">ลำดับวันในรอบ (<span id="patternCycleDays">6</span> วัน)</label>
+        <div id="customCycleControls" class="hide" style="display:flex; gap:4px;">
+          <button type="button" class="btn soft" id="patternAddDayBtn" style="padding:2px 8px; font-size:11px;">+ เพิ่มวัน</button>
+          <button type="button" class="btn soft" id="patternRemoveDayBtn" style="padding:2px 8px; font-size:11px;">- ลบวัน</button>
+        </div>
+      </div>
+      <div class="pattern-step-list" id="patternStepList"></div>
+      <div style="font-size:11px; color:var(--muted); margin-top:5px;">💡 แตะที่แต่ละวันเพื่อสลับเป็น ☀️ กะเช้า / 🌙 กะดึก / 🏖️ วันหยุด</div>
+    </div>
+
+    <!-- 3. Range & Anchor Date -->
+    <div class="group">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div>
+          <label>วันเริ่มนับรอบ (Day 1)</label>
+          <input type="date" id="patternAnchorDate" class="pattern-date-input">
+        </div>
+        <div>
+          <label>ขอบเขตวันที่สร้าง</label>
+          <select id="patternRangeSelect" class="pattern-select">
+            <option value="current_period">รอบบิลปัจจุบัน</option>
+            <option value="current_month">เดือนปัจจุบัน</option>
+            <option value="next_month">เดือนถัดไป</option>
+            <option value="3_months">3 เดือนข้างหน้า</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Default OT Option -->
+    <div class="group" style="margin-bottom:8px;">
+      <label class="check" style="font-size:12px;">
+        <input type="checkbox" id="patternIncludeOt"> ⏱️ ใส่ OT ประจำกะอัตโนมัติ
+      </label>
+      <div id="patternOtFields" class="hide" style="display:flex; gap:8px; align-items:center; margin-top:6px; padding-left:22px;">
+        <span style="font-size:11.5px; color:var(--muted); white-space:nowrap;">เฉพาะกะ:</span>
+        <select id="patternOtTargetShift" class="pattern-mini-select">
+          <option value="night">กะดึกเท่านั้น 🌙</option>
+          <option value="all_work">ทุกวันทำงาน (เช้า+ดึก)</option>
+        </select>
+        <input type="number" id="patternOtHours" value="2" min="0.5" step="0.5" class="pattern-mini-input">
+        <span style="font-size:11.5px; color:var(--muted);">ชม.</span>
+      </div>
+    </div>
+
+    <!-- 5. Overwrite Policy -->
+    <div class="group" style="margin-bottom:10px;">
+      <label class="check" style="font-size:12px;">
+        <input type="checkbox" id="patternSkipExisting" checked> 🛡️ ข้ามวันที่มีบันทึกไว้แล้ว (ปลอดภัย ไม่ทับข้อมูลเดิม)
+      </label>
+    </div>
+
+    <!-- Status banner after generation -->
+    <div id="patternResultBanner" class="pattern-result-banner hide"></div>
+
+    <!-- Actions -->
+    <div class="actions" style="margin-top:14px; gap:8px;">
+      <button type="button" class="btn danger-soft hide" id="patternUndoBtn" style="flex:none; font-size:12px; padding:10px 14px;">↩️ ยกเลิก (Undo)</button>
+      <button type="button" class="btn primary" id="patternGenerateBtn" style="flex:1;">🚀 สร้างตารางกะอัตโนมัติ</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="multi-select-bar" id="multiSelectActionBar">
   <div class="ms-info">
@@ -667,12 +757,12 @@
 
 <script src="js/utils.js?v=45"></script>
 <script src="js/calc.js?v=48"></script>
-<script src="js/ui.js?v=53"></script>
+<script src="js/ui.js?v=54"></script>
 <script src="js/settings.js?v=45"></script>
 <script src="js/data.js?v=46"></script>
 <script src="js/cloud.js?v=3"></script>
 <script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=48"></script>
+<script src="js/app.js?v=49"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){

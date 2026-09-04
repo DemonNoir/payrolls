@@ -1334,3 +1334,280 @@ function saveBatchEdit() {
   exitMultiSelectMode();
 }
 
+/* ═══════════════════════════════════
+   Shift Pattern Engine
+   ═══════════════════════════════════ */
+
+var shiftPatternSequence = [
+  { type: 'day', label: 'เช้า', icon: '☀️' },
+  { type: 'day', label: 'เช้า', icon: '☀️' },
+  { type: 'night', label: 'ดึก', icon: '🌙' },
+  { type: 'night', label: 'ดึก', icon: '🌙' },
+  { type: 'off', label: 'หยุด', icon: '🏖️' },
+  { type: 'off', label: 'หยุด', icon: '🏖️' }
+];
+
+var lastShiftPatternBackup = null;
+
+var SHIFT_PRESETS = {
+  '4-2': [
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' }
+  ],
+  '6-2': [
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' }
+  ],
+  'weekly-rot': [
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'day', label: 'เช้า', icon: '☀️' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'night', label: 'ดึก', icon: '🌙' },
+    { type: 'off', label: 'หยุด', icon: '🏖️' }
+  ]
+};
+
+function openShiftPatternModal() {
+  var overlay = $('shiftPatternOverlay');
+  if (!overlay) return;
+
+  // Set default anchor date to current period start or today
+  var anchorInput = $('patternAnchorDate');
+  if (anchorInput && !anchorInput.value) {
+    var pStart = currentPeriod && currentPeriod.start ? currentPeriod.start : new Date();
+    anchorInput.value = dateKey(pStart);
+  }
+
+  // Render steps
+  renderPatternSteps();
+
+  // Hide result banner
+  var banner = $('patternResultBanner');
+  if (banner) banner.className = 'pattern-result-banner hide';
+
+  // Show/hide undo
+  var undoBtn = $('patternUndoBtn');
+  if (undoBtn) undoBtn.classList.toggle('hide', !lastShiftPatternBackup);
+
+  overlay.classList.add('show');
+}
+
+function closeShiftPatternModal() {
+  var overlay = $('shiftPatternOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
+function renderPatternSteps() {
+  var list = $('patternStepList');
+  if (!list) return;
+
+  if ($('patternCycleDays')) {
+    $('patternCycleDays').innerText = shiftPatternSequence.length;
+  }
+
+  var html = '';
+  shiftPatternSequence.forEach(function(step, idx) {
+    var stepClass = 'step-' + step.type;
+    html += '<div class="pattern-step-item ' + stepClass + '" data-step-idx="' + idx + '" title="แตะเพื่อเปลี่ยนประเภท">' +
+      '<span class="pattern-step-day">D' + (idx + 1) + '</span>' +
+      '<span class="pattern-step-icon">' + step.icon + '</span>' +
+      '<span class="pattern-step-label">' + step.label + '</span>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+
+  // Bind click to toggle day type
+  list.querySelectorAll('.pattern-step-item').forEach(function(el) {
+    el.onclick = function() {
+      var idx = parseInt(el.getAttribute('data-step-idx'), 10);
+      cycleStepType(idx);
+    };
+  });
+}
+
+function cycleStepType(idx) {
+  var current = shiftPatternSequence[idx];
+  if (!current) return;
+  if (current.type === 'day') {
+    shiftPatternSequence[idx] = { type: 'night', label: 'ดึก', icon: '🌙' };
+  } else if (current.type === 'night') {
+    shiftPatternSequence[idx] = { type: 'off', label: 'หยุด', icon: '🏖️' };
+  } else {
+    shiftPatternSequence[idx] = { type: 'day', label: 'เช้า', icon: '☀️' };
+  }
+
+  // Deselect preset buttons if modified
+  document.querySelectorAll('.pattern-preset-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-preset') === 'custom');
+  });
+  if ($('customCycleControls')) $('customCycleControls').classList.remove('hide');
+
+  renderPatternSteps();
+}
+
+function setShiftPreset(presetName) {
+  document.querySelectorAll('.pattern-preset-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-preset') === presetName);
+  });
+
+  var customControls = $('customCycleControls');
+  if (presetName === 'custom') {
+    if (customControls) customControls.classList.remove('hide');
+  } else {
+    if (customControls) customControls.classList.add('hide');
+    if (SHIFT_PRESETS[presetName]) {
+      shiftPatternSequence = JSON.parse(JSON.stringify(SHIFT_PRESETS[presetName]));
+    }
+  }
+  renderPatternSteps();
+}
+
+function addShiftStep() {
+  if (shiftPatternSequence.length >= 28) return;
+  shiftPatternSequence.push({ type: 'day', label: 'เช้า', icon: '☀️' });
+  renderPatternSteps();
+}
+
+function removeShiftStep() {
+  if (shiftPatternSequence.length <= 2) return;
+  shiftPatternSequence.pop();
+  renderPatternSteps();
+}
+
+function executeGenerateShiftPattern() {
+  var anchorVal = $('patternAnchorDate') ? $('patternAnchorDate').value : '';
+  if (!anchorVal) {
+    alert('กรุณาเลือกวันเริ่มนับรอบ');
+    return;
+  }
+  var anchorDt = parseDateKey(anchorVal);
+  if (isNaN(anchorDt.getTime())) {
+    alert('รูปแบบวันเริ่มนับรอบไม่ถูกต้อง');
+    return;
+  }
+
+  var rangeChoice = $('patternRangeSelect') ? $('patternRangeSelect').value : 'current_period';
+  var rangeStart, rangeEnd;
+
+  if (rangeChoice === 'current_period') {
+    rangeStart = new Date(currentPeriod.start.getFullYear(), currentPeriod.start.getMonth(), currentPeriod.start.getDate());
+    rangeEnd = new Date(currentPeriod.end.getFullYear(), currentPeriod.end.getMonth(), currentPeriod.end.getDate());
+  } else if (rangeChoice === 'current_month') {
+    rangeStart = new Date(curY, curM, 1);
+    rangeEnd = new Date(curY, curM + 1, 0);
+  } else if (rangeChoice === 'next_month') {
+    rangeStart = new Date(curY, curM + 1, 1);
+    rangeEnd = new Date(curY, curM + 2, 0);
+  } else if (rangeChoice === '3_months') {
+    rangeStart = new Date(curY, curM, 1);
+    rangeEnd = new Date(curY, curM + 3, 0);
+  }
+
+  var includeOt = $('patternIncludeOt') ? $('patternIncludeOt').checked : false;
+  var otTargetShift = $('patternOtTargetShift') ? $('patternOtTargetShift').value : 'night';
+  var otHours = $('patternOtHours') ? num($('patternOtHours').value) : 2;
+  var skipExisting = $('patternSkipExisting') ? $('patternSkipExisting').checked : true;
+
+  // 1. Backup current cal for undo
+  var cal = getCal();
+  lastShiftPatternBackup = JSON.parse(JSON.stringify(cal));
+
+  var cycleLen = shiftPatternSequence.length;
+  if (cycleLen <= 0) return;
+
+  var generatedCount = 0;
+  var skippedCount = 0;
+  var cur = new Date(rangeStart);
+
+  while (cur <= rangeEnd) {
+    var k = dateKey(cur);
+    var diffDays = Math.round((cur - anchorDt) / (1000 * 60 * 60 * 24));
+    var stepIdx = ((diffDays % cycleLen) + cycleLen) % cycleLen;
+    var step = shiftPatternSequence[stepIdx];
+
+    // Check skip
+    if (skipExisting && cal[k]) {
+      skippedCount++;
+    } else {
+      if (step.type === 'night') {
+        var ratesArr = [];
+        if (includeOt && (otTargetShift === 'night' || otTargetShift === 'all_work') && otHours > 0) {
+          ratesArr.push({ hours: otHours, multiplier: 1.5, payType: 'money' });
+        }
+        cal[k] = { kind: 'ot', rates: ratesArr, isNight: true };
+        generatedCount++;
+      } else if (step.type === 'day') {
+        if (includeOt && otTargetShift === 'all_work' && otHours > 0) {
+          cal[k] = { kind: 'ot', rates: [{ hours: otHours, multiplier: 1.5, payType: 'money' }], isNight: false };
+          generatedCount++;
+        } else {
+          // If already has entry and not skipping, clean it so it becomes regular day
+          if (cal[k]) delete cal[k];
+          generatedCount++;
+        }
+      } else if (step.type === 'off') {
+        // Off day
+        if (cal[k]) delete cal[k];
+        generatedCount++;
+      }
+    }
+
+    cur = addDays(cur, 1);
+  }
+
+  // Save cal and render
+  setCal(cal);
+  renderCalendar();
+  renderDashboard();
+
+  // Show result banner
+  var banner = $('patternResultBanner');
+  if (banner) {
+    banner.className = 'pattern-result-banner success';
+    banner.innerHTML = '🎉 <b>สร้างตารางกะสำเร็จ!</b> ลงข้อมูลแล้ว ' + generatedCount + ' วัน' +
+      (skippedCount > 0 ? ' (ข้ามวันที่มีข้อมูลเดิม ' + skippedCount + ' วัน)' : '');
+  }
+
+  // Show undo button
+  var undoBtn = $('patternUndoBtn');
+  if (undoBtn) undoBtn.classList.remove('hide');
+}
+
+function executeUndoShiftPattern() {
+  if (!lastShiftPatternBackup) return;
+  setCal(lastShiftPatternBackup);
+  lastShiftPatternBackup = null;
+
+  renderCalendar();
+  renderDashboard();
+
+  var banner = $('patternResultBanner');
+  if (banner) {
+    banner.className = 'pattern-result-banner warn';
+    banner.innerHTML = '↩️ <b>ย้อนกลับเรียบร้อย:</b> คืนค่าข้อมูลปฏิทินกลับสู่สภาพเดิมแล้ว';
+  }
+
+  var undoBtn = $('patternUndoBtn');
+  if (undoBtn) undoBtn.classList.add('hide');
+}
+
+
