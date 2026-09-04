@@ -145,6 +145,20 @@ const CACHE = 'ot-vXX'; // increment XX by 1
 
 ---
 
+## Available Skills
+
+This project has custom skills installed in `.agents/skills/`. Call them by name when the task matches.
+
+| Skill | When to use |
+| :--- | :--- |
+| `impeccable` | Any UI/CSS/design task — redesign, polish, audit, animate, colorize |
+| `handoff` | End of session — create `HANDOFF.md` to pass context to next agent |
+| `agent-session-resume` | When asked to review or resume a previous agent session or chat log |
+
+> ⚠️ Do NOT run impeccable without reading `PRODUCT.md` first — it loads design context automatically.
+
+---
+
 ## Deep Dive References
 
 > Load the relevant doc **only when your task needs it** — do not load all of them.
@@ -156,6 +170,8 @@ const CACHE = 'ot-vXX'; // increment XX by 1
 | `.agents/docs/scope.md` | Adding a new feature, checking hard constraints |
 | `.agents/docs/data-privacy.md` | Adding a `localStorage` key, modifying export/import |
 | `.agents/docs/ui-conventions.md` | Any change to CSS, layout, or visual components |
+| `.agents/docs/testing-guide.md` | Understanding what each test covers, writing new tests for `calc.js` |
+| `.agents/docs/specs-index.md` | Checking status of feature specs before starting a new feature |
 | `ARCHITECTURE.md` | Full technical deep-dive on Business Rules and localStorage |
 | `PRODUCT.md` | Product context and brand commitments |
 | `HANDOFF.md` | Resuming work from a previous session (if file exists) |
@@ -192,6 +208,10 @@ calc.js?v=XX               // note XX
 ```
 
 Never guess the version number — always read it first.
+
+### Step 2b — Check `.codex/hooks.json` (if relevant)
+
+The `.codex/` directory contains a `hooks.json` file used by Codex-based agents. If you are running as a Codex agent or the task involves agent hook configuration, read this file. Otherwise skip it — it does not affect runtime behavior.
 
 ### Step 3 — Identify the Relevant Docs to Load
 

@@ -52,3 +52,29 @@ This is the canonical registry of bugs that have already been fixed. **Read this
 - Do NOT write `(getDay()!==0 && (!isHolidayKey(k) || hasOt))` — this was the root cause of the 2026-06-27 bug
 - ✅ Always keep them as two independent OR branches: `(isWorkingDay || hasOt)`
 - **Why:** The logic is independent. Collapsing them creates a precedence trap where Sunday is excluded before `hasOt` is ever checked.
+
+---
+
+## 🔬 Pre-Push Regression Checklist (Browser)
+
+After every change to `calc.js`, verify these three scenarios in the browser **before** running the full test suite. They are the most commonly broken edge cases.
+
+### Check 1 — Sunday OT still earns allowances
+1. Open the app, go to a Sunday in the current cycle
+2. Record 2 hours of OT
+3. Open the period summary → **transport and food allowance must be > ฿0**
+4. ❌ If transport = 0, the `||` was broken → revert immediately
+
+### Check 2 — Social Security never exceeds ฿750
+1. Set base salary to ฿20,000 in Settings
+2. Open period summary → **ประกันสังคม must show ฿750**, not ฿1,000
+3. ❌ If it shows ฿1,000, `Math.floor` was changed or the cap was removed
+
+### Check 3 — Past period not affected by new settings
+1. Navigate to last month's period
+2. Change salary in Settings (for current period only)
+3. Navigate back to last month → **numbers must be identical to before**
+4. ❌ If last month changed, `getEffectiveSettings()` / `period_settings:*` logic is broken
+
+> These three checks take less than 2 minutes and catch 90% of regression bugs before they reach production.
+
