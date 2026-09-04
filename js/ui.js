@@ -164,7 +164,20 @@ function countRemainingDaysBreakdown(fromDate, endDate) {
 function renderGoalCalc() {
   var gc = $('goalCard');
   if (!gc) return;
-  var st = periodStats(currentPeriod);
+
+  /* ⚠️ คำนวณฐานรายได้เต็มรอบบิล (overall) เสมอ โดยไม่ผูกกับ calc_mode ของแดชบอร์ด
+     เพราะเป้าหมายคือเงินสุทธิสิ้นรอบบิล หากใช้ realtime เงินเดือนจะถูก prorate ตามวันที่ผ่านไป
+     ทำให้ยอด OT ที่ต้องทำเพิ่มเพี้ยนสูงเกินจริง */
+  var savedMode = getLS('calc_mode');
+  var st;
+  try {
+    setLS('calc_mode', 'overall');
+    st = periodStats(currentPeriod);
+  } finally {
+    if (savedMode !== null) setLS('calc_mode', savedMode);
+    else localStorage.removeItem('calc_mode');
+  }
+
   var s = settings(currentPeriod);
   if (!s.salaryBase || s.salaryBase <= 0) { gc.style.display = 'none'; return; }
   gc.style.display = '';
@@ -180,13 +193,13 @@ function renderGoalCalc() {
   var remainWorkDays = breakdown.workDays;
   var remainHolidays = breakdown.holidayDays;
   var cutoffDateStr = cutoffEnd.getDate() + ' ' + MS[cutoffEnd.getMonth()];
-  var currentNet = st.net;
+  var projectedNet = st.net;
   var rate = st.hourlyRate;
   var ot15Rate = Math.round(rate * 1.5 * 100) / 100;
   var otFood = num(st.otFood !== undefined ? st.otFood : 50);
 
-  /* Update header */
-  if ($('goalCurrentNet')) $('goalCurrentNet').innerText = 'สุทธิตอนนี้ ' + money(currentNet);
+  /* Update header: แสดงยอดคาดการณ์สิ้นรอบหากทำงานปกติ */
+  if ($('goalCurrentNet')) $('goalCurrentNet').innerText = 'ฐานสิ้นรอบ ' + money(projectedNet);
   if ($('goalRemainingDays')) {
     var remainTxt = 'เหลือวันทำงานปกติ ' + remainWorkDays + ' วัน';
     if (remainHolidays > 0) remainTxt += ' · วันหยุด ' + remainHolidays + ' วัน';
@@ -202,10 +215,10 @@ function renderGoalCalc() {
   var goal = num(goalEl.value);
   if (!goal || goal <= 0) { resultEl.innerHTML = ''; return; }
 
-  var needed = goal - currentNet;
+  var needed = goal - projectedNet;
 
   if (needed <= 0) {
-    resultEl.innerHTML = '<div class="goal-achieved">🎉 บรรลุเป้าหมายแล้ว! (' + money(currentNet) + ')</div>';
+    resultEl.innerHTML = '<div class="goal-achieved">🎉 ทำงานตามปกติจนสิ้นรอบก็ถึงเป้าหมายแล้ว! (คาดว่าจะได้ ' + money(projectedNet) + ')</div>';
     return;
   }
 
