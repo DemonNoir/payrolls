@@ -144,9 +144,107 @@ function renderCalendar(){
   $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
   $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
 
-
-
   checkMigration();
+}
+
+/* ── Goal Calculator ── */
+function countRemainingWorkDays(fromDate, endDate) {
+  /* นับวันทำงาน (จันทร์-เสาร์ ไม่ใช่วันหยุดนักขัตฤกษ์) จาก fromDate+1 ถึง endDate */
+  var count = 0;
+  var cur = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 1);
+  var end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  while (cur <= end) {
+    var k = dateKey(cur);
+    if (cur.getDay() !== 0 && !isHolidayKey(k)) count++;
+    cur = addDays(cur, 1);
+  }
+  return count;
+}
+
+function renderGoalCalc() {
+  var gc = $('goalCard');
+  if (!gc) return;
+  var st = periodStats(currentPeriod);
+  var s = settings(currentPeriod);
+  if (!s.salaryBase || s.salaryBase <= 0) { gc.style.display = 'none'; return; }
+  gc.style.display = '';
+
+  /* วันที่ปัจจุบัน และ วันตัดรอบ */
+  var todayDt = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  var cutoffEnd = currentPeriod.end;
+
+  /* ถ้าพ้นตัดรอบแล้ว ซ่อน card */
+  if (todayDt > cutoffEnd) { gc.style.display = 'none'; return; }
+
+  var remainWorkDays = countRemainingWorkDays(todayDt, cutoffEnd);
+  var cutoffDateStr = cutoffEnd.getDate() + ' ' + MS[cutoffEnd.getMonth()];
+  var currentNet = st.net;
+  var rate = st.hourlyRate;
+
+  /* Update header */
+  if ($('goalCurrentNet')) $('goalCurrentNet').innerText = 'สุทธิตอนนี้ ' + money(currentNet);
+  if ($('goalRemainingDays')) {
+    $('goalRemainingDays').innerText = 'เหลือวันทำงาน ' + remainWorkDays + ' วัน (ถึงตัดรอบ ' + cutoffDateStr + ')';
+  }
+
+  /* คำนวณผล */
+  var goalEl = $('goalIncome');
+  var resultEl = $('goalResult');
+  if (!goalEl || !resultEl) return;
+
+  var goal = num(goalEl.value);
+  if (!goal || goal <= 0) { resultEl.innerHTML = ''; return; }
+
+  var needed = goal - currentNet;
+
+  if (needed <= 0) {
+    resultEl.innerHTML = '<div class="goal-achieved">✅ บรรลุเป้าหมายแล้ว! (' + money(currentNet) + ')</div>';
+    return;
+  }
+
+  /* OT ชม. ที่ต้องทำเพิ่ม (per multiplier) */
+  var hrs15 = needed / (rate * 1.5);
+  var hrs30 = needed / (rate * 3.0);
+  /* แปลง → วัน (สมมติวันละ 2 ชม.) */
+  var days15 = hrs15 / 2;
+  var days30 = hrs30 / 2;
+
+  function rowClass(days) {
+    if (days > remainWorkDays) return 'danger';
+    if (days > remainWorkDays * 0.75) return 'warn';
+    return 'ok';
+  }
+  function daysLabel(days, hrs) {
+    var d = Math.ceil(days);
+    var h = hrs.toFixed(1);
+    var suffix = days > remainWorkDays
+      ? ' ⚠ เกินวันที่เหลือ'
+      : ' (จาก ' + remainWorkDays + ' วัน)';
+    return h + ' ชม. · ≈ ' + d + ' วัน × 2 ชม.' + suffix;
+  }
+
+  var html = '<div class="goal-needed">ต้องหาเพิ่ม <b>' + money(needed) + '</b></div>';
+  html += '<div class="goal-row ' + rowClass(days15) + '">' +
+    '<span class="goal-row__rate">OT 1.5×</span>' +
+    '<div class="goal-row__right">' +
+      '<div class="goal-row__hrs">' + hrs15.toFixed(1) + ' ชม.</div>' +
+      '<div class="goal-row__days">' + daysLabel(days15, hrs15) + '</div>' +
+    '</div></div>';
+  html += '<div class="goal-row ' + rowClass(days30) + '">' +
+    '<span class="goal-row__rate">OT 3.0×</span>' +
+    '<div class="goal-row__right">' +
+      '<div class="goal-row__hrs">' + hrs30.toFixed(1) + ' ชม.</div>' +
+      '<div class="goal-row__days">' + daysLabel(days30, hrs30) + '</div>' +
+    '</div></div>';
+
+  /* ถ้า 1.5x ทำไม่ทัน แต่ 3x ทำทัน */
+  if (days15 > remainWorkDays && days30 <= remainWorkDays) {
+    html += '<div class="goal-impossible" style="background:rgba(245,158,11,0.1);color:#f59e0b;">💡 OT 1.5× ไม่ทัน แต่ถ้าเปลี่ยนเป็น 3× ยังทำได้</div>';
+  } else if (days30 > remainWorkDays) {
+    html += '<div class="goal-impossible">❌ เป้าหมายนี้ไม่สามารถทำได้ทันในรอบนี้แล้ว</div>';
+  }
+
+  resultEl.innerHTML = html;
 }
 
 function renderDashboard(){
@@ -209,6 +307,14 @@ function renderDashboard(){
   $('dashNetSub').innerText='รายได้ประจำ '+money(st.base)+' + OT '+money(st.otPay)+' + สวัสดิการ '+money(st.welfare.total)+' - รายการหัก '+money(st.deductions.total);
   $('dashHourlyRate').innerText=s.salaryBase>0?(st.hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'— (ยังไม่ตั้งเงินเดือน)';
   $('dashRateDetail').innerText='เงินเดือน '+money(s.salaryBase)+' · KPI Daily '+kpiDailyStr+' · KPI Bonus '+kpiBonusStr;
+
+  /* Goal Calculator */
+  renderGoalCalc();
+  var gi = $('goalIncome');
+  if (gi && !gi._goalWired) {
+    gi._goalWired = true;
+    gi.addEventListener('input', function() { renderGoalCalc(); });
+  }
 
   drawCharts();
 }
