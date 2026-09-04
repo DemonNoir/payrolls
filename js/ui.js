@@ -144,12 +144,7 @@ function renderCalendar(){
   $('deductionBox').innerText='รายการหัก: '+money(st.deductions.total)+' · สุทธิ: '+money(st.net);
   $('paydayBox').innerText='เงินออกอีก '+paydayCountdown()+' วัน';
 
-  /* Rate footer */
-  var rf=$('rateFooter');
-  if(rf){
-    var s=settings();
-    rf.innerText=s.salaryBase>0?('💼 ค่าจ้างฐาน: '+hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'';
-  }
+
 
   checkMigration();
 }
