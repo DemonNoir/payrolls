@@ -115,6 +115,33 @@ async function testGitHubToken(token){
   return user;
 }
 
+/* ── Debounced Auto-Sync & Concurrency Control ── */
+var cloudSyncTimer = null;
+var isCloudSyncing = false;
+var hasPendingCloudSync = false;
+
+function triggerAutoCloudSync(delayMs){
+  var cfg = getCloudConfig();
+  if(!cfg.autoSync || !cfg.token) return;
+
+  var wait = (typeof delayMs === 'number') ? delayMs : 3000;
+
+  if(cloudSyncTimer){
+    clearTimeout(cloudSyncTimer);
+  }
+
+  /* ถ้ากำลังส่งข้อมูลอยู่ ให้ตั้งค่าไว้ว่ามีข้อมูลใหม่รอส่งซ้ำหลังส่งเสร็จ */
+  if(isCloudSyncing){
+    hasPendingCloudSync = true;
+    return;
+  }
+
+  cloudSyncTimer = setTimeout(function(){
+    cloudSyncTimer = null;
+    cloudBackup(true);
+  }, wait);
+}
+
 async function cloudBackup(silent){
   var cfg = getCloudConfig();
   var token = $('cloudGistToken') ? $('cloudGistToken').value.trim() : cfg.token;
@@ -124,6 +151,18 @@ async function cloudBackup(silent){
     if(!silent) alert('กรุณากรอก GitHub Personal Access Token ก่อนครับ');
     return;
   }
+
+  /* ป้องกัน Concurrent Request ชนกัน (Secondary Rate Limit) */
+  if(isCloudSyncing){
+    if(silent){
+      hasPendingCloudSync = true;
+    } else {
+      alert('⏳ กำลังซิงค์ข้อมูลกับคลาวด์อยู่แล้ว โปรดรอสักครู่ครับ');
+    }
+    return;
+  }
+
+  isCloudSyncing = true;
 
   var btn = $('cloudBackupBtn');
   var origText = btn ? btn.innerText : '';
@@ -161,6 +200,9 @@ async function cloudBackup(silent){
 
     if(res.status === 401) throw new Error('Token ไม่ถูกต้องหรือไม่มีสิทธิ์เข้าถึง Gist (โปรดตรวจสอบว่าได้เลือก scope "gist" หรือไม่)');
     if(res.status === 404 && gistId) throw new Error('ไม่พบ Gist ID นี้ในบัญชีของคุณ (อาจถูกลบไปแล้ว ให้ลองลบช่อง Gist ID เพื่อสร้างใหม่)');
+    if(res.status === 429 || (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0')) {
+      throw new Error('ชนขีดจำกัดความถี่ GitHub API (Rate Limit) กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
+    }
     if(!res.ok) throw new Error('GitHub API Error (' + res.status + ')');
 
     var result = await res.json();
@@ -185,7 +227,13 @@ async function cloudBackup(silent){
     if(!silent) alert('❌ การสำรองข้อมูลล้มเหลว: ' + err.message);
     console.error('Cloud Backup Error:', err);
   } finally {
+    isCloudSyncing = false;
     if(btn && !silent) { btn.disabled = false; btn.innerText = origText; }
+    /* หากมีคิวการแก้ไขค้างอยู่ขณะกำลังซิงค์ ให้รวบยอดส่งต่ออีกรอบ */
+    if(hasPendingCloudSync){
+      hasPendingCloudSync = false;
+      triggerAutoCloudSync(2000);
+    }
   }
 }
 
@@ -430,6 +478,9 @@ function initCloudEvents(){
 
   if($('cloudAutoSyncToggle')) $('cloudAutoSyncToggle').onchange = function(){
     saveCloudConfig({ autoSync: this.checked });
+    if(this.checked && typeof triggerAutoCloudSync === 'function'){
+      triggerAutoCloudSync(1000);
+    }
   };
 
   if($('closeCloudBtn')) $('closeCloudBtn').onclick = closeCloudModal;
