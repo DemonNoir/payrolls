@@ -23,11 +23,11 @@ function renderInfo(){
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   var btn=$('themeBtn');
-  if(btn) btn.innerText=(t==='dark')?'☀️':(t==='light')?'🌙':'🌓';
+  if(btn) btn.innerText=(t==='dark')?'☀️':(t==='light')?'🌙':(t==='glass')?'💎':'🌓';
 }
 function toggleTheme(){
   var cur=document.documentElement.getAttribute('data-theme')||'auto';
-  var next=cur==='auto'?'dark':cur==='dark'?'light':'auto';
+  var next=cur==='auto'?'dark':cur==='dark'?'glass':cur==='glass'?'light':'auto';
   setLS('theme',next);applyTheme(next);
 }
 function initTheme(){
