@@ -197,6 +197,14 @@ assert('พนักงานใหม่ → isProrated = true', st4.isProrated
 /* proratedSalary = min(12000, (12000/30)*15) = min(12000, 6000) = 6000 */
 assert('Prorate เงินเดือน 12000 × 15/30 = 6000', st4.proratedSalary, 6000);
 
+/* รอบก่อนเริ่มงาน (16 พ.ค. - 15 มิ.ย.) → ไม่มีการคำนวณรายได้และรายการหัก */
+var pJune = { start: new Date(2026, 4, 16), end: new Date(2026, 5, 15) };
+var stBefore = periodStats(pJune);
+assert('รอบก่อนเริ่มงาน → employedDays = 0', stBefore.employedDays, 0);
+assert('รอบก่อนเริ่มงาน → proratedSalary = 0', stBefore.proratedSalary, 0);
+assert('รอบก่อนเริ่มงาน → รายการหัก = 0', stBefore.deductions.total, 0);
+assert('รอบก่อนเริ่มงาน → สุทธิ = 0', stBefore.net, 0);
+
 /* ═══════════════════════════════════════════════════════════
  * TEST 4: หักลา — เฉพาะลากิจ+ขาดงานหักเงินเดือน, ลาป่วยไม่หัก
  * ═══════════════════════════════════════════════════════════ */

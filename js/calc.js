@@ -102,7 +102,9 @@ function getBanks(excludeKey){
   });
   banks.swap = (banks.swap || 0) + num(st.bankAdj);
   if ('annual' in banks) banks.annual = num(st.annualLeaveAdj) + (monthsWorked()*4);
+  var dStartBank = st.startDate ? parseDateKey(st.startDate) : null;
   Object.keys(data).forEach(function(k){
+    if(dStartBank && parseDateKey(k) < dStartBank) return;
     if(k!==excludeKey){
       var en=data[k];
       if(en.kind==='ot') {
@@ -244,7 +246,8 @@ function periodStats(p,kpiBonusPctOverride){
   if(unpaidLeaveDays>0) proratedSalary=Math.max(0,proratedSalary-(st.salaryBase/30)*unpaidLeaveDays);
 
   /* ── KPI Calculation (Dual Mode) ── */
-  var notEmployedYet = (employedDaysInPeriod === 0);
+  var isBeforeEmployment = !!(dStart && end < dStart);
+  var notEmployedYet = (employedDaysInPeriod === 0) || isBeforeEmployment;
   /* ⚠️ realtime mode: ถ้ารอบบิลยังไม่มาถึง (start > today) → ยังไม่ได้รับ KPI */
   var isFuturePeriod = (st.calcMode !== 'overall') && (start > todayDt);
   var skipKpi = notEmployedYet || isFuturePeriod;
@@ -266,13 +269,22 @@ function periodStats(p,kpiBonusPctOverride){
     }
   });
   var diligence=(hasLeavePenalty||notEmployedYet)?0:st.diligence;
-  if(notEmployedYet){proratedHousing=0;welfare={transport:0,food:0,otFood:0,night:0,total:0};}
+  if(notEmployedYet){
+    proratedSalary=0;
+    proratedHousing=0;
+    welfare={transport:0,food:0,otFood:0,night:0,total:0};
+    ppTax=0;
+    ppOther=0;
+    ppSick=0; ppPersonal=0; ppAbsent=0; ppAnnual=0; ppSwap=0;
+    ppMaternity=0; ppOrdination=0; ppFuneral=0; ppPersonalUnpaid=0;
+    th=0; tp=0; otDays=0; autoDays=0; leaveDays=0; actual=0;
+  }
   /* ⚠️ รางวัลอายุงาน: ไม่นับถ้ายังไม่เริ่มงาน หรือรอบบิลยังไม่มาถึง */
   if(skipKpi) ppServiceAward = 0;
   var base=proratedSalary+proratedHousing+ppServiceAward+diligence+kpi;
 
   /* ── ประกันสังคม ── */
-  var socialSecurity=Math.min(750,Math.floor(proratedSalary*0.05));
+  var socialSecurity=notEmployedYet?0:Math.min(750,Math.floor(proratedSalary*0.05));
   var deductions={social:socialSecurity,tax:ppTax,other:ppOther,total:socialSecurity+ppTax+ppOther};
   var gross=base+tp+welfare.total;
 
