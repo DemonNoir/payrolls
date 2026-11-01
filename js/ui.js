@@ -118,7 +118,7 @@ function renderCalendar(){
       cls+=' use'; badge='<span class="badge '+(ltCls2[ltype2]||'leave-sick')+'">'+(ltLabel2[ltype2]||'ลา')+' '+hours(en.days)+'d</span>';
     }
     var cell=document.createElement('div');
-    cell.className='cell'+cls+(k===dateKey(today)?' today':'');
+    cell.className='cell'+cls+(cur.getDay()===6?' sat':'')+(k===dateKey(today)?' today':'');
     cell.title=hname||'';
     var isStart=(set.startDate&&k===set.startDate);
     var isProbationEndDay=(probationEnd && k===dateKey(probationEnd));

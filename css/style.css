@@ -1,10 +1,10 @@
 /* ── Light Theme ── */
 :root{
---ink:#172033;--muted:#526178;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
+--ink:#172033;--muted:#3d5168;--line:#d9dee8;--bg:#eef2f6;--panel:#fff;
 --nav:#18233a;--orange:#9a6009;--orange-bg:#e8960e;--blue:#3b6fd1;--purple:#7a4fc7;--red:#c0392b;
 --green:#22865f;--teal:#087a89;--yellow:#f1c40f;
 --hero-bg:#18233a;--hero-text:#fff;--strip-bg:#dcecff;--strip-text:#1b4e9a;
---strip-warn-bg:#ffe8dc;--strip-warn-text:#9d451c;
+--strip-warn-bg:#e6f4ea;--strip-warn-text:#1a6b35;
 --canvas-bg:#ffffff;--canvas-label:#526178;
 }
 
@@ -339,6 +339,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .cell.leave{background:#dcecff;border-color:#aecaf1}
 .cell.use{background:#e7defa;border-color:#c8b2ef}
 .cell.holiday{background:#ffe1df;border-color:#efaaa5}
+.cell.sat{background:#f0eeff;border-color:#d0c5f0}
+.cell.sat .num{color:#7057c0}
 .cell.today{outline:2.5px solid var(--blue);outline-offset:-1px}
 /* iOS 26 Liquid Glass badge — tinted chip with specular hairline */
 .cell .badge{
@@ -360,6 +362,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
              0 0 0 1.5px rgba(255,255,255,0.80),
              0 1px 3px rgba(0,0,0,0.15);
 }
+/* 1x on orange (money) bg: dark brown text for max contrast */
+.cell.money .badge.m1{ color:#5c3200; }
 /* 3x rate: amber-red glow — urgency without a loud border */
 .cell .badge.m3{
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),
@@ -382,6 +386,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 /* Dark mode overrides for cells — harmonized with Obsidian Dark palette */
 [data-theme="dark"] .cell{background:var(--cell-bg, #1c1f2b);border-color:var(--cell-border, #252836)}
 [data-theme="dark"] .cell .num{color:#8b92a5}
+[data-theme="dark"] .cell.sat{background:#1a1535;border-color:#2d2060}
+[data-theme="dark"] .cell.sat .num{color:#a58aff}
 [data-theme="dark"] .cell.money{background:#241c00;border-color:#4a3a00}
 [data-theme="dark"] .cell.leave{background:#0c1a35;border-color:#1a3060}
 [data-theme="dark"] .cell.use{background:#1a0d35;border-color:#341866}
@@ -391,6 +397,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 @media(prefers-color-scheme:dark){
   [data-theme="auto"] .cell{background:var(--cell-bg, #1c1f2b);border-color:var(--cell-border, #252836)}
   [data-theme="auto"] .cell .num{color:#8b92a5}
+  [data-theme="auto"] .cell.sat{background:#1a1535;border-color:#2d2060}
+  [data-theme="auto"] .cell.sat .num{color:#a58aff}
   [data-theme="auto"] .cell.money{background:#241c00;border-color:#4a3a00}
   [data-theme="auto"] .cell.leave{background:#0c1a35;border-color:#1a3060}
   [data-theme="auto"] .cell.use{background:#1a0d35;border-color:#341866}
