@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=160">
+<link rel="stylesheet" href="css/style.css?v=161">
 
 </head>
 <body>
@@ -21,9 +21,7 @@
 <button class="icon" id="prevBtn" title="ก่อนหน้า">‹</button>
 <h1 id="monthLabel"></h1>
 <button class="icon" id="nextBtn" title="ถัดไป">›</button>
-<button class="icon" id="docsBtn" title="เอกสาร & อัปเดต">📋</button>
 <button class="icon" id="themeBtn" title="สลับธีม">🌙</button>
-<button class="icon" id="shiftPatternBtn" title="สร้างตารางกะวนลูปอัตโนมัติ">🔁</button>
 <button class="icon" id="settingsBtn" title="ตั้งค่า">⚙</button>
 <button class="icon avatar-btn" id="avatarBtn" title="กดเพื่อเปลี่ยนรูปโปรไฟล์">
   <img class="avatar-img" id="avatarImg" src="" alt="โปรไฟล์">
@@ -305,6 +303,10 @@
 <!-- Settings Overlay -->
 <div class="overlay" id="settingsOverlay"><div class="sheet">
 <h2>⚙️ ตั้งค่า</h2>
+<div class="settings-quick-row">
+  <button class="settings-quick-btn" id="docsBtn" title="เอกสาร & อัปเดต">📋<span>รายงาน</span></button>
+  <button class="settings-quick-btn" id="shiftPatternBtn" title="สร้างตารางกะวนลูปอัตโนมัติ">🔁<span>กะวนลูป</span></button>
+</div>
 <div id="settingsPeriodBadge" style="font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; background:rgba(45,156,219,0.15); border:1px solid rgba(45,156,219,0.3); color:var(--blue); margin-bottom:15px; display:inline-block;">📅 มีผลกับรอบบิลปัจจุบันเป็นต้นไป</div>
 <div class="settingsGrid">
 <div class="group"><label>เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="เงินเดือนหลัก"></div>
