@@ -2476,6 +2476,14 @@ body{background:#fff;display:block;padding:0}
 [data-theme="glass"] .annual-hero::after{
   opacity: 0.5;
 }
+/* Glass theme: net income gradient — deep navy→indigo, readable on frosted-white bg */
+[data-theme="glass"] .dash-hero-amount,
+[data-theme="glass"] .annual-hero-amount{
+  background: linear-gradient(135deg, #1a2e6b 10%, #4f46e5 60%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 [data-theme="glass"] .card,
 [data-theme="glass"] .dash-stat-card,
 [data-theme="glass"] .dash-rate-card,
