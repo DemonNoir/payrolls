@@ -157,6 +157,9 @@ function periodStats(p,kpiBonusPctOverride){
   Object.keys(data).forEach(function(k){
     var dt=parseDateKey(k), en=data[k]; if(!inRangeDate(dt,start,end))return;
     if(st.calcMode === 'realtime' && dt > todayDt) return;
+    /* ❌ ไม่นับ OT/ลา/กะดึกก่อนวันเริ่มงาน */
+    var dStartLoop = st.startDate ? parseDateKey(st.startDate) : null;
+    if(dStartLoop && dt < dStartLoop) return;
     byDay[k]=en;
     if(en.isNight) nightShiftDays++;
     if(en.kind==='ot'){
