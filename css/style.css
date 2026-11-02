@@ -84,13 +84,14 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .top-nav-pill{flex:1;display:flex;align-items:center;min-width:0;gap:6px}
 .top-nav-pill h1{flex:1;text-align:center;font-size:15px;margin:0;min-width:0;font-weight:800}
 .icon{
-  width:36px;height:36px;flex:0 0 36px;border-radius:50%;
+  width:36px;height:36px;min-width:36px;min-height:36px;aspect-ratio:1/1;flex:0 0 36px;flex-shrink:0;border-radius:50%;
   border:1px solid var(--line);background:var(--panel);color:var(--ink);
-  font-size:16px;cursor:pointer;display:grid;place-items:center;
+  font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:background .2s ease, box-shadow .2s ease, border-color .2s ease;
   box-shadow:0 1px 3px rgba(0,0,0,0.04);
   will-change:transform;
   -webkit-tap-highlight-color: transparent;
+  padding:0;box-sizing:border-box;
 }
 .icon:hover{background:var(--strip-bg);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .icon:active{transform:scale(0.88)}
@@ -2491,17 +2492,25 @@ body{background:#fff;display:block;padding:0}
   border: 1px solid rgba(232, 150, 14, 0.25);
 }
 
-/* ── Liquid Glass Overrides (Artboard Edition) — must stay at end to win cascade ── */
+/* ── Liquid Glass Overrides (Compact Artboard Edition — Fits Mobile Viewport) ── */
+[data-theme="glass"] body{
+  padding: 8px 6px;
+}
+[data-theme="glass"] .top{
+  margin-bottom: 6px;
+  gap: 5px;
+}
 [data-theme="glass"] .top-nav-pill{
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #fff;
-  border-radius: 24px;
-  padding: 3px;
+  border-radius: 20px;
+  padding: 2px 3px;
   border: 1px solid rgba(20,33,61,.06);
-  height: 48px;
+  height: 38px;
+  min-width: 0;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(20,33,61,.04);
 }
@@ -2509,30 +2518,55 @@ body{background:#fff;display:block;padding:0}
   border: 0;
   box-shadow: none;
   background: #F1F4FB;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 32px;
+  flex-shrink: 0;
   border-radius: 50%;
   color: #14213D;
-  font-size: 18px;
+  font-size: 16px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
 }
 [data-theme="glass"] .top-nav-pill h1{
-  font-size: 14.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #14213D;
   white-space: nowrap;
   padding: 0 4px;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 [data-theme="glass"] .top .icon:not(.top-nav-pill .icon){
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 36px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid rgba(20,33,61,.08);
   background: #fff;
   box-shadow: 0 1px 2px rgba(20,33,61,.06);
   color: #14213D;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
 }
 [data-theme="glass"] #themeBtn{
   background: #2F5BEA;
@@ -2544,22 +2578,22 @@ body{background:#fff;display:block;padding:0}
 [data-theme="glass"] .tabs{
   display: grid;
   grid-template-columns: repeat(4,1fr);
-  gap: 3px;
-  padding: 3px;
-  border-radius: 18px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 14px;
   background: rgba(255,255,255,.45);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid rgba(255,255,255,.75);
-  box-shadow: 0 8px 24px rgba(47,91,234,.10);
-  margin-bottom: 8px;
+  box-shadow: 0 4px 16px rgba(47,91,234,.08);
+  margin-bottom: 5px;
 }
 [data-theme="glass"] .tabs button{
-  height: 36px;
+  height: 31px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 11px;
   background: transparent;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #26355D;
   padding: 0 2px;
@@ -2574,28 +2608,29 @@ body{background:#fff;display:block;padding:0}
 /* Sub-header row */
 [data-theme="glass"] .sub-header-row{
   background: #fff;
-  border-radius: 18px;
-  padding: 8px 12px;
+  border-radius: 14px;
+  padding: 5px 10px;
   border: 1px solid rgba(20,33,61,.06);
   box-shadow: 0 1px 2px rgba(20,33,61,.05);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 5px;
 }
 [data-theme="glass"] .rate-info{
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #14213D;
 }
 [data-theme="glass"] .mode-select{
-  height: 38px;
-  border-radius: 12px;
+  height: 32px;
+  border-radius: 10px;
   border: 1px solid rgba(20,33,61,.12);
   background: #F6F8FD;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #14213D;
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 /* Hero Cards */
@@ -2606,10 +2641,11 @@ body{background:#fff;display:block;padding:0}
   backdrop-filter: blur(24px) saturate(170%);
   -webkit-backdrop-filter: blur(24px) saturate(170%);
   border: 1px solid rgba(255,255,255,.8);
-  box-shadow: 0 12px 32px rgba(47,91,234,.14);
-  border-radius: 24px;
-  padding: 14px 18px;
+  box-shadow: 0 8px 24px rgba(47,91,234,.10);
+  border-radius: 18px;
+  padding: 10px 14px;
   color: #14213D;
+  margin-bottom: 5px;
 }
 [data-theme="glass"] .hero::before,
 [data-theme="glass"] .dash-hero::before,
@@ -2619,26 +2655,26 @@ body{background:#fff;display:block;padding:0}
   display: none;
 }
 [data-theme="glass"] .hero .big{
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   color: #14213D;
 }
 [data-theme="glass"] .hero .side{
   color: #26355D;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
 }
 [data-theme="glass"] .hero .side b{
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
   color: #14213D;
-  margin-top: 2px;
-  letter-spacing: -0.5px;
+  margin-top: 1px;
+  letter-spacing: -0.3px;
 }
 [data-theme="glass"] .dash-hero-amount,
 [data-theme="glass"] .annual-hero-amount{
   color: #14213D;
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 700;
   background: none;
   -webkit-text-fill-color: initial;
@@ -2647,13 +2683,14 @@ body{background:#fff;display:block;padding:0}
 /* Summary Strips */
 [data-theme="glass"] .strip{
   background: #fff;
-  border-radius: 18px;
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 6px 10px;
   border: 1px solid rgba(20,33,61,.06);
-  box-shadow: 0 1px 2px rgba(20,33,61,.05);
+  box-shadow: 0 1px 2px rgba(20,33,61,.04);
   color: #14213D;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  margin-bottom: 4px;
 }
 [data-theme="glass"] .strip.split{
   display: flex;
@@ -2662,21 +2699,22 @@ body{background:#fff;display:block;padding:0}
 }
 [data-theme="glass"] .strip.split span{
   color: #4B5675;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 [data-theme="glass"] .strip.split span b{
-  font-size: 17px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #14213D;
-  margin-left: 4px;
+  margin-left: 3px;
 }
 [data-theme="glass"] .strip.warn{
   background: #DDF3E6;
   border: 1px solid rgba(11,90,56,.12);
   color: #0B5A38;
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 700;
+  padding: 6px 10px;
 }
 
 /* Cards & Panels */
@@ -2691,32 +2729,32 @@ body{background:#fff;display:block;padding:0}
 [data-theme="glass"] .calendarDesk,
 [data-theme="glass"] .legend{
   background: #fff;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(20,33,61,.06);
   box-shadow: 0 1px 2px rgba(20,33,61,.05);
 }
 
 /* Calendar desk & grid */
 [data-theme="glass"] .calendarDesk{
-  padding: 10px;
+  padding: 6px 6px 8px;
 }
 [data-theme="glass"] .weekdays{
   color: #4B5675;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
-  margin: 4px 0 8px;
+  margin: 2px 0 5px;
 }
 [data-theme="glass"] .grid{
-  gap: 4px;
+  gap: 3px;
 }
 [data-theme="glass"] .cell{
   background: #EEF0FA;
   border: none;
-  border-radius: 12px;
+  border-radius: 9px;
   box-shadow: none;
 }
 [data-theme="glass"] .cell .num{
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #14213D;
 }
@@ -2738,8 +2776,10 @@ body{background:#fff;display:block;padding:0}
 }
 [data-theme="glass"] .cell .holidayMark{
   color: #B42318;
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
+  top: 1px;
+  right: 2px;
 }
 [data-theme="glass"] .cell.leave{
   background: #E8F0FE;
@@ -2750,12 +2790,14 @@ body{background:#fff;display:block;padding:0}
 
 /* Badges */
 [data-theme="glass"] .cell .badge{
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
   background: #FFC83D;
   color: #3D2800;
-  border-radius: 8px;
-  padding: 1px 4px;
+  border-radius: 6px;
+  padding: 0 3px;
+  line-height: 1.25;
+  margin-top: 1px;
   border: none;
   box-shadow: none;
   backdrop-filter: none;
@@ -2770,10 +2812,10 @@ body{background:#fff;display:block;padding:0}
   color: #fff;
 }
 [data-theme="glass"] .cell .badge.m1{
-  box-shadow: 0 0 0 1.5px rgba(255,200,61,0.9);
+  box-shadow: 0 0 0 1.2px rgba(255,200,61,0.9);
 }
 [data-theme="glass"] .cell .badge.m3{
-  box-shadow: 0 0 0 1.5px #B42318, 0 0 6px rgba(180,35,24,0.4);
+  box-shadow: 0 0 0 1.2px #B42318, 0 0 4px rgba(180,35,24,0.4);
 }
 [data-theme="glass"] .cell.selected{
   background: rgba(47,91,234,0.20);
@@ -2782,15 +2824,18 @@ body{background:#fff;display:block;padding:0}
 
 /* Legend */
 [data-theme="glass"] .legend{
-  padding: 10px 14px;
+  padding: 6px 10px;
+  margin: 5px 0 0;
   color: #26355D;
-  font-size: 11.5px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  border-radius: 12px;
 }
 
 /* Sheet & Modal */
 [data-theme="glass"] .sheet{
   background: #fff;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid rgba(20,33,61,.08);
   box-shadow: 0 16px 48px rgba(20,33,61,.18);
 }
@@ -2801,7 +2846,7 @@ body{background:#fff;display:block;padding:0}
 }
 [data-theme="glass"] .cloud-sheet{
   background: #fff;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid rgba(20,33,61,.08);
 }
 
