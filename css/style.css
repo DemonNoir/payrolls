@@ -33,24 +33,25 @@
   }
 }
 
-/* ── Liquid Glass (iOS 26 style — light frosted glass) ── */
+/* ── Liquid Glass (iOS 26 / Pastel Light Artboard Edition) ── */
 [data-theme="glass"]{
-  --ink:#3a4468;--muted:#4a5880;--line:rgba(255,255,255,0.45);
-  --bg:transparent;--panel:rgba(255,255,255,0.45);
-  --nav:rgba(255,255,255,0.40);
+  --ink:#14213D;--muted:#4B5675;--line:rgba(20,33,61,0.06);
+  --bg:transparent;--panel:#fff;
+  --nav:rgba(255,255,255,0.45);
   --orange:#e8960e;--orange-bg:rgba(232,150,14,0.55);
-  --blue:#3b82f6;--purple:#8b5cf6;--red:#ef4444;
-  --green:#10b981;--teal:#06b6d4;--yellow:#f59e0b;
-  --hero-bg:rgba(255,255,255,0.35);--hero-text:#2a3357;
-  --strip-bg:rgba(96,165,250,0.25);--strip-text:#1e3a8a;
-  --strip-warn-bg:rgba(34,197,94,0.18);--strip-warn-text:#14532d;
-  --canvas-bg:rgba(255,255,255,0.40);--canvas-label:#4a5880;
-  --cell-bg:rgba(255,255,255,0.40);--cell-border:rgba(255,255,255,0.50);
-  /* glass-specific tokens */
-  --glass-blur:blur(22px) saturate(180%);
-  --glass-border:1px solid rgba(255,255,255,0.55);
-  --glass-highlight:inset 0 1px 0 rgba(255,255,255,0.65);
-  --glass-shadow:0 8px 32px rgba(80,100,160,0.22);
+  --blue:#2F5BEA;--purple:#5B3FC4;--red:#B42318;
+  --green:#0B5A38;--teal:#06b6d4;--yellow:#FFC83D;
+  --hero-bg:linear-gradient(135deg, rgba(255,255,255,.66), rgba(255,255,255,.36));
+  --hero-text:#14213D;
+  --strip-bg:#fff;--strip-text:#14213D;
+  --strip-warn-bg:#DDF3E6;--strip-warn-text:#0B5A38;
+  --canvas-bg:rgba(255,255,255,0.85);--canvas-label:#4B5675;
+  --cell-bg:#EEF0FA;--cell-border:transparent;
+  /* glass tokens */
+  --glass-blur:blur(24px) saturate(170%);
+  --glass-border:1px solid rgba(255,255,255,0.80);
+  --glass-highlight:none;
+  --glass-shadow:0 12px 32px rgba(47,91,234,0.14);
 }
 *{box-sizing:border-box}
 body{
@@ -80,7 +81,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 
 /* ── Top Nav Bar ── */
 .top{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.top h1{flex:1;text-align:center;font-size:15px;margin:0;min-width:0;font-weight:800}
+.top-nav-pill{flex:1;display:flex;align-items:center;min-width:0;gap:6px}
+.top-nav-pill h1{flex:1;text-align:center;font-size:15px;margin:0;min-width:0;font-weight:800}
 .icon{
   width:36px;height:36px;flex:0 0 36px;border-radius:50%;
   border:1px solid var(--line);background:var(--panel);color:var(--ink);
@@ -163,15 +165,46 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .section.on{display:block;animation:fadeSlideIn .35s ease}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── Liquid Glass body background ── */
+/* ── Liquid Glass body background (Artboard Edition) ── */
   [data-theme="glass"] body,
   [data-theme="glass"]{
-    background-image:
-      radial-gradient(ellipse at 15% 0%, rgba(125,211,252,0.55) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 20%, rgba(196,181,253,0.55) 0%, transparent 55%),
-      radial-gradient(ellipse at 50% 100%, rgba(253,186,116,0.45) 0%, transparent 55%),
-      linear-gradient(160deg, #dbeafe 0%, #e0e7ff 35%, #fce7f3 70%, #fef3c7 100%);
-    background-attachment: fixed;
+    background: linear-gradient(170deg,#D9E7FF 0%,#E6E0FF 45%,#FFEBDD 100%) fixed;
+    font-family: 'IBM Plex Sans Thai','Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    color: #14213D;
+    position: relative;
+    min-height: 100vh;
+  }
+  [data-theme="glass"] body::before{
+    content: '';
+    position: fixed;
+    left: -70px;
+    top: 110px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: #7FB2FF;
+    opacity: .55;
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  [data-theme="glass"] body::after{
+    content: '';
+    position: fixed;
+    right: -80px;
+    top: 260px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: #B7A4FF;
+    opacity: .50;
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  [data-theme="glass"] .app{
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Calendar Hero ── */
@@ -2458,121 +2491,318 @@ body{background:#fff;display:block;padding:0}
   border: 1px solid rgba(232, 150, 14, 0.25);
 }
 
-/* ── Liquid Glass Overrides — must stay at end to win cascade ── */
+/* ── Liquid Glass Overrides (Artboard Edition) — must stay at end to win cascade ── */
+[data-theme="glass"] .top-nav-pill{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 24px;
+  padding: 3px;
+  border: 1px solid rgba(20,33,61,.06);
+  height: 48px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(20,33,61,.04);
+}
+[data-theme="glass"] .top-nav-pill .icon{
+  border: 0;
+  box-shadow: none;
+  background: #F1F4FB;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #14213D;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="glass"] .top-nav-pill h1{
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #14213D;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+[data-theme="glass"] .top .icon:not(.top-nav-pill .icon){
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,33,61,.08);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20,33,61,.06);
+  color: #14213D;
+}
+[data-theme="glass"] #themeBtn{
+  background: #2F5BEA;
+  color: #fff;
+  border-color: #2F5BEA;
+}
+
+/* Tabs */
+[data-theme="glass"] .tabs{
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 3px;
+  padding: 3px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.45);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow: 0 8px 24px rgba(47,91,234,.10);
+  margin-bottom: 8px;
+}
+[data-theme="glass"] .tabs button{
+  height: 36px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #26355D;
+  padding: 0 2px;
+  box-shadow: none;
+}
+[data-theme="glass"] .tabs button.on{
+  background: #fff;
+  color: #14213D;
+  box-shadow: 0 1px 3px rgba(20,33,61,.12);
+}
+
+/* Sub-header row */
+[data-theme="glass"] .sub-header-row{
+  background: #fff;
+  border-radius: 18px;
+  padding: 8px 12px;
+  border: 1px solid rgba(20,33,61,.06);
+  box-shadow: 0 1px 2px rgba(20,33,61,.05);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-theme="glass"] .rate-info{
+  font-size: 15px;
+  font-weight: 700;
+  color: #14213D;
+}
+[data-theme="glass"] .mode-select{
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,33,61,.12);
+  background: #F6F8FD;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #14213D;
+  padding: 0 10px;
+}
+
+/* Hero Cards */
 [data-theme="glass"] .hero,
 [data-theme="glass"] .dash-hero,
 [data-theme="glass"] .annual-hero{
-  background: rgba(255,255,255,0.30);
-  color: var(--hero-text);
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: linear-gradient(135deg, rgba(255,255,255,.66), rgba(255,255,255,.36));
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255,255,255,.8);
+  box-shadow: 0 12px 32px rgba(47,91,234,.14);
+  border-radius: 24px;
+  padding: 14px 18px;
+  color: #14213D;
 }
 [data-theme="glass"] .hero::before,
 [data-theme="glass"] .dash-hero::before,
 [data-theme="glass"] .dash-hero::after,
 [data-theme="glass"] .annual-hero::before,
 [data-theme="glass"] .annual-hero::after{
-  opacity: 0.5;
+  display: none;
 }
-/* Glass theme: net income gradient — deep navy→indigo, readable on frosted-white bg */
+[data-theme="glass"] .hero .big{
+  font-size: 32px;
+  font-weight: 700;
+  color: #14213D;
+}
+[data-theme="glass"] .hero .side{
+  color: #26355D;
+  font-size: 12px;
+  font-weight: 500;
+}
+[data-theme="glass"] .hero .side b{
+  font-size: 24px;
+  font-weight: 700;
+  color: #14213D;
+  margin-top: 2px;
+  letter-spacing: -0.5px;
+}
 [data-theme="glass"] .dash-hero-amount,
 [data-theme="glass"] .annual-hero-amount{
-  background: linear-gradient(135deg, #1a2e6b 10%, #4f46e5 60%, #7c3aed 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #14213D;
+  font-size: 36px;
+  font-weight: 700;
+  background: none;
+  -webkit-text-fill-color: initial;
 }
+
+/* Summary Strips */
+[data-theme="glass"] .strip{
+  background: #fff;
+  border-radius: 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(20,33,61,.06);
+  box-shadow: 0 1px 2px rgba(20,33,61,.05);
+  color: #14213D;
+  font-size: 13px;
+  font-weight: 600;
+}
+[data-theme="glass"] .strip.split{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+[data-theme="glass"] .strip.split span{
+  color: #4B5675;
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-theme="glass"] .strip.split span b{
+  font-size: 17px;
+  font-weight: 700;
+  color: #14213D;
+  margin-left: 4px;
+}
+[data-theme="glass"] .strip.warn{
+  background: #DDF3E6;
+  border: 1px solid rgba(11,90,56,.12);
+  color: #0B5A38;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Cards & Panels */
 [data-theme="glass"] .card,
 [data-theme="glass"] .dash-stat-card,
 [data-theme="glass"] .dash-rate-card,
 [data-theme="glass"] .summaryList,
 [data-theme="glass"] .annual-stat-card,
 [data-theme="glass"] .annual-tax-card,
-[data-theme="glass"] .annual-chart-card{
-  background: rgba(255,255,255,0.40);
-  border: var(--glass-border);
-  box-shadow: var(--glass-highlight), var(--glass-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+[data-theme="glass"] .annual-chart-card,
+[data-theme="glass"] .cal-net-card,
+[data-theme="glass"] .calendarDesk,
+[data-theme="glass"] .legend{
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(20,33,61,.06);
+  box-shadow: 0 1px 2px rgba(20,33,61,.05);
 }
-[data-theme="glass"] .sheet{
-  background: rgba(255,255,255,0.55);
-  border: var(--glass-border);
-  box-shadow: var(--glass-highlight), var(--glass-shadow);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
+
+/* Calendar desk & grid */
+[data-theme="glass"] .calendarDesk{
+  padding: 10px;
 }
-[data-theme="glass"] .overlay{
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+[data-theme="glass"] .weekdays{
+  color: #4B5675;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 4px 0 8px;
 }
-[data-theme="glass"] .tabs button{
-  background: rgba(255,255,255,0.35);
-  border: var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-[data-theme="glass"] .tabs button.on{
-  background: rgba(255,255,255,0.60);
-  color: var(--ink);
-  box-shadow: var(--glass-highlight), var(--glass-shadow);
+[data-theme="glass"] .grid{
+  gap: 4px;
 }
 [data-theme="glass"] .cell{
-  background: var(--cell-bg);
-  border-color: var(--cell-border);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.40);
+  background: #EEF0FA;
+  border: none;
+  border-radius: 12px;
+  box-shadow: none;
+}
+[data-theme="glass"] .cell .num{
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #14213D;
+}
+[data-theme="glass"] .cell.sat .num{
+  color: #5B3FC4;
+}
+[data-theme="glass"] .cell.today{
+  outline: 2px solid #2F5BEA;
+  outline-offset: 1px;
+}
+[data-theme="glass"] .cell.money{
+  background: #FFF3D1;
+}
+[data-theme="glass"] .cell.holiday{
+  background: #FDE7EA;
+}
+[data-theme="glass"] .cell.holiday .num{
+  color: #8A1C2B;
+}
+[data-theme="glass"] .cell .holidayMark{
+  color: #B42318;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+[data-theme="glass"] .cell.leave{
+  background: #E8F0FE;
+}
+[data-theme="glass"] .cell.use{
+  background: #F3E8FF;
+}
+
+/* Badges */
+[data-theme="glass"] .cell .badge{
+  font-size: 9.5px;
+  font-weight: 700;
+  background: #FFC83D;
+  color: #3D2800;
+  border-radius: 8px;
+  padding: 1px 4px;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="glass"] .cell .badge.leave{
+  background: #4F7DF3;
+  color: #fff;
+}
+[data-theme="glass"] .cell .badge.use{
+  background: #8B5CF6;
+  color: #fff;
+}
+[data-theme="glass"] .cell .badge.m1{
+  box-shadow: 0 0 0 1.5px rgba(255,200,61,0.9);
+}
+[data-theme="glass"] .cell .badge.m3{
+  box-shadow: 0 0 0 1.5px #B42318, 0 0 6px rgba(180,35,24,0.4);
+}
+[data-theme="glass"] .cell.selected{
+  background: rgba(47,91,234,0.20);
+  box-shadow: 0 0 0 2px #2F5BEA;
+}
+
+/* Legend */
+[data-theme="glass"] .legend{
+  padding: 10px 14px;
+  color: #26355D;
+  font-size: 11.5px;
+}
+
+/* Sheet & Modal */
+[data-theme="glass"] .sheet{
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(20,33,61,.08);
+  box-shadow: 0 16px 48px rgba(20,33,61,.18);
+}
+[data-theme="glass"] .overlay{
+  background: rgba(20,33,61,0.25);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-[data-theme="glass"] .cell.money{background:rgba(253,230,138,0.60);border-color:rgba(252,211,77,0.60)}
-[data-theme="glass"] .cell.leave{background:rgba(191,219,254,0.55);border-color:rgba(147,197,253,0.60)}
-[data-theme="glass"] .cell.use{background:rgba(221,214,254,0.55);border-color:rgba(196,181,253,0.60)}
-[data-theme="glass"] .cell.leave-day{background:rgba(167,243,208,0.55);border-color:rgba(110,231,183,0.60)}
-[data-theme="glass"] .cell.holiday{background:rgba(254,202,202,0.55);border-color:rgba(252,165,165,0.60)}
-/* Glass theme badge overrides — deeper blur, more vibrancy */
-[data-theme="glass"] .cell .badge{
-  background:rgba(232,150,14,0.50);
-  backdrop-filter:blur(16px) saturate(200%);
-  -webkit-backdrop-filter:blur(16px) saturate(200%);
-  border-color:rgba(255,255,255,0.65);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 8px rgba(80,100,160,0.18);
-}
-[data-theme="glass"] .cell .badge.leave{background:rgba(59,111,209,0.45)}
-[data-theme="glass"] .cell .badge.use{background:rgba(122,79,199,0.45)}
-[data-theme="glass"] .cell .badge.m1{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.45),
-             0 0 0 1.5px rgba(255,255,255,0.90),
-             0 2px 8px rgba(80,100,160,0.18);
-}
-[data-theme="glass"] .cell .badge.m3{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),
-             0 0 0 1.5px rgba(239,68,68,0.90),
-             0 0 10px rgba(239,68,68,0.35),
-             0 2px 8px rgba(80,100,160,0.18);
-}
-[data-theme="glass"] .cell.selected{
-  background: rgba(59,130,246,0.25);
-  box-shadow: var(--glass-highlight), 0 0 0 2px rgba(59,130,246,0.50);
-}
-[data-theme="glass"] .mode-select{
-  background-color: rgba(255,255,255,0.35);
-  border: var(--glass-border);
-}
-[data-theme="glass"] .docs-fab{
-  background: linear-gradient(135deg, rgba(255,255,255,0.60), rgba(255,255,255,0.35));
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-}
 [data-theme="glass"] .cloud-sheet{
-  background: rgba(255,255,255,0.55);
-  border: var(--glass-border);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(20,33,61,.08);
 }
 
 
