@@ -16,7 +16,7 @@ function renderInfo(){
   var hourlyRate=getHourlyRate(kpiBonusPct);
   var rateStr=st.salaryBase>0?('ค่าจ้างฐาน '+hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.'):'ยังไม่ตั้งเงินเดือน';
   var cutoff=st.cutoff?('ตัดรอบวันที่ '+st.cutoff):'ตามเดือนปฏิทิน';
-  if($('topRateInfo')) $('topRateInfo').innerText=rateStr+' · '+cutoff+' · แตะเพื่อตั้งค่า';
+  if($('topRateInfo')) $('topRateInfo').innerHTML='<span class="rate-info-main">'+rateStr+'</span><span class="rate-info-detail">'+cutoff+' · แตะเพื่อตั้งค่า</span>';
 }
 
 /* ── Dark Mode ── */

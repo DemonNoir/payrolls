@@ -2624,6 +2624,14 @@ body{background:#fff;display:block;padding:0}
   font-weight: 700;
   color: #14213D;
 }
+@media (max-width: 600px){
+  .sub-header-row{justify-content:space-between;gap:8px;padding:7px 10px}
+  .rate-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px;font-size:12px;line-height:1.35}
+  .rate-info-main,.rate-info-detail{display:block;white-space:nowrap}
+  .rate-info-main{font-weight:700;color:var(--ink)}
+  .rate-info-detail{font-size:11px;color:var(--muted)}
+  .mode-select{flex:0 0 auto;max-width:44%;font-size:11px}
+}
 [data-theme="glass"] .mode-select{
   height: 32px;
   border-radius: 10px;
