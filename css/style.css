@@ -2907,13 +2907,19 @@ body{background:#fff;display:block;padding:0}
    with the text color inherited from each card for reliable contrast. */
 .liquid-number{
   font-variant-numeric:tabular-nums;
-  -webkit-text-stroke:.28px rgba(255,255,255,.58);
-  text-shadow:0 1px 0 rgba(255,255,255,.3),0 2px 1px rgba(9,24,50,.22),0 5px 12px rgba(9,24,50,.14);
+  color:#F7FBFF;
+  -webkit-text-stroke:.45px rgba(9,24,50,.58);
+  text-shadow:0 1px 0 rgba(255,255,255,.72),0 2px 0 rgba(9,24,50,.3),0 6px 14px rgba(9,24,50,.24);
 }
 [data-theme="glass"] .liquid-number{
-  -webkit-text-stroke:.32px rgba(255,255,255,.72);
-  text-shadow:0 1px 0 rgba(255,255,255,.78),0 2px 1px rgba(20,33,61,.12),0 5px 12px rgba(47,91,234,.12);
+  color:#FCFDFF;
+  -webkit-text-stroke:.85px rgba(20,33,61,.68);
+  text-shadow:0 1px 0 rgba(255,255,255,.98),0 2px 0 rgba(20,33,61,.28),0 4px 0 rgba(20,33,61,.12),0 8px 14px rgba(20,33,61,.22);
 }
-.row.total-row b.liquid-number{font-size:18px;letter-spacing:-.2px}
+.row.total-row b.liquid-number{
+  color:#137A50;-webkit-text-stroke:.35px rgba(255,255,255,.95);
+  text-shadow:0 1px 0 rgba(255,255,255,.98),0 2px 0 rgba(7,82,53,.22),0 5px 10px rgba(7,82,53,.2);
+  font-size:18px;letter-spacing:-.2px
+}
 
 
