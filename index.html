@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=171">
+<link rel="stylesheet" href="css/style.css?v=172">
 
 </head>
 <body>
@@ -66,9 +66,11 @@
 
 <section id="calendarPage" class="section on">
 <div class="hero">
-<div><span id="totalHours" class="big">0</span> ชม. OT</div>
-<div class="side">รวมเงิน OT<b id="totalPay">0.00 บาท</b></div>
-<button class="hero-compare-link noPrint" id="compareOtLink" type="button">เทียบคำขอ OT <span aria-hidden="true">›</span></button>
+<div class="hero-hours">
+<div class="hero-hours-main"><span id="totalHours" class="big">0</span> ชม. OT</div>
+<button class="hero-compare-link noPrint" id="compareOtLink" type="button">เทียบคำขอ OT</button>
+</div>
+<div class="side"><span>รวมเงิน OT</span><b id="totalPay">0.00 บาท</b></div>
 </div>
 <div class="strip split" id="bankBox" role="button" tabindex="0" aria-label="เปิดตั้งค่าวันหยุดและการลา">
   <span>สลับหยุด: <b id="valBank">0</b> ชม.</span>
