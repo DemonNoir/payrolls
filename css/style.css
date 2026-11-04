@@ -750,6 +750,26 @@ canvas{width:100%;display:block}
   content:'';display:block;width:40px;height:5px;
   background:var(--line);border-radius:3px;margin:0 auto 16px;
 }
+.compare-ot-trigger{width:100%;min-height:46px;margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.compare-ot-trigger span{font-size:11px;font-weight:600;opacity:.72}
+.compare-ot-sheet{display:flex;flex-direction:column;gap:8px}
+.compare-ot-help{margin:0 0 4px;color:var(--muted);font-size:12px;line-height:1.5}
+.compare-ot-label{font-size:12px;color:var(--muted);font-weight:800}
+.compare-ot-text{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:13px;line-height:1.5}
+.compare-ot-text:focus{outline:2px solid var(--blue);outline-offset:1px}
+.compare-ot-actions{margin-top:0}
+.compare-ot-results{font-size:12px;line-height:1.5}
+.compare-ot-summary{padding:10px 12px;background:var(--strip-bg);border-radius:12px;margin:4px 0 8px;color:var(--ink)}
+.compare-ot-row{padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--panel)}
+.compare-ot-row.match{border-color:rgba(34,134,95,.35)}
+.compare-ot-row.mismatch{border-color:rgba(192,57,43,.35)}
+.compare-ot-status{font-weight:800;margin-bottom:2px}
+.compare-ot-detail{color:var(--muted);font-size:11px}
+.compare-ot-empty{padding:10px;color:var(--muted);text-align:center}
+@media(max-width:600px){
+  .compare-ot-trigger{flex-direction:column;gap:1px;padding:7px 10px}
+  .compare-ot-sheet{max-height:90dvh}
+}
 @media (min-width: 600px) {
   .overlay { align-items: center; padding: 24px; }
   .sheet {

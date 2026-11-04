@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=169">
+<link rel="stylesheet" href="css/style.css?v=170">
 
 </head>
 <body>
@@ -75,6 +75,7 @@
 </div>
 <div class="strip" id="deductionBox">รายการหัก: 0.00 บาท · สุทธิ: 0.00 บาท</div>
 <div class="strip warn" id="paydayBox">เงินออกอีก 0 วัน</div>
+<button class="btn soft compare-ot-trigger noPrint" id="compareOtBtn" type="button">🔎 เทียบคำขอ OT <span>วางข้อความจากหลักฐาน · ตรวจในเครื่อง</span></button>
 
 <div class="calendarDesk">
 <div>
@@ -258,6 +259,22 @@
 </footer>
 
 </main>
+
+<!-- Compare submitted overtime with calendar entries (local only) -->
+<div class="overlay" id="compareOtOverlay" aria-hidden="true">
+  <div class="sheet compare-ot-sheet" role="dialog" aria-modal="true" aria-labelledby="compareOtTitle">
+    <h2 id="compareOtTitle">เทียบคำขอ OT</h2>
+    <p class="compare-ot-help">วางข้อความจากหน้าประวัติคำขอ ระบบจะแยกวันที่ ชั่วโมง และวิธีรับ OT เพื่อเทียบกับปฏิทินในรอบที่ระบุ ข้อมูลประมวลผลในเครื่องและไม่แก้รายการเดิม</p>
+    <label class="compare-ot-label" for="compareOtText">ข้อความหลักฐาน</label>
+    <textarea id="compareOtText" class="compare-ot-text" rows="7" placeholder="วางข้อความที่คัดลอกมาได้เลย"></textarea>
+    <div class="actions compare-ot-actions">
+      <button class="btn soft" id="clearCompareOtBtn" type="button">ล้าง</button>
+      <button class="btn primary" id="runCompareOtBtn" type="button">ตรวจเทียบ</button>
+    </div>
+    <div id="compareOtResults" class="compare-ot-results" aria-live="polite"></div>
+    <button class="ghost" id="closeCompareOtBtn" type="button">ปิด</button>
+  </div>
+</div>
 
 <!-- Entry Overlay -->
 <div class="overlay" id="entryOverlay"><div class="sheet">
@@ -767,7 +784,7 @@
 <script src="js/data.js?v=47"></script>
 <script src="js/cloud.js?v=4"></script>
 <script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=51"></script>
+<script src="js/app.js?v=52"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){

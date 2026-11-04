@@ -29,6 +29,7 @@ Use these entry points before searching the whole repository. Prefer function na
 | Annual totals, monthly breakdown, and average | `js/ui.js` → `renderAnnual()` | `annualChartSub`, `eligibleMonths`; monthly values come from `js/calc.js` → `monthStats()` |
 | Calendar month grid and summary strips | `js/ui.js` → `renderCalendar()` | `calendarGrid`, `bankBox`, `paydayBox`, `deductionBox` |
 | Click from leave balance strip to leave-type settings | `js/app.js` → `openLeaveSettingsFromSummary()` | `bankBox`; destination overlay and button wiring in `js/settings.js` → `openLeaveSettingsBtn` |
+| Compare pasted approved OT requests with calendar | `js/app.js` → `parseApprovedOtRequests()`, `compareOtWithCalendar()` | `compareOtText`, `compareOtResults`; UI in `index.html` → `compareOtOverlay` |
 | Dashboard cards and goal calculator | `js/ui.js` → `renderDashboard()` | `dash-`, `goal`, `renderGoalCalc` |
 | Billing-cycle summary | `js/ui.js` → `renderSummary()` | `monthlySummary`, `monthStats()` |
 | Hourly OT rate, billing periods, and net-pay calculation | `js/calc.js` → `getHourlyRate()`, `periodFor()`, `periodStats()` | `monthStats()` builds annual month values; read Business Rules below before edits |

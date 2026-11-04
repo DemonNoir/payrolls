@@ -70,6 +70,106 @@ $('annualPrevBtn').onclick=function(){annualYear--;renderAnnual()};
 $('annualNextBtn').onclick=function(){annualYear++;renderAnnual()};
 $('annualPdfBtn').onclick=function(){window.print()};
 
+/* ── Offline comparison: approved OT requests vs calendar (read-only) ── */
+function parseApprovedOtRequests(rawText){
+  var text=String(rawText||'');
+  var periodMatch=text.match(/(\d{4}-\d{2}-\d{2})\s*[~～–—-]\s*(\d{4}-\d{2}-\d{2})/);
+  var period=periodMatch?{start:periodMatch[1],end:periodMatch[2]}:{start:dateKey(currentPeriod.start),end:dateKey(currentPeriod.end)};
+  var marker=/ทำงานล่วงเวลาในวันทำงานผ่านการอนุมัติแล้ว|การปรับค่าล่วงเวลาผ่านการอนุมัติแล้ว/g;
+  var starts=[],match;
+  while((match=marker.exec(text))!==null) starts.push(match.index);
+  var entries=[];
+  starts.forEach(function(start,index){
+    var block=text.slice(start,index+1<starts.length?starts[index+1]:text.length);
+    var dateMatch=block.match(/เวลาเริ่มต้น\s*(?:\r?\n)+\s*(\d{4}-\d{2}-\d{2})/);
+    var hoursMatch=block.match(/^\s*(\d+(?:[.,]\d+)?)\s*ชั่วโมง\s*$/m);
+    var payType=block.indexOf('โควต้าการโอนสลับวันหยุด')>=0?'leave':
+      (block.indexOf('วิธีการคิดค่าล่วงเวลา')>=0?'money':null);
+    if(!dateMatch||!hoursMatch||!payType)return;
+    var day=dateMatch[1],amount=num(hoursMatch[1].replace(',','.'));
+    if(day<period.start||day>period.end||amount<=0)return;
+    entries.push({date:day,hours:amount,payType:payType});
+  });
+  return {period:period,entries:entries,detected:starts.length};
+}
+
+function compareOtWithCalendar(parsed){
+  var requested={},calendar={},data=getCal();
+  function bucket(target,date){if(!target[date])target[date]={money:0,leave:0};return target[date]}
+  parsed.entries.forEach(function(item){bucket(requested,item.date)[item.payType]+=item.hours});
+  Object.keys(data).forEach(function(date){
+    if(date<parsed.period.start||date>parsed.period.end)return;
+    var entry=data[date];
+    if(!entry||entry.kind!=='ot')return;
+    var normalized=normalizeEntry(entry);
+    if(!normalized||!normalized.rates)return;
+    normalized.rates.forEach(function(rate){
+      var type=rate.payType==='leave'?'leave':'money';
+      bucket(calendar,date)[type]+=num(rate.hours);
+    });
+  });
+  var dates=Array.from(new Set(Object.keys(requested).concat(Object.keys(calendar)))).sort();
+  var rows=[],matched=0;
+  dates.forEach(function(date){
+    var req=requested[date]||{money:0,leave:0},cal=calendar[date]||{money:0,leave:0};
+    var moneyDiff=+(req.money-cal.money).toFixed(2),leaveDiff=+(req.leave-cal.leave).toFixed(2);
+    if(!moneyDiff&&!leaveDiff){matched++;return;}
+    rows.push({date:date,req:req,cal:cal,moneyDiff:moneyDiff,leaveDiff:leaveDiff});
+  });
+  return {requested:requested,calendar:calendar,rows:rows,matched:matched};
+}
+
+function renderOtComparison(){
+  var output=$('compareOtResults');
+  if(!output)return;
+  output.innerHTML='';
+  var parsed=parseApprovedOtRequests($('compareOtText').value);
+  if(!parsed.entries.length){
+    var empty=document.createElement('div');empty.className='compare-ot-empty';
+    empty.innerText='ยังไม่พบรายการอนุมัติที่อ่านได้ ตรวจว่าข้อความมีวันที่เริ่มต้น จำนวนชั่วโมง และวิธีรับ OT';
+    output.appendChild(empty);return;
+  }
+  var result=compareOtWithCalendar(parsed),reqMoney=0,reqLeave=0,calMoney=0,calLeave=0;
+  Object.keys(result.requested).forEach(function(d){reqMoney+=result.requested[d].money;reqLeave+=result.requested[d].leave});
+  Object.keys(result.calendar).forEach(function(d){calMoney+=result.calendar[d].money;calLeave+=result.calendar[d].leave});
+  var summary=document.createElement('div');summary.className='compare-ot-summary';
+  summary.innerText='รอบ '+parsed.period.start+' – '+parsed.period.end+' · อ่านได้ '+parsed.entries.length+' จาก '+parsed.detected+' รายการ\n'+
+    'ยื่น: เงิน '+hours(reqMoney)+' ชม. / สลับหยุด '+hours(reqLeave)+' ชม.\n'+
+    'ปฏิทิน: เงิน '+hours(calMoney)+' ชม. / สลับหยุด '+hours(calLeave)+' ชม.';
+  output.appendChild(summary);
+  if(parsed.entries.length<parsed.detected){
+    var warning=document.createElement('div');warning.className='compare-ot-empty';
+    warning.innerText='มีบางรายการอ่านไม่ครบ กรุณาตรวจข้อความที่วางก่อนใช้ผลเทียบ';output.appendChild(warning);
+  }
+  if(!result.rows.length){
+    var allMatch=document.createElement('div');allMatch.className='compare-ot-row match';
+    allMatch.innerText='✓ ชั่วโมงและวิธีรับ OT ตรงกันครบ '+result.matched+' วัน';output.appendChild(allMatch);return;
+  }
+  result.rows.forEach(function(row){
+    var el=document.createElement('div');el.className='compare-ot-row mismatch';
+    var title=document.createElement('div');title.className='compare-ot-status';
+    var hasShortage=row.moneyDiff>0||row.leaveDiff>0,hasExcess=row.moneyDiff<0||row.leaveDiff<0;
+    title.innerText=hasShortage&&hasExcess?'ชั่วโมงหรือประเภทไม่ตรง':(hasShortage?'มีคำขอที่ยังไม่ลงปฏิทิน':'มีรายการในปฏิทินที่ไม่พบในคำขอ');
+    var detail=document.createElement('div');detail.className='compare-ot-detail';
+    detail.innerText=row.date+' · เงิน ยื่น '+hours(row.req.money)+' / ปฏิทิน '+hours(row.cal.money)+' ชม. · สลับหยุด ยื่น '+hours(row.req.leave)+' / ปฏิทิน '+hours(row.cal.leave)+' ชม.';
+    el.appendChild(title);el.appendChild(detail);output.appendChild(el);
+  });
+  if(result.matched){var matched=document.createElement('div');matched.className='compare-ot-empty';matched.innerText='ตรงกัน '+result.matched+' วัน';output.appendChild(matched)}
+}
+
+function closeOtComparison(){
+  $('compareOtOverlay').classList.remove('show');
+  $('compareOtOverlay').setAttribute('aria-hidden','true');
+  $('compareOtText').value='';$('compareOtResults').innerHTML='';
+}
+if($('compareOtBtn'))$('compareOtBtn').onclick=function(){
+  $('compareOtOverlay').classList.add('show');$('compareOtOverlay').setAttribute('aria-hidden','false');$('compareOtText').focus();
+};
+if($('runCompareOtBtn'))$('runCompareOtBtn').onclick=renderOtComparison;
+if($('clearCompareOtBtn'))$('clearCompareOtBtn').onclick=function(){$('compareOtText').value='';$('compareOtResults').innerHTML='';$('compareOtText').focus()};
+if($('closeCompareOtBtn'))$('closeCompareOtBtn').onclick=closeOtComparison;
+if($('compareOtOverlay'))$('compareOtOverlay').onclick=function(e){if(e.target===this)closeOtComparison()};
+
 /* Backup warning */
 
 $('backupWarnBtn').onclick=openSettings;
