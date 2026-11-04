@@ -330,6 +330,8 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .strip{background:var(--strip-bg);color:var(--strip-text);border-radius:10px;padding:9px 12px;font-size:13px;text-align:center;margin-bottom:8px;font-weight:800}
 .strip.split{display:flex;justify-content:space-between;align-items:center}
 .strip.split span{flex:1;text-align:center}
+#bankBox{cursor:pointer;transition:background .18s ease,box-shadow .18s ease}
+#bankBox:hover,#bankBox:focus-visible{box-shadow:0 0 0 2px var(--blue);outline:none}
 .strip.split span:first-child{border-right:1px solid rgba(0,0,0,0.1)}
 [data-theme="dark"] .strip.split span:first-child, [data-theme="auto"] .strip.split span:first-child{border-right:1px solid rgba(255,255,255,0.1)}
 .strip.warn{background:var(--strip-warn-bg);color:var(--strip-warn-text)}

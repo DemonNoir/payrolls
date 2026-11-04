@@ -71,7 +71,23 @@ $('annualNextBtn').onclick=function(){annualYear++;renderAnnual()};
 $('annualPdfBtn').onclick=function(){window.print()};
 
 /* Backup warning */
+
 $('backupWarnBtn').onclick=openSettings;
+
+function openLeaveSettingsFromSummary(){
+  openSettings();
+  requestAnimationFrame(function(){
+    var section=$('leaveSettingsHeading');
+    if(section) section.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+if($('bankBox')){
+  $('bankBox').onclick=openLeaveSettingsFromSummary;
+  $('bankBox').onkeydown=function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();openLeaveSettingsFromSummary();}
+  };
+}
+
 
 /* Mandatory Backup Reminder Popup */
 if($('bakReminderExportBtn')) $('bakReminderExportBtn').onclick=exportData;
