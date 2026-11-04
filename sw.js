@@ -2,7 +2,7 @@
    - ทดสอบบนเครื่อง (localhost/file://) → ไม่ต้องเปลี่ยนก็ได้
    - อัปโหลดขึ้น production (GitHub Pages) → ต้องเปลี่ยนทุกครั้ง!
    - เปลี่ยน = เพิ่มตัวเลขทีละ 1 จากเวอร์ชันปัจจุบัน */
-const CACHE='ot-v94';
+const CACHE='ot-v95';
 const FILES=['./','./index.html','./css/style.css','./js/utils.js','./js/calc.js','./js/ui.js','./js/settings.js','./js/data.js','./js/cloud.js','./js/tutorial.js','./js/app.js','./js/docs.js','./manifest.json','./docs/walkthrough-mandatory-backup-popup.md','./docs/walkthrough.md','./docs/leave_system_overhaul.md','./docs/full_redesign_walkthrough.md','./docs/night_shift_indicator.md','./docs/annual_redesign.md','./docs/allowance_rules.md','./docs/ot_rate_label_fix.md','./docs/personal_leave_fix.md','./docs/pwa_icon_update.md'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

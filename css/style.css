@@ -473,9 +473,7 @@ body{display:flex;justify-content:center;padding:14px 8px;min-height:100vh;trans
 .dash-hero-label{font-size:12px;opacity:0.6;font-weight:600;letter-spacing:0.3px;margin-bottom:4px}
 .dash-hero-amount{
   font-size:32px;font-weight:900;letter-spacing:-0.5px;line-height:1.1;margin:4px 0 6px;
-  font-variant-numeric:tabular-nums;
-  background:linear-gradient(135deg,#fff 30%,rgba(91,142,224,0.8));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-variant-numeric:tabular-nums;color:#f5f7fb;
 }
 .dash-hero-sub{font-size:11px;opacity:0.5;font-weight:500;line-height:1.4}
 
@@ -605,10 +603,7 @@ canvas{width:100%;display:block}
 .annual-hero-year-sub{font-size:11px;opacity:0.6;font-weight:500}
 .annual-hero-amount{
   font-size:32px;font-weight:900;letter-spacing:-0.5px;line-height:1.1;
-  margin:4px 0 6px;font-variant-numeric:tabular-nums;
-  background:linear-gradient(135deg,#fff 30%,rgba(91,142,224,0.8));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+  margin:4px 0 6px;font-variant-numeric:tabular-nums;color:#f5f7fb;
 }
 .annual-hero-sub{font-size:12px;opacity:0.55;font-weight:600;letter-spacing:0.3px}
 
@@ -2907,5 +2902,18 @@ body{background:#fff;display:block;padding:0}
   border-radius: 20px;
   border: 1px solid rgba(20,33,61,.08);
 }
+
+/* Restrained glass bevel for headline totals: a thin lit rim and soft depth,
+   with the text color inherited from each card for reliable contrast. */
+.liquid-number{
+  font-variant-numeric:tabular-nums;
+  -webkit-text-stroke:.28px rgba(255,255,255,.58);
+  text-shadow:0 1px 0 rgba(255,255,255,.3),0 2px 1px rgba(9,24,50,.22),0 5px 12px rgba(9,24,50,.14);
+}
+[data-theme="glass"] .liquid-number{
+  -webkit-text-stroke:.32px rgba(255,255,255,.72);
+  text-shadow:0 1px 0 rgba(255,255,255,.78),0 2px 1px rgba(20,33,61,.12),0 5px 12px rgba(47,91,234,.12);
+}
+.row.total-row b.liquid-number{font-size:18px;letter-spacing:-.2px}
 
 

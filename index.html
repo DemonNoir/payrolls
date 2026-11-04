@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=172">
+<link rel="stylesheet" href="css/style.css?v=173">
 
 </head>
 <body>
@@ -67,10 +67,10 @@
 <section id="calendarPage" class="section on">
 <div class="hero">
 <div class="hero-hours">
-<div class="hero-hours-main"><span id="totalHours" class="big">0</span> ชม. OT</div>
+<div class="hero-hours-main"><span id="totalHours" class="big liquid-number">0</span> ชม. OT</div>
 <button class="hero-compare-link noPrint" id="compareOtLink" type="button">เทียบคำขอ OT</button>
 </div>
-<div class="side"><span>รวมเงิน OT</span><b id="totalPay">0.00 บาท</b></div>
+<div class="side"><span>รวมเงิน OT</span><b id="totalPay" class="liquid-number">0.00 บาท</b></div>
 </div>
 <div class="strip split" id="bankBox" role="button" tabindex="0" aria-label="เปิดตั้งค่าวันหยุดและการลา">
   <span>สลับหยุด: <b id="valBank">0</b> ชม.</span>
@@ -92,7 +92,7 @@
 <!-- Hero -->
 <div class="dash-hero">
   <div class="dash-hero-label">รายได้สุทธิโดยประมาณ</div>
-  <div class="dash-hero-amount" id="dashNet">0.00 บาท</div>
+  <div class="dash-hero-amount liquid-number" id="dashNet">0.00 บาท</div>
   <div class="dash-hero-sub" id="dashNetSub"></div>
 </div>
 
@@ -190,7 +190,7 @@
     </div>
     <button class="annual-hero-btn" id="annualNextBtn">›</button>
   </div>
-  <div class="annual-hero-amount" id="annualHeroAmount">0.00</div>
+  <div class="annual-hero-amount liquid-number" id="annualHeroAmount">0.00</div>
   <div class="annual-hero-sub">รายได้สุทธิรวมทั้งปี</div>
 </div>
 
@@ -780,7 +780,7 @@
 
 <script src="js/utils.js?v=45"></script>
 <script src="js/calc.js?v=50"></script>
-<script src="js/ui.js?v=59"></script>
+<script src="js/ui.js?v=60"></script>
 <script src="js/settings.js?v=45"></script>
 <script src="js/data.js?v=47"></script>
 <script src="js/cloud.js?v=4"></script>
