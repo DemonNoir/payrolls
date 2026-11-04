@@ -75,11 +75,8 @@ $('annualPdfBtn').onclick=function(){window.print()};
 $('backupWarnBtn').onclick=openSettings;
 
 function openLeaveSettingsFromSummary(){
-  openSettings();
-  requestAnimationFrame(function(){
-    var section=$('leaveSettingsHeading');
-    if(section) section.scrollIntoView({behavior:'smooth',block:'center'});
-  });
+  renderLeaveSettings();
+  $('leaveSettingsOverlay').classList.add('show');
 }
 if($('bankBox')){
   $('bankBox').onclick=openLeaveSettingsFromSummary;
