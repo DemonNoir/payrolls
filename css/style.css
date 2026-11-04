@@ -593,6 +593,8 @@ canvas{width:100%;display:block}
 }
 .annual-hero-btn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.4);transform:scale(1.08)}
 .annual-hero-btn:active{transform:scale(0.95)}
+[data-theme="glass"] .annual-hero-btn{width:44px;height:44px;border:1px solid rgba(47,91,234,.3);background:rgba(255,255,255,.88);color:#2448B8;font-size:22px;box-shadow:0 3px 10px rgba(37,67,151,.16)}
+[data-theme="glass"] .annual-hero-btn:hover{background:#fff;border-color:rgba(47,91,234,.6);box-shadow:0 5px 14px rgba(37,67,151,.22)}
 .annual-hero-year{display:flex;flex-direction:column;align-items:center;gap:1px}
 .annual-hero-year-label{font-size:18px;font-weight:900;letter-spacing:0.5px}
 .annual-hero-year-sub{font-size:11px;opacity:0.6;font-weight:500}
@@ -2509,7 +2511,7 @@ body{background:#fff;display:block;padding:0}
   border-radius: 20px;
   padding: 2px 3px;
   border: 1px solid rgba(20,33,61,.06);
-  height: 38px;
+  height: 46px;
   min-width: 0;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(20,33,61,.04);
@@ -2518,12 +2520,12 @@ body{background:#fff;display:block;padding:0}
   border: 0;
   box-shadow: none;
   background: #F1F4FB;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   aspect-ratio: 1 / 1;
-  flex: 0 0 32px;
+  flex: 0 0 44px;
   flex-shrink: 0;
   border-radius: 50%;
   color: #14213D;
@@ -2589,7 +2591,7 @@ body{background:#fff;display:block;padding:0}
   margin-bottom: 5px;
 }
 [data-theme="glass"] .tabs button{
-  height: 31px;
+  min-height: 44px;
   border: 0;
   border-radius: 11px;
   background: transparent;
@@ -2600,7 +2602,7 @@ body{background:#fff;display:block;padding:0}
   box-shadow: none;
 }
 [data-theme="glass"] .tabs button.on{
-  background: #fff;
+  background: rgba(255,255,255,.82);
   color: #14213D;
   box-shadow: 0 1px 3px rgba(20,33,61,.12);
 }
@@ -2655,17 +2657,17 @@ body{background:#fff;display:block;padding:0}
   display: none;
 }
 [data-theme="glass"] .hero .big{
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
   color: #14213D;
 }
 [data-theme="glass"] .hero .side{
   color: #26355D;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 [data-theme="glass"] .hero .side b{
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
   color: #14213D;
   margin-top: 1px;
@@ -2728,15 +2730,19 @@ body{background:#fff;display:block;padding:0}
 [data-theme="glass"] .cal-net-card,
 [data-theme="glass"] .calendarDesk,
 [data-theme="glass"] .legend{
-  background: #fff;
+  background: rgba(255,255,255,.58);
   border-radius: 16px;
   border: 1px solid rgba(20,33,61,.06);
-  box-shadow: 0 1px 2px rgba(20,33,61,.05);
+  background: rgba(255,255,255,.58);
+  backdrop-filter: blur(18px) saturate(155%);
+  -webkit-backdrop-filter: blur(18px) saturate(155%);
+  border-color: rgba(255,255,255,.72);
+  box-shadow: 0 8px 22px rgba(47,91,234,.08);
 }
 
 /* Calendar desk & grid */
 [data-theme="glass"] .calendarDesk{
-  padding: 6px 6px 8px;
+  padding: 8px 8px 10px;
 }
 [data-theme="glass"] .weekdays{
   color: #4B5675;
@@ -2745,18 +2751,40 @@ body{background:#fff;display:block;padding:0}
   margin: 2px 0 5px;
 }
 [data-theme="glass"] .grid{
-  gap: 3px;
+  gap: 4px;
 }
 [data-theme="glass"] .cell{
   background: #EEF0FA;
   border: none;
-  border-radius: 9px;
+  border-radius: 11px;
   box-shadow: none;
 }
 [data-theme="glass"] .cell .num{
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #14213D;
+}
+
+/* Preserve the glass material while keeping touch controls comfortable. */
+@media (max-width: 420px){
+  [data-theme="glass"] .top .icon:not(.top-nav-pill .icon){
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-basis: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  [data-theme="glass"] *,
+  [data-theme="glass"] *::before,
+  [data-theme="glass"] *::after{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
 }
 [data-theme="glass"] .cell.sat .num{
   color: #5B3FC4;
