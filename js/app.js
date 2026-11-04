@@ -162,7 +162,7 @@ function closeOtComparison(){
   $('compareOtOverlay').setAttribute('aria-hidden','true');
   $('compareOtText').value='';$('compareOtResults').innerHTML='';
 }
-if($('compareOtBtn'))$('compareOtBtn').onclick=function(){
+if($('compareOtLink'))$('compareOtLink').onclick=function(){
   $('compareOtOverlay').classList.add('show');$('compareOtOverlay').setAttribute('aria-hidden','false');$('compareOtText').focus();
 };
 if($('runCompareOtBtn'))$('runCompareOtBtn').onclick=renderOtComparison;

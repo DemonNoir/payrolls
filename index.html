@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=170">
+<link rel="stylesheet" href="css/style.css?v=171">
 
 </head>
 <body>
@@ -68,6 +68,7 @@
 <div class="hero">
 <div><span id="totalHours" class="big">0</span> ชม. OT</div>
 <div class="side">รวมเงิน OT<b id="totalPay">0.00 บาท</b></div>
+<button class="hero-compare-link noPrint" id="compareOtLink" type="button">เทียบคำขอ OT <span aria-hidden="true">›</span></button>
 </div>
 <div class="strip split" id="bankBox" role="button" tabindex="0" aria-label="เปิดตั้งค่าวันหยุดและการลา">
   <span>สลับหยุด: <b id="valBank">0</b> ชม.</span>
@@ -75,8 +76,6 @@
 </div>
 <div class="strip" id="deductionBox">รายการหัก: 0.00 บาท · สุทธิ: 0.00 บาท</div>
 <div class="strip warn" id="paydayBox">เงินออกอีก 0 วัน</div>
-<button class="btn soft compare-ot-trigger noPrint" id="compareOtBtn" type="button">🔎 เทียบคำขอ OT <span>วางข้อความจากหลักฐาน · ตรวจในเครื่อง</span></button>
-
 <div class="calendarDesk">
 <div>
 <div class="weekdays"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
@@ -784,7 +783,7 @@
 <script src="js/data.js?v=47"></script>
 <script src="js/cloud.js?v=4"></script>
 <script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=52"></script>
+<script src="js/app.js?v=53"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){
