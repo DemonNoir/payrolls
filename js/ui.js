@@ -485,6 +485,14 @@ function renderAnnual(){
     monthData.push({name:MN[m],nameShort:MS[m],st:st});
   }
 
+  // Average only across months after employment began and up to the current month.
+  var annualStartDate=settings().startDate?parseDateKey(settings().startDate):null;
+  var firstEligibleMonth=annualStartDate&&annualStartDate.getFullYear()===annualYear?annualStartDate.getMonth():
+    (annualStartDate&&annualStartDate.getFullYear()>annualYear?12:0);
+  var currentYear=today.getFullYear();
+  var lastEligibleMonth=annualYear<currentYear?11:(annualYear===currentYear?today.getMonth():-1);
+  var eligibleMonths=Math.max(0,lastEligibleMonth-firstEligibleMonth+1);
+
   /* ── Hero ── */
   var heroAmt=$('annualHeroAmount');
   if(heroAmt) heroAmt.innerText=num(totNet).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท';
@@ -513,7 +521,9 @@ function renderAnnual(){
     }
     drawAnnualBarChart(canvas,chartLabels,chartValues);
     var chartSub=$('annualChartSub');
-    if(chartSub) chartSub.innerText='เฉลี่ย '+money(totNet/12)+'/เดือน';
+    if(chartSub) chartSub.innerText=eligibleMonths
+      ? 'เฉลี่ย '+money(totNet/eligibleMonths)+'/เดือน · '+eligibleMonths+' เดือน'
+      : 'ยังไม่มีเดือนที่เริ่มงานในช่วงนี้';
   }
 
   /* ── Tax Card (ภ.ง.ด.91) ── */
