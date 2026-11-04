@@ -462,7 +462,7 @@ function renderSummary(){
   html += '<div class="row"><span>🏛 ภาษี</span><b>-'+money(st.deductions.tax)+'</b></div>';
   html += '<div class="row"><span>🏷 หักอื่นๆ</span><b>-'+money(st.deductions.other)+'</b></div>';
 
-  html += '<div class="row total-row"><span>💵 รายได้สุทธิ</span><b class="liquid-number">'+money(st.net)+'</b></div>';
+  html += '<div class="row total-row"><span>💵 รายได้สุทธิ</span><b class="headline-number">'+money(st.net)+'</b></div>';
 
   $('monthlySummary').innerHTML = html;
 }
