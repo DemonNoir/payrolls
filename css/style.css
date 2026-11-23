@@ -786,26 +786,289 @@ canvas{width:100%;display:block}
   .sheet::before { display: none; }
 }
 .sheet h2{font-size:16px;margin:0 0 14px;font-weight:900;display:flex;align-items:center;gap:8px}
-/* Settings menu and category navigation */
-.settings-sheet{display:flex;flex-direction:column;overflow:hidden}
-.settings-sheet [data-settings-panel],#settingsMenu{overflow-y:auto;overscroll-behavior:contain}
-.settings-header,#settingsPeriodBadge,#settingsSaveBar,.settings-sheet::before{flex-shrink:0}
-.settings-sheet [hidden]{display:none!important}
-.settings-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.settings-header h2{margin:0;flex:1;font-size:19px;outline:none}
-.settings-header button{min-height:44px;padding:0 10px;border:0;background:transparent;color:var(--blue);font:inherit;cursor:pointer}
-#settingsBackBtn{font-size:26px;min-width:42px}
-#settingsPeriodBadge{margin:0 0 14px;color:var(--muted);font-size:12px}
-.settings-options{border-block:1px solid var(--line)}
-.settings-options button{display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 4px;text-align:left;font:inherit;font-weight:650;cursor:pointer}
-.settings-options button:last-child{border-bottom:0}
-.settings-options button::after{content:'';width:8px;height:8px;flex-shrink:0;margin-right:6px;border-top:2px solid var(--muted);border-right:2px solid var(--muted);transform:rotate(45deg)}
-.settings-options small{display:block;margin-top:2px;color:var(--muted);font-size:12px;font-weight:400}
-.settings-options button:is(:hover,:focus-visible){background:var(--strip-bg)}
-.settings-kpi{margin-top:14px}
-.settings-kpi summary{cursor:pointer;font-weight:650}
-#settingsSaveBar{margin-top:14px;padding:4px 0 0}
-#settingsSaveBar button{width:100%}
+/* ═══════════════════════════════════════════════════════
+   Settings Modal — Premium Redesign (Grouped iOS-style)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Sheet structure ── */
+.settings-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 20px 24px;
+}
+.settings-sheet [data-settings-panel],
+#settingsMenu {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+}
+.settings-sheet::before { flex-shrink: 0; }
+.settings-sheet [hidden] { display: none !important; }
+
+/* ── Header ── */
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 0 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.settings-header-title {
+  flex: 1;
+  min-width: 0;
+}
+.settings-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+  outline: none;
+}
+#settingsPeriodBadge {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.settings-back-btn {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: var(--strip-bg);
+  color: var(--ink);
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+.settings-back-btn:hover { background: var(--line); }
+.settings-back-btn:active { transform: scale(0.9); }
+.settings-close-btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: var(--strip-bg);
+  color: var(--muted);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+.settings-close-btn:hover { background: rgba(192,57,43,0.1); color: var(--red); }
+
+/* ── Group label (section header above each card) ── */
+.s-group-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 4px;
+  margin: 0 0 6px;
+}
+#settingsMenu .s-group-label:not(:first-child) { margin-top: 20px; }
+[data-settings-panel] .s-group-label { margin-top: 20px; }
+[data-settings-panel] .s-group-label:first-child { margin-top: 0; }
+
+/* ── Nav card (menu + action rows) ── */
+.s-nav-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.s-nav-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 0 8px;
+}
+.s-nav-row:last-child { border-bottom: 0; }
+.s-nav-row:hover, .s-nav-row:focus-visible { background: var(--strip-bg); outline: none; }
+.s-nav-row:active { background: var(--line); }
+.s-nav-title {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.s-nav-sub {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.s-nav-chevron {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--muted);
+  align-self: center;
+  transition: transform 0.15s;
+  line-height: 1;
+  opacity: 0.7;
+}
+.s-nav-row:hover .s-nav-chevron { transform: translateX(2px); opacity: 1; }
+/* Row without subtitle: single-row layout */
+.s-nav-row:not(:has(.s-nav-sub)) {
+  grid-template-rows: 1fr;
+}
+.s-nav-row:not(:has(.s-nav-sub)) .s-nav-title {
+  grid-row: 1;
+}
+
+/* ── Form card (grouped input container) ── */
+.s-form-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.s-field {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.s-field label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.s-field-hint {
+  font-weight: 500;
+  opacity: 0.7;
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.s-field input, .s-field select {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.15s, box-shadow 0.15s;
+  font-variant-numeric: tabular-nums;
+}
+.s-field input:focus, .s-field select:focus {
+  outline: 0;
+  background: var(--bg);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+.s-field-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 0 16px;
+}
+
+/* ── KPI field with inline toggle ── */
+.s-field--kpi .s-field-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.s-field--kpi .s-field-top label {
+  margin: 0;
+}
+.s-kpi-toggle {
+  display: flex;
+  gap: 4px;
+}
+.s-kpi-opt {
+  display: flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 0 !important;
+  letter-spacing: 0 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+}
+.s-kpi-opt input[type="radio"] {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  accent-color: var(--blue);
+}
+.s-kpi-opt span {
+  padding: 3px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-weight: 700;
+  font-size: 11px;
+}
+.s-kpi-opt input:checked + span {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* ── Save bar ── */
+#settingsSaveBar { margin-top: 20px; padding: 0; flex-shrink: 0; }
+#settingsSaveBar button { width: 100%; }
+
+/* ── KPI info box (kept as-is, minor tweak) ── */
+.settings-kpi { margin-top: 16px; }
+.settings-kpi summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+
+/* ── Keep old .settings-options for any legacy use ── */
+.settings-options { border-block: 1px solid var(--line); }
+.settings-options button {
+  display: flex; width: 100%; min-height: 48px; align-items: center;
+  justify-content: space-between; gap: 12px; border: 0; border-bottom: 1px solid var(--line);
+  background: transparent; color: var(--ink); padding: 10px 4px; text-align: left;
+  font: inherit; font-weight: 650; cursor: pointer;
+}
+.settings-options button:last-child { border-bottom: 0; }
+.settings-options small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 400; }
 .group{margin-bottom:11px}
 .group label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
 .group input{
@@ -871,17 +1134,11 @@ canvas{width:100%;display:block}
 .leave-settings-btn-text small{font-size:11px;color:var(--muted);font-weight:500}
 .leave-settings-btn-arrow{font-size:20px;color:var(--muted);font-weight:300;line-height:1}
 
+/* settingsGrid retained for any remaining legacy use in other overlays */
 .settingsGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .settingsGrid .group{margin-bottom:0}
-.subhead{
-  font-size:13px;font-weight:900;margin:16px 0 8px;
-  border-top:1px solid var(--line);padding:12px 0 0 10px;
-  position:relative;
-}
-.subhead::before{
-  content:'';position:absolute;left:0;top:12px;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--blue),var(--green));border-radius:2px;
-}
+.subhead{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin:20px 0 6px;padding:0 4px}
+@media(max-width:380px){.settingsGrid{grid-template-columns:1fr}}
 .holidayList{margin:8px 0 0}
 .holidayItem{
   display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;

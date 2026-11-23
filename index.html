@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=176">
+<link rel="stylesheet" href="css/style.css?v=177">
 
 </head>
 <body>
@@ -349,102 +349,200 @@
 
 <!-- Settings Overlay -->
 <div class="overlay" id="settingsOverlay"><div class="sheet settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+
+  <!-- ── Settings Header ── -->
   <div class="settings-header">
-    <button type="button" id="settingsBackBtn" aria-label="กลับเมนูตั้งค่า" hidden>‹</button>
-    <h2 id="settingsTitle" tabindex="-1">ตั้งค่า</h2>
-    <button type="button" id="closeSettingsBtn">ปิด</button>
+    <button type="button" id="settingsBackBtn" class="settings-back-btn" aria-label="กลับเมนูตั้งค่า" hidden>‹</button>
+    <div class="settings-header-title">
+      <h2 id="settingsTitle" tabindex="-1">ตั้งค่า</h2>
+      <p id="settingsPeriodBadge" hidden></p>
+    </div>
+    <button type="button" id="closeSettingsBtn" class="settings-close-btn" aria-label="ปิด">✕</button>
   </div>
-  <p id="settingsPeriodBadge" hidden></p>
-  <nav id="settingsMenu" class="settings-options" aria-label="หมวดการตั้งค่า">
-  <button type="button" data-settings-target="pay"><span>เงินเดือนและรอบบิล<small>เงินเดือน · วันตัดรอบ · วันเงินออก</small></span></button>
-  <button type="button" data-settings-target="earn"><span>รายได้ประจำและ KPI<small>ค่าบ้าน · เบี้ยขยัน · ฐานค่าแรง OT</small></span></button>
-  <button type="button" data-settings-target="welfare"><span>สวัสดิการและรายการหัก<small>ค่าอาหาร · ค่าเดินทาง · ภาษี</small></span></button>
-  <button type="button" data-settings-target="shifts"><span>ตารางกะและวันลา<small>กะวนลูป · โควตาลา · วันหยุด</small></span></button>
-  <button type="button" data-settings-target="backup"><span>สำรองและกู้คืนข้อมูล<small>ไฟล์สำรองในเครื่อง</small></span></button>
-  <button type="button" data-settings-target="help"><span>คู่มือและอัปเดต<small>วิธีใช้งาน · เอกสารการอัปเดต</small></span></button>
+
+  <!-- ── Settings Menu ── -->
+  <nav id="settingsMenu" aria-label="หมวดการตั้งค่า">
+    <div class="s-group-label">ข้อมูลเงินเดือน</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row" data-settings-target="pay">
+        <span class="s-nav-title">เงินเดือนและรอบบิล</span>
+        <span class="s-nav-sub">เงินเดือน · วันตัดรอบ · วันเงินออก</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row" data-settings-target="earn">
+        <span class="s-nav-title">รายได้และ KPI</span>
+        <span class="s-nav-sub">ค่าบ้าน · เบี้ยขยัน · ฐานค่าแรง OT</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row" data-settings-target="welfare">
+        <span class="s-nav-title">สวัสดิการและรายการหัก</span>
+        <span class="s-nav-sub">ค่าอาหาร · ค่าเดินทาง · ภาษี</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
+
+    <div class="s-group-label">กะและวันหยุด</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row" data-settings-target="shifts">
+        <span class="s-nav-title">ตารางกะและวันลา</span>
+        <span class="s-nav-sub">กะวนลูป · โควตาลา · วันหยุด</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
+
+    <div class="s-group-label">ข้อมูลและความช่วยเหลือ</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row" data-settings-target="backup">
+        <span class="s-nav-title">สำรองและกู้คืนข้อมูล</span>
+        <span class="s-nav-sub">ไฟล์สำรองในเครื่อง</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row" data-settings-target="help">
+        <span class="s-nav-title">คู่มือและอัปเดต</span>
+        <span class="s-nav-sub">วิธีใช้งาน · เอกสารการอัปเดต</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
   </nav>
-<section data-settings-panel="pay" aria-labelledby="settingsTitle" hidden>
-<div class="settingsGrid">
-<div class="group"><label for="setSalaryBase">เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="เงินเดือนหลัก"></div>
-<div class="group"><label for="setStartDate">วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
-<div class="group"><label for="setCutoff">วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
-<div class="group"><label for="setPayday">วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div></div>
-</section>
-<section data-settings-panel="earn" aria-labelledby="settingsTitle" hidden>
-<div class="settingsGrid">
-<div class="group"><label for="setHousing">ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
-<div class="group"><label for="setDiligence">เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
-<div class="group"><label for="setServiceAward">รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
-<div class="group">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <label for="setKpi" style="margin:0;">KPI Daily</label>
-    <div style="display:flex; gap:6px; font-size:11px;">
-      <label style="cursor:pointer;"><input type="radio" name="kpiType" value="percent" checked> %</label>
-      <label style="cursor:pointer;"><input type="radio" name="kpiType" value="amount"> ฿</label>
+
+  <!-- ── Panel: เงินเดือนและรอบบิล ── -->
+  <section data-settings-panel="pay" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">เงินเดือน</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="setSalaryBase">เงินเดือน</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setStartDate">วันที่เริ่มงาน</label><input type="date" id="setStartDate"></div>
     </div>
-  </div>
-  <input type="number" id="setKpi" step="0.1" inputmode="decimal" placeholder="0">
-</div>
-<div class="group">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <label for="setKpiBonus" id="kpiBonusLabel" style="margin:0;">KPI Bonus รอบนี้</label>
-    <div style="display:flex; gap:6px; font-size:11px;">
-      <label style="cursor:pointer;"><input type="radio" name="kpiBonusType" value="percent" checked> %</label>
-      <label style="cursor:pointer;"><input type="radio" name="kpiBonusType" value="amount"> ฿</label>
+    <div class="s-group-label">รอบบิล</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="setCutoff">วันตัดรอบ <span class="s-field-hint">(1–31)</span></label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setPayday">วันเงินออก <span class="s-field-hint">(1–31)</span></label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
     </div>
-  </div>
-  <input type="number" id="setKpiBonus" step="0.1" inputmode="decimal" placeholder="0">
-</div>
-</div>
-<details class="kpi-info-box settings-kpi" id="kpiInfoBox">
-<summary>วิธีคำนวณค่าแรง OT</summary>
-<div class="kpi-row"><span>KPI Daily</span><b id="infoKpiDaily">0%</b></div>
-<div class="kpi-row"><span>KPI Bonus รอบนี้</span><b id="infoKpiBonus">0%</b></div>
-<div class="kpi-row"><span>KPI รวม</span><b id="infoKpiTotal">0%</b></div>
-<div class="kpi-row"><span>ฐานคำนวณ (เงินเดือน + KPI)</span><b id="infoBase">0 บาท</b></div>
-<div class="kpi-row"><span>ค่าแรง/ชม. (อัตโนมัติ)</span><b id="infoHourlyRate">0 บาท/ชม.</b></div>
-</details>
-</section>
-<section data-settings-panel="welfare" aria-labelledby="settingsTitle" hidden>
-<div class="settingsGrid">
-<div class="group"><label for="setTransport">ค่าเดินทาง (บาท/วัน)</label><input type="number" id="setTransport" inputmode="decimal"></div>
-<div class="group"><label for="setFood">ค่าอาหาร (บาท/วัน)</label><input type="number" id="setFood" inputmode="decimal"></div>
-<div class="group"><label for="setOtFood">ค่าอาหาร OT (บาท/วัน)</label><input type="number" id="setOtFood" inputmode="decimal"></div>
-<div class="group"><label for="setNightRate">ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
-</div>
-<div class="subhead" id="deductSubhead">รายการหัก — รอบนี้</div>
-<div class="settingsGrid">
-<div class="group"><label for="setTax">ภาษี</label><input type="number" id="setTax" inputmode="decimal"></div>
-<div class="group"><label for="setOther">หักอื่นๆ</label><input type="number" id="setOther" inputmode="decimal"></div>
-</div>
-</section>
-<section data-settings-panel="shifts" aria-labelledby="settingsTitle" hidden>
-<div class="settings-options">
-  <button type="button" id="shiftPatternBtn">สร้างตารางกะวนลูป</button>
-  <button type="button" id="openLeaveSettingsBtn">ประเภทการลาและโควตา</button>
-</div>
-<div class="subhead">จัดการวันหยุด</div>
-<div class="settingsGrid">
-<div class="group"><label for="holidayDate">วันที่เริ่ม</label><input type="date" id="holidayDate" enterkeyhint="next"></div>
-<div class="group"><label for="holidayDateEnd">ถึงวันที่ (ถ้ามี)</label><input type="date" id="holidayDateEnd" enterkeyhint="next"></div>
-<div class="group" style="grid-column: 1 / -1;"><label for="holidayName">ชื่อวันหยุด</label><input type="text" id="holidayName" enterkeyhint="done"></div>
-</div>
-<div class="actions"><button class="btn soft" id="clearHolidayBtn">ล้างฟอร์ม</button><button class="btn primary" id="saveHolidayBtn">บันทึกวันหยุด</button></div>
-<div class="holidayList" id="holidayList"></div>
-</section>
-<section data-settings-panel="backup" aria-labelledby="settingsTitle" hidden>
-<div class="actions">
-<button class="btn primary" id="exportBtn">📤 สำรองข้อมูล</button>
-<button class="btn primary" id="importBtn">📥 กู้คืนข้อมูล</button>
-</div>
-<input type="file" id="importFile" accept="application/json,.json" class="hide">
-</section>
-<section data-settings-panel="help" aria-labelledby="settingsTitle" hidden>
-<div class="settings-options">
-  <button type="button" id="showTutorialBtn">คู่มือการใช้งาน</button>
-  <button type="button" id="docsBtn">เอกสารและประวัติการอัปเดต</button>
-</div>
-</section>
+  </section>
+
+  <!-- ── Panel: รายได้และ KPI ── -->
+  <section data-settings-panel="earn" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">รายได้ประจำ</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="setHousing">ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setDiligence">เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setServiceAward">รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div class="s-group-label">KPI</div>
+    <div class="s-form-card">
+      <div class="s-field s-field--kpi">
+        <div class="s-field-top">
+          <label for="setKpi">KPI Daily</label>
+          <div class="s-kpi-toggle">
+            <label class="s-kpi-opt"><input type="radio" name="kpiType" value="percent" checked><span>%</span></label>
+            <label class="s-kpi-opt"><input type="radio" name="kpiType" value="amount"><span>฿</span></label>
+          </div>
+        </div>
+        <input type="number" id="setKpi" step="0.1" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="s-field-sep"></div>
+      <div class="s-field s-field--kpi">
+        <div class="s-field-top">
+          <label for="setKpiBonus" id="kpiBonusLabel">KPI Bonus รอบนี้</label>
+          <div class="s-kpi-toggle">
+            <label class="s-kpi-opt"><input type="radio" name="kpiBonusType" value="percent" checked><span>%</span></label>
+            <label class="s-kpi-opt"><input type="radio" name="kpiBonusType" value="amount"><span>฿</span></label>
+          </div>
+        </div>
+        <input type="number" id="setKpiBonus" step="0.1" inputmode="decimal" placeholder="0">
+      </div>
+    </div>
+    <details class="kpi-info-box settings-kpi" id="kpiInfoBox">
+      <summary>วิธีคำนวณค่าแรง OT</summary>
+      <div class="kpi-row"><span>KPI Daily</span><b id="infoKpiDaily">0%</b></div>
+      <div class="kpi-row"><span>KPI Bonus รอบนี้</span><b id="infoKpiBonus">0%</b></div>
+      <div class="kpi-row"><span>KPI รวม</span><b id="infoKpiTotal">0%</b></div>
+      <div class="kpi-row"><span>ฐานคำนวณ (เงินเดือน + KPI)</span><b id="infoBase">0 บาท</b></div>
+      <div class="kpi-row"><span>ค่าแรง/ชม. (อัตโนมัติ)</span><b id="infoHourlyRate">0 บาท/ชม.</b></div>
+    </details>
+  </section>
+
+  <!-- ── Panel: สวัสดิการและรายการหัก ── -->
+  <section data-settings-panel="welfare" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">สวัสดิการรายวัน</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="setTransport">ค่าเดินทาง <span class="s-field-hint">บาท/วัน</span></label><input type="number" id="setTransport" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setFood">ค่าอาหาร <span class="s-field-hint">บาท/วัน</span></label><input type="number" id="setFood" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setOtFood">ค่าอาหาร OT <span class="s-field-hint">บาท/วัน</span></label><input type="number" id="setOtFood" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setNightRate">ค่ากะดึก <span class="s-field-hint">บาท/วัน</span></label><input type="number" id="setNightRate" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div class="s-group-label" id="deductSubhead">รายการหัก — รอบนี้</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="setTax">ภาษี</label><input type="number" id="setTax" inputmode="decimal" placeholder="0"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="setOther">หักอื่นๆ</label><input type="number" id="setOther" inputmode="decimal" placeholder="0"></div>
+    </div>
+  </section>
+
+  <!-- ── Panel: ตารางกะและวันลา ── -->
+  <section data-settings-panel="shifts" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">กะและการลา</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row" id="shiftPatternBtn">
+        <span class="s-nav-title">สร้างตารางกะวนลูป</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row" id="openLeaveSettingsBtn">
+        <span class="s-nav-title">ประเภทการลาและโควตา</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
+    <div class="s-group-label">เพิ่มวันหยุด</div>
+    <div class="s-form-card">
+      <div class="s-field"><label for="holidayDate">วันที่เริ่ม</label><input type="date" id="holidayDate" enterkeyhint="next"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="holidayDateEnd">ถึงวันที่ <span class="s-field-hint">ถ้ามี</span></label><input type="date" id="holidayDateEnd" enterkeyhint="next"></div>
+      <div class="s-field-sep"></div>
+      <div class="s-field"><label for="holidayName">ชื่อวันหยุด</label><input type="text" id="holidayName" enterkeyhint="done"></div>
+    </div>
+    <div class="actions"><button class="btn soft" id="clearHolidayBtn">ล้างฟอร์ม</button><button class="btn primary" id="saveHolidayBtn">บันทึกวันหยุด</button></div>
+    <div class="holidayList" id="holidayList"></div>
+  </section>
+
+  <!-- ── Panel: สำรองข้อมูล ── -->
+  <section data-settings-panel="backup" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">ข้อมูล</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row s-nav-row--action" id="exportBtn">
+        <span class="s-nav-title">📤 สำรองข้อมูล</span>
+        <span class="s-nav-sub">บันทึกไฟล์ JSON ลงเครื่อง</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row s-nav-row--action" id="importBtn">
+        <span class="s-nav-title">📥 กู้คืนข้อมูล</span>
+        <span class="s-nav-sub">โหลดไฟล์ JSON ที่สำรองไว้</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" class="hide">
+  </section>
+
+  <!-- ── Panel: คู่มือและอัปเดต ── -->
+  <section data-settings-panel="help" aria-labelledby="settingsTitle" hidden>
+    <div class="s-group-label">ความช่วยเหลือ</div>
+    <div class="s-nav-card">
+      <button type="button" class="s-nav-row" id="showTutorialBtn">
+        <span class="s-nav-title">คู่มือการใช้งาน</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+      <button type="button" class="s-nav-row" id="docsBtn">
+        <span class="s-nav-title">เอกสารและประวัติการอัปเดต</span>
+        <span class="s-nav-chevron">›</span>
+      </button>
+    </div>
+  </section>
+
   <div id="settingsSaveBar" hidden><button type="button" class="btn primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button></div>
 </div></div>
 

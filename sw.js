@@ -2,11 +2,11 @@
    - ทดสอบบนเครื่อง (localhost/file://) → ไม่ต้องเปลี่ยนก็ได้
    - อัปโหลดขึ้น production (GitHub Pages) → ต้องเปลี่ยนทุกครั้ง!
    - เปลี่ยน = เพิ่มตัวเลขทีละ 1 จากเวอร์ชันปัจจุบัน */
-const CACHE='ot-v98';
+const CACHE='ot-v99';
 const FILES = [
   './',
   './index.html',
-  './css/style.css?v=176',
+  './css/style.css?v=177',
   './js/utils.js?v=46',
   './js/calc.js?v=51',
   './js/ui.js?v=62',
