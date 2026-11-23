@@ -371,7 +371,9 @@ function showSettingsPanel(name) {
   var editable = ['pay', 'earn', 'welfare'].includes(name);
   menu.hidden = !!button;
   $('settingsBackBtn').hidden = !button;
-  $('settingsTitle').textContent = button ? button.firstElementChild.firstChild.textContent : 'ตั้งค่า';
+  // Support both old structure (span > text) and new .s-nav-title structure
+  var titleEl = button && (button.querySelector('.s-nav-title') || button.firstElementChild);
+  $('settingsTitle').textContent = titleEl ? (titleEl.firstChild ? titleEl.firstChild.textContent || titleEl.textContent : titleEl.textContent) : 'ตั้งค่า';
   $('settingsPeriodBadge').hidden = !editable;
   $('settingsSaveBar').hidden = !editable && !settingsDirty;
   $('settingsOverlay').querySelectorAll('[data-settings-panel]').forEach(function(panel) {
@@ -496,7 +498,9 @@ function saveSettings(force){
   };
   
   savePeriodSettings(curPeriodRef, newSt);
-  closeSettings();
+  // Return to the settings menu (not close entirely) — user navigates out themselves
+  settingsDirty = false;
+  showSettingsPanel(); // go back to menu
   currentPeriod = periodFor(new Date(curPeriodRef.end.getFullYear(), curPeriodRef.end.getMonth(), 1), curPeriodRef);
   renderAll();
 }
