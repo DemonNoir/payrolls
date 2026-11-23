@@ -760,7 +760,16 @@ canvas{width:100%;display:block}
 .compare-ot-row.match{border-color:rgba(34,134,95,.35)}
 .compare-ot-row.mismatch{border-color:rgba(192,57,43,.35)}
 .compare-ot-status{font-weight:800;margin-bottom:2px}
-.compare-ot-detail{color:var(--muted);font-size:11px}
+.compare-ot-detail{white-space:pre-line;color:var(--muted);font-size:11px}
+.compare-ot-open{margin-top:6px}
+.entry-comparison-note{margin:0 0 14px;padding:10px 12px;background:var(--strip-bg);border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-line}
+.rate-time{margin:0 0 10px}
+.rate-time-toggle{display:inline-flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;cursor:pointer}
+.rate-time-toggle input{width:16px;height:16px;accent-color:var(--blue)}
+.rate-time-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px}
+.rate-time-grid label,.rate-time-result{font-size:12px;color:var(--muted)}
+.rate-time-grid input{display:block;width:100%;min-width:0;margin-top:4px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;text-align:center}
+.rate-time-result{display:block;margin-top:5px}
 .compare-ot-empty{padding:10px;color:var(--muted);text-align:center}
 @media(max-width:600px){
   .compare-ot-sheet{max-height:90dvh}
@@ -777,16 +786,26 @@ canvas{width:100%;display:block}
   .sheet::before { display: none; }
 }
 .sheet h2{font-size:16px;margin:0 0 14px;font-weight:900;display:flex;align-items:center;gap:8px}
-/* Quick-action row inside Settings modal */
-.settings-quick-row{display:flex;gap:8px;margin-bottom:16px}
-.settings-quick-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;padding:10px 8px;border:1px solid var(--line);border-radius:14px;
-  background:var(--strip-bg);color:var(--strip-text);cursor:pointer;
-  font-size:20px;font-weight:700;transition:all .2s;
-}
-.settings-quick-btn span{font-size:11px;font-weight:700;color:var(--ink);opacity:0.75}
-.settings-quick-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.08);background:var(--panel)}
+/* Settings menu and category navigation */
+.settings-sheet{display:flex;flex-direction:column;overflow:hidden}
+.settings-sheet [data-settings-panel],#settingsMenu{overflow-y:auto;overscroll-behavior:contain}
+.settings-header,#settingsPeriodBadge,#settingsSaveBar,.settings-sheet::before{flex-shrink:0}
+.settings-sheet [hidden]{display:none!important}
+.settings-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.settings-header h2{margin:0;flex:1;font-size:19px;outline:none}
+.settings-header button{min-height:44px;padding:0 10px;border:0;background:transparent;color:var(--blue);font:inherit;cursor:pointer}
+#settingsBackBtn{font-size:26px;min-width:42px}
+#settingsPeriodBadge{margin:0 0 14px;color:var(--muted);font-size:12px}
+.settings-options{border-block:1px solid var(--line)}
+.settings-options button{display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 4px;text-align:left;font:inherit;font-weight:650;cursor:pointer}
+.settings-options button:last-child{border-bottom:0}
+.settings-options button::after{content:'';width:8px;height:8px;flex-shrink:0;margin-right:6px;border-top:2px solid var(--muted);border-right:2px solid var(--muted);transform:rotate(45deg)}
+.settings-options small{display:block;margin-top:2px;color:var(--muted);font-size:12px;font-weight:400}
+.settings-options button:is(:hover,:focus-visible){background:var(--strip-bg)}
+.settings-kpi{margin-top:14px}
+.settings-kpi summary{cursor:pointer;font-weight:650}
+#settingsSaveBar{margin-top:14px;padding:4px 0 0}
+#settingsSaveBar button{width:100%}
 .group{margin-bottom:11px}
 .group label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:4px}
 .group input{
@@ -2914,6 +2933,61 @@ body{background:#fff;display:block;padding:0}
   font-size:18px;
   font-weight:900;
   letter-spacing:-.025em;
+}
+
+/* Payslip reconciliation */
+.payslip-card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  scroll-margin-top: 12px;
+}
+.payslip-header, .payslip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+.payslip-header { justify-content: space-between; }
+.payslip-header h2 { margin: 0; font-size: 17px; }
+.payslip-link {
+  border: 0;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.payslip-link:hover { text-decoration: underline; }
+.payslip-period, .payslip-note, .payslip-feedback, .payslip-fields small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.payslip-period { margin: 3px 0 14px; }
+.payslip-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.payslip-fields .group { min-width: 0; margin: 0; }
+.payslip-fields input { font-size: 16px; }
+.payslip-fields small, .payslip-fields strong {
+  display: block;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.payslip-fields strong { color: var(--orange); font-size: 13px; }
+.payslip-fields .payslip-match { color: var(--green); }
+.payslip-note { margin: 10px 0 0; }
+.payslip-note:empty, .payslip-fields strong:empty { display: none; }
+.payslip-actions { margin-top: 14px; }
+.payslip-actions .btn { flex: 0 1 auto; padding: 10px 16px; }
+@media (max-width: 350px) {
+  .payslip-fields { grid-template-columns: 1fr; }
 }
 
 

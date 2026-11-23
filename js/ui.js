@@ -55,7 +55,7 @@ function renderCalendar(){
   if(isNaN(kpiBonusPct))kpiBonusPct=0;
   var hourlyRate=getHourlyRate(kpiBonusPct);
 
-  var data=getCal(), grid=$('calendarGrid'); grid.innerHTML='';
+  var data=getCal(), shifts=getShiftSchedule(), holidays=getHolidays(), grid=$('calendarGrid'); grid.innerHTML='';
   for(var i=0;i<currentPeriod.start.getDay();i++){var blank=document.createElement('div');blank.className='cell empty';grid.appendChild(blank)}
 
   var cur=new Date(currentPeriod.start), st=periodStats(currentPeriod), set=settings();
@@ -74,7 +74,7 @@ function renderCalendar(){
   }
 
   while(cur<=currentPeriod.end){
-    var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k);
+    var k=dateKey(cur), en=data[k], cls='', badge='', hname=holidayName(k, shifts, holidays);
     if(hname)cls+=' holiday';
     if(en&&en.kind==='ot'){
       var ne = normalizeEntry(en);
@@ -119,11 +119,14 @@ function renderCalendar(){
     }
     var cell=document.createElement('div');
     cell.className='cell'+cls+(cur.getDay()===6?' sat':'')+(k===dateKey(today)?' today':'');
-    cell.title=hname||'';
+    var shift=shifts[k];
+    var shiftLabel=shift==='day'?'กะเช้า':shift==='night'?'กะดึก':shift==='off'?'หยุดตามกะ':'';
+    cell.title=[shiftLabel, hname && hname!=='วันหยุดตามกะ'?hname:''].filter(Boolean).join(' · ');
     var isStart=(set.startDate&&k===set.startDate);
     var isProbationEndDay=(probationEnd && k===dateKey(probationEnd));
-    var isNight=(en&&en.isNight)?'<span style="position:absolute;top:2px;right:4px;font-size:12px;">🌙</span>':'';
-    cell.innerHTML=(hname?'<span class="holidayMark">หยุด</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+(isProbationEndDay&&!isStart?'<span class="probationMark">🏅 สิ้นสุดทดลองงาน</span>':'')+isNight+'<span class="num">'+cur.getDate()+'</span>'+badge;
+    var shiftIcon=shift==='night'?'🌙':shift==='day'?'☀️':en&&en.isNight?'🌙':'';
+    var marker=[hname?'หยุด':'', shiftIcon].filter(Boolean).join(' ');
+    cell.innerHTML=(marker?'<span class="holidayMark">'+marker+'</span>':'')+(isStart?'<span class="startMark">💼 เริ่มงาน</span>':'')+(isProbationEndDay&&!isStart?'<span class="probationMark">🏅 สิ้นสุดทดลองงาน</span>':'')+'<span class="num">'+cur.getDate()+'</span>'+badge;
     cell.setAttribute('data-date', k);
     cell.onclick=(function(key){return function(){
       if(window.multiSelectMode) {
@@ -150,11 +153,12 @@ function renderCalendar(){
 /* ── Goal Calculator ── */
 function countRemainingDaysBreakdown(fromDate, endDate) {
   var workDays = 0, holidayDays = 0;
+  var shifts = getShiftSchedule(), holidays = getHolidays();
   var cur = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 1);
   var end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
   while (cur <= end) {
     var k = dateKey(cur);
-    if (cur.getDay() !== 0 && !isHolidayKey(k)) workDays++;
+    if (isScheduledWorkday(k, shifts, holidays)) workDays++;
     else holidayDays++;
     cur = addDays(cur, 1);
   }
@@ -168,15 +172,7 @@ function renderGoalCalc() {
   /* ⚠️ คำนวณฐานรายได้เต็มรอบบิล (overall) เสมอ โดยไม่ผูกกับ calc_mode ของแดชบอร์ด
      เพราะเป้าหมายคือเงินสุทธิสิ้นรอบบิล หากใช้ realtime เงินเดือนจะถูก prorate ตามวันที่ผ่านไป
      ทำให้ยอด OT ที่ต้องทำเพิ่มเพี้ยนสูงเกินจริง */
-  var savedMode = getLS('calc_mode');
-  var st;
-  try {
-    setLS('calc_mode', 'overall');
-    st = periodStats(currentPeriod);
-  } finally {
-    if (savedMode !== null) setLS('calc_mode', savedMode);
-    else localStorage.removeItem('calc_mode');
-  }
+  var st = periodStats(currentPeriod, undefined, 'overall');
 
   var s = settings(currentPeriod);
   if (!s.salaryBase || s.salaryBase <= 0) { gc.style.display = 'none'; return; }
@@ -189,14 +185,16 @@ function renderGoalCalc() {
   /* ถ้าพ้นตัดรอบแล้ว ซ่อน card */
   if (todayDt > cutoffEnd) { gc.style.display = 'none'; return; }
 
-  var breakdown = countRemainingDaysBreakdown(todayDt, cutoffEnd);
+  var firstEligible = currentPeriod.start;
+  if (s.startDate && parseDateKey(s.startDate) > firstEligible) firstEligible = parseDateKey(s.startDate);
+  var breakdown = countRemainingDaysBreakdown(new Date(Math.max(todayDt, addDays(firstEligible, -1))), cutoffEnd);
   var remainWorkDays = breakdown.workDays;
   var remainHolidays = breakdown.holidayDays;
   var cutoffDateStr = cutoffEnd.getDate() + ' ' + MS[cutoffEnd.getMonth()];
   var projectedNet = st.net;
   var rate = st.hourlyRate;
   var ot15Rate = Math.round(rate * 1.5 * 100) / 100;
-  var otFood = num(st.otFood !== undefined ? st.otFood : 50);
+  var otFood = num(s.otFood);
 
   /* Update header: แสดงยอดคาดการณ์สิ้นรอบหากทำงานปกติ */
   if ($('goalCurrentNet')) $('goalCurrentNet').innerText = 'ฐานสิ้นรอบ ' + money(projectedNet);
@@ -400,7 +398,7 @@ function renderKpiInfo(){
 
   var kpiTotalMoney = kpiDailyMoney + kpiBonusMoney;
   var baseCalc = salaryBase + kpiTotalMoney;
-  var hourlyRate = Math.ceil(baseCalc / 30 / 8 * 100) / 100;
+  var hourlyRate = Math.round(baseCalc / 30 / 8 * 100) / 100;
   
   var kpiDailyPct = salaryBase > 0 ? (kpiDailyMoney / salaryBase * 100) : 0;
   var kpiBonusPct = salaryBase > 0 ? (kpiBonusMoney / salaryBase * 100) : 0;
@@ -409,7 +407,6 @@ function renderKpiInfo(){
   $('infoKpiDaily').innerText = (kpiDailyType === 'amount') ? money(kpiDailyVal) : (hours(kpiDailyVal) + '% (' + money(kpiDailyMoney) + ')');
   $('infoKpiBonus').innerText = (kpiBonusType === 'amount') ? money(kpiBonusVal) : (hours(kpiBonusVal) + '% (' + money(kpiBonusMoney) + ')');
   $('infoKpiTotal').innerText = money(kpiTotalMoney) + ' (' + hours(kpiTotalPct) + '%)';
-  $('infoKpiMoney').innerText = money(kpiTotalMoney);
   $('infoBase').innerText = money(baseCalc);
   $('infoHourlyRate').innerText = salaryBase > 0 ? (hourlyRate.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท/ชม.') : '— (ยังไม่ตั้งเงินเดือน)';
 
@@ -465,6 +462,7 @@ function renderSummary(){
   html += '<div class="row total-row"><span>💵 รายได้สุทธิ</span><b class="headline-number">'+money(st.net)+'</b></div>';
 
   $('monthlySummary').innerHTML = html;
+  renderPayslip();
 }
 
 /* ── Annual Summary — Premium Redesign ── */
@@ -1189,7 +1187,10 @@ function openBatchEdit() {
   $('batchUseFields').classList.add('hide');
   $('batchUseHours').value = '';
   
-  $('batchEntryNight').checked = false;
+  const shifts = getShiftSchedule();
+  const nightDates = [...window.selectedDates].filter(k => isNightAttendance(data[k], shifts[k])).length;
+  $('batchEntryNight').checked = nightDates === window.selectedDates.size;
+  $('batchEntryNight').indeterminate = nightDates > 0 && nightDates < window.selectedDates.size;
   $('batchHolidayName').value = '';
   // Hide holiday fields on reset
   $('batchHolidayFields').classList.add('hide');
@@ -1285,13 +1286,15 @@ function saveBatchEdit() {
   }
 
   let data = getCal();
+  const shifts = getShiftSchedule();
   let hList = getHolidays();
   let updatedHolidays = false;
 
   window.selectedDates.forEach(k => {
+    const dateIsNight = $('batchEntryNight').indeterminate ? isNightAttendance(data[k], shifts[k]) : isNight;
     if (isOT && totalBatchH > 0) {
       // Auto mark holiday for 1.0x or 3.0x
-      if (hasHolidayMultiplier) {
+      if (hasHolidayMultiplier && !isHolidayKey(k, shifts, hList)) {
         if (!hList.find(x => x.date === k)) {
           hList.push({ date: k, name: 'วันหยุดนักขัตฤกษ์' });
           updatedHolidays = true;
@@ -1320,11 +1323,11 @@ function saveBatchEdit() {
       data[k] = { 
         kind: 'ot', 
         rates: finalRates, 
-        isNight: isNight 
+        isNight: dateIsNight
       };
     } else if (isUse && hoursVal > 0) {
       // ใช้วันหยุด mode: เขียนทับ พร้อม isNight
-      data[k] = { kind: 'use', hours: hoursVal, leaveType: leaveType, isNight: isNight };
+      data[k] = { kind: 'use', hours: hoursVal, leaveType: leaveType, isNight: dateIsNight };
     } else if (isNight) {
       // กะดึกอย่างเดียว: MERGE ไม่ overwrite ข้อมูลเดิม
       if (data[k]) {
@@ -1517,6 +1520,7 @@ function executeGenerateShiftPattern() {
 
   var rangeChoice = $('patternRangeSelect') ? $('patternRangeSelect').value : 'current_period';
   var rangeStart, rangeEnd;
+  var curY = currentPeriod.end.getFullYear(), curM = currentPeriod.end.getMonth();
 
   if (rangeChoice === 'current_period') {
     rangeStart = new Date(currentPeriod.start.getFullYear(), currentPeriod.start.getMonth(), currentPeriod.start.getDate());
@@ -1537,10 +1541,8 @@ function executeGenerateShiftPattern() {
   var otHours = $('patternOtHours') ? num($('patternOtHours').value) : 2;
   var skipExisting = $('patternSkipExisting') ? $('patternSkipExisting').checked : true;
 
-  // 1. Backup current cal for undo
-  var cal = getCal();
-  lastShiftPatternBackup = JSON.parse(JSON.stringify(cal));
-
+  var cal = getCal(), shifts = getShiftSchedule(), holidays = getHolidays();
+  var changes = [];
   var cycleLen = shiftPatternSequence.length;
   if (cycleLen <= 0) return;
 
@@ -1554,40 +1556,31 @@ function executeGenerateShiftPattern() {
     var stepIdx = ((diffDays % cycleLen) + cycleLen) % cycleLen;
     var step = shiftPatternSequence[stepIdx];
 
-    // Check skip
-    if (skipExisting && cal[k]) {
+    if (skipExisting && (cal[k] || shifts[k])) {
       skippedCount++;
     } else {
-      if (step.type === 'night') {
-        var ratesArr = [];
-        if (includeOt && (otTargetShift === 'night' || otTargetShift === 'all_work') && otHours > 0) {
-          ratesArr.push({ hours: otHours, multiplier: 1.5, payType: 'money' });
-        }
-        cal[k] = { kind: 'ot', rates: ratesArr, isNight: true };
-        generatedCount++;
-      } else if (step.type === 'day') {
-        if (includeOt && otTargetShift === 'all_work' && otHours > 0) {
-          cal[k] = { kind: 'ot', rates: [{ hours: otHours, multiplier: 1.5, payType: 'money' }], isNight: false };
-          generatedCount++;
-        } else {
-          // If already has entry and not skipping, clean it so it becomes regular day
-          if (cal[k]) delete cal[k];
-          generatedCount++;
-        }
-      } else if (step.type === 'off') {
-        // Off day
-        if (cal[k]) delete cal[k];
-        generatedCount++;
+      var previousShift = shifts[k], previousEntry = cal[k];
+      shifts[k] = step.type;
+      var addOt = step.type !== 'off' && includeOt && otHours > 0 &&
+        (otTargetShift === 'all_work' || otTargetShift === step.type);
+      if (addOt) {
+        var multiplier = isHolidayKey(k, shifts, holidays) ? 3 : 1.5;
+        cal[k] = {kind:'ot', rates:[{hours:otHours, multiplier:multiplier, payType:'money'}], isNight:step.type === 'night'};
+      } else {
+        delete cal[k];
       }
+      changes.push({key:k, previousShift:previousShift, previousEntry:previousEntry, shift:step.type, entry:cal[k]});
+      generatedCount++;
     }
 
     cur = addDays(cur, 1);
   }
 
-  // Save cal and render
-  setCal(cal);
-  renderCalendar();
-  renderDashboard();
+  if (changes.length) {
+    if (!saveShiftPatternChanges(cal, shifts)) return;
+    lastShiftPatternBackup = changes;
+    renderAll();
+  }
 
   // Show result banner
   var banner = $('patternResultBanner');
@@ -1599,21 +1592,50 @@ function executeGenerateShiftPattern() {
 
   // Show undo button
   var undoBtn = $('patternUndoBtn');
-  if (undoBtn) undoBtn.classList.remove('hide');
+  if (undoBtn) undoBtn.classList.toggle('hide', !lastShiftPatternBackup);
+}
+
+/* Both stores belong to the same edit. A failed schedule write must also undo the calendar write. */
+function saveShiftPatternChanges(cal, shifts) {
+  var previousCal = getLS('ot_cal');
+  try {
+    setCal(cal);
+    try {
+      localStorage.setItem('shift_schedule', JSON.stringify(shifts));
+    } catch(e) {
+      if (previousCal === null) localStorage.removeItem('ot_cal');
+      else localStorage.setItem('ot_cal', previousCal);
+      throw e;
+    }
+    return true;
+  } catch(e) {
+    alert('บันทึกตารางกะไม่ได้ กรุณาตรวจสอบพื้นที่จัดเก็บแล้วลองอีกครั้ง');
+    return false;
+  }
 }
 
 function executeUndoShiftPattern() {
   if (!lastShiftPatternBackup) return;
-  setCal(lastShiftPatternBackup);
+  var cal = getCal(), shifts = getShiftSchedule(), skipped = 0;
+  lastShiftPatternBackup.forEach(function(change){
+    var k = change.key;
+    if(shifts[k] !== change.shift || JSON.stringify(cal[k]) !== JSON.stringify(change.entry)){
+      skipped++;
+      return;
+    }
+    if(change.previousShift) shifts[k] = change.previousShift;
+    else delete shifts[k];
+    if(change.previousEntry) cal[k] = change.previousEntry;
+    else delete cal[k];
+  });
+  if (!saveShiftPatternChanges(cal, shifts)) return;
   lastShiftPatternBackup = null;
-
-  renderCalendar();
-  renderDashboard();
+  renderAll();
 
   var banner = $('patternResultBanner');
   if (banner) {
     banner.className = 'pattern-result-banner warn';
-    banner.innerHTML = '↩️ <b>ย้อนกลับเรียบร้อย:</b> คืนค่าข้อมูลปฏิทินกลับสู่สภาพเดิมแล้ว';
+    banner.innerText = 'ย้อนการสร้างตารางกะแล้ว' + (skipped ? ' · เก็บ ' + skipped + ' วันที่มีการแก้ไขภายหลังไว้' : '');
   }
 
   var undoBtn = $('patternUndoBtn');

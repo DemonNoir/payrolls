@@ -1,28 +1,28 @@
 /* ── Open Entry ── */
-function openEntry(k){
+var entryPeriod = null;
+var entryComparison = null;
+function openEntry(k, comparisonRow, comparisonPeriod){
+  var d = parseDateKey(k);
+  entryPeriod = comparisonPeriod || (inRangeDate(d,currentPeriod.start,currentPeriod.end) ? currentPeriod : periodFor(d,d));
+  var st=settings(entryPeriod);
+  if(st.salaryBase<=0){alert('กรุณาตั้งเงินเดือน (บาท/เดือน) ก่อนในเมนูตั้งค่า');openSettings('pay');return}
   activeKey=k;
-  var st=settings();
-  if(st.salaryBase<=0){alert('กรุณาตั้งเงินเดือน (บาท/เดือน) ก่อนในเมนูตั้งค่า');openSettings();return}
-  var d=parseDateKey(k), W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  entryComparison=comparisonRow || null;
+  var note=$('entryComparisonNote');
+  note.hidden=!entryComparison;
+  if(entryComparison){
+    note.textContent=otComparisonAmounts(entryComparison);
+    $('compareOtOverlay').classList.remove('show');
+    $('compareOtOverlay').setAttribute('aria-hidden','true');
+  }
+  var W=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
   $('entryTitle').innerText='✏️ วัน'+W[d.getDay()]+' ที่ '+d.getDate()+' '+MN[d.getMonth()]+' '+(d.getFullYear()+543)+(holidayName(k)?' · '+holidayName(k):'');
   var en=getCal()[k], kind=en?en.kind:'ot';
   /* backward compat: old kind='leave' → treat as kind='use' */
   if(kind==='leave') kind='use';
   setRad('entryKind',kind);toggleEntryFields();
-  $('entryNight').checked = (en && en.isNight) ? true : false;
-  var isHol = isHolidayKey(k);
-  
-  $('rateRowsContainer').innerHTML = ''; // clear rows
-  if(en&&en.kind==='ot'){
-    var ne = normalizeEntry(en);
-    ne.rates.forEach(function(r, i) {
-       var m = num(r.multiplier);
-       if(isHol && m===1.5) m = 3;
-       addRateRow(i, r.hours, m, r.payType, isHol);
-    });
-  }else{
-    addRateRow(0, '', isHol?3:1.5, 'money', isHol);
-  }
+  $('entryNight').checked = isNightAttendance(en, getShiftSchedule()[k]);
+  fillEntryRates(en);
   /* populate leaveType dropdown dynamically */
   var types = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
   var ltSelect = $('leaveType');
@@ -51,6 +51,7 @@ function openEntry(k){
   $('deleteEntryBtn').style.display=en?'block':'none';
   previewEntry();
   $('entryOverlay').classList.add('show');
+  $('entryTitle').focus();
 }
 
 function updateEntryModalBank() {
@@ -75,10 +76,70 @@ $('leaveType').addEventListener('change', function() {
   previewEntry();
 });
 
-function closeEntry(){$('entryOverlay').classList.remove('show');activeKey=null}
+function closeEntry(){
+  $('entryOverlay').classList.remove('show');
+  activeKey=null;
+  entryPeriod=null;
+  if(entryComparison){
+    var date=entryComparison.date;
+    entryComparison=null;
+    $('compareOtOverlay').classList.add('show');
+    $('compareOtOverlay').setAttribute('aria-hidden','false');
+    renderOtComparison();
+    var opener=$('compareOtResults').querySelector('[data-edit-date="'+date+'"]');
+    (opener || $('runCompareOtBtn')).focus();
+  }
+}
+
+function fillEntryRates(entry, repeat){
+  var isHol=isHolidayKey(activeKey);
+  var rates=entry && entry.kind==='ot' ? normalizeEntry(entry).rates : [];
+  $('rateRowsContainer').replaceChildren();
+  if(!rates.length){
+    addRateRow(0,'',isHol?3:1.5,'money',isHol);
+    return;
+  }
+  rates.forEach(function(rate,index){
+    var multiplier=num(rate.multiplier);
+    if(repeat && isHol && multiplier===1.5) multiplier=3;
+    addRateRow(index,rate.hours,multiplier,rate.payType,isHol,null,null,rate.timing);
+  });
+}
+
+function readRateTiming(row){
+  if(!row.querySelector('.use-rate-time').checked) return null;
+  var rest=row.querySelector('.rate-break');
+  return {start:row.querySelector('.rate-start').value, end:row.querySelector('.rate-end').value,
+          breakMinutes:rest.validity.badInput ? NaN : Number(rest.value)};
+}
+
+function updateRateTiming(row){
+  var timing=readRateTiming(row);
+  row.querySelector('.rate-time-fields').hidden=!timing;
+  row.querySelector('.rate-hours-group').hidden=!!timing;
+  if(!timing) return;
+  var minutes=otClockDuration(timing.start,timing.end,timing.breakMinutes);
+  var result=row.querySelector('.rate-time-result');
+  if(minutes===null){
+    result.textContent=(!timing.start || !timing.end) ? 'ระบุเวลาเริ่มและเลิก OT' :
+      (timing.start===timing.end ? 'เวลาเริ่มและเลิกต้องต่างกัน' : 'เวลาพักต้องเป็นนาทีเต็ม ตั้งแต่ 0 และสั้นกว่าช่วง OT');
+    return;
+  }
+  result.textContent='รวม '+Math.floor(minutes/60)+' ชม. '+minutes%60+' นาที'+(timing.end<timing.start?' · เลิกวันถัดไป':'');
+}
+
+function rateHoursFromRow(row,timing){
+  if(!timing){
+    var manual=row.querySelector('.rateHours');
+    return manual.validity.badInput ? NaN : num(manual.value);
+  }
+  var minutes=otClockDuration(timing.start,timing.end,timing.breakMinutes);
+  return minutes===null ? NaN : minutes/60;
+}
+
 
 /* ── Multi-Rate UI Helpers ── */
-function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefix) {
+function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefix, timing) {
   var container = $(containerId || 'rateRowsContainer');
   if(!container) return;
   var pfx = prefix || '';
@@ -95,10 +156,10 @@ function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefi
       <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ ${index + 1}</span>
       ${delBtn}
     </div>
-    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" value="${hours||''}" ${oninputStr}></div>
+    <div class="group rate-hours-group"><label for="${pfx}rateHours${index}">ชม. OT</label><input id="${pfx}rateHours${index}" type="number" class="rateHours" step="any" inputmode="decimal" ${oninputStr}></div>
     <div class="group"><div class="choice">
       <label><input type="radio" name="${pfx}multiplier_${index}" value="1" ${multiplier==1?'checked':''} ${onchangeStr}> 1.0x</label>
-      <label class="${pfx}mult15Label" style="display:${isHol?'none':''}"><input type="radio" name="${pfx}multiplier_${index}" value="1.5" ${multiplier==1.5?'checked':''} ${onchangeStr}> 1.5x</label>
+      <label class="${pfx}mult15Label" style="display:${isHol && multiplier!=1.5?'none':''}"><input type="radio" name="${pfx}multiplier_${index}" value="1.5" ${multiplier==1.5?'checked':''} ${onchangeStr}> 1.5x</label>
       <label><input type="radio" name="${pfx}multiplier_${index}" value="3" ${multiplier==3?'checked':''} ${onchangeStr}> 3.0x</label>
     </div></div>
     <div class="group"><label>รับเป็น</label><div class="choice">
@@ -106,6 +167,23 @@ function addRateRow(index, hours, multiplier, payType, isHol, containerId, prefi
       <label><input type="radio" name="${pfx}payType_${index}" value="leave" ${payType==='leave'?'checked':''} ${onchangeStr}> วันหยุด</label>
     </div></div>
   `;
+  div.querySelector('.rateHours').value=hours || '';
+  if(!pfx){
+    var controls=$('rateTimeTemplate').content.cloneNode(true);
+    var toggle=controls.querySelector('.use-rate-time');
+    if(timing && otClockDuration(timing.start,timing.end,timing.breakMinutes)!==null){
+      toggle.checked=true;
+      controls.querySelector('.rate-start').value=timing.start;
+      controls.querySelector('.rate-end').value=timing.end;
+      controls.querySelector('.rate-break').value=timing.breakMinutes;
+    }
+    var panel=controls.querySelector('.rate-time');
+    function refreshClock(){updateRateTiming(div);previewEntry();}
+    panel.addEventListener('input',refreshClock);
+    panel.addEventListener('change',refreshClock);
+    div.querySelector('.rate-hours-group').after(controls);
+    updateRateTiming(div);
+  }
   container.appendChild(div);
 }
 
@@ -146,10 +224,8 @@ function toggleEntryFields(){
 function previewEntry(){
   var kind=radVal('entryKind');
   if(kind==='ot'){
-    var curLabel=periodLabel(currentPeriod);
-    var kpiBonusPct=getKpiBonusPct(curLabel);
-    if(isNaN(kpiBonusPct))kpiBonusPct=0;
-    var rate=getHourlyRate(kpiBonusPct);
+    var kpiBonusPct=num(settings(entryPeriod).kpiBonusValue);
+    var rate=getHourlyRate(kpiBonusPct,entryPeriod);
     
     var totalMoney = 0;
     var totalLeave = 0;
@@ -159,7 +235,7 @@ function previewEntry(){
     var rows = document.querySelectorAll('#rateRowsContainer .rate-row');
     rows.forEach(function(row) {
        var idx = row.getAttribute('data-rate-index');
-       var h = num(row.querySelector('.rateHours').value);
+       var h = rateHoursFromRow(row,readRateTiming(row));
        var mInput = document.querySelector('input[name="multiplier_'+idx+'"]:checked');
        var ptInput = document.querySelector('input[name="payType_'+idx+'"]:checked');
        if(!mInput || !ptInput) return;
@@ -170,7 +246,7 @@ function previewEntry(){
          if (pt === 'money') {
             var effectiveRate = rate * m;
             totalMoney += effectiveRate * h;
-            desc.push(h + 'ชม.×' + m + 'x');
+            desc.push(hours(h) + 'ชม.×' + m + 'x');
          } else {
             totalLeave += h;
          }
@@ -213,24 +289,26 @@ function saveEntry(){
   var data=getCal(), kind=radVal('entryKind');
   var isNight = $('entryNight').checked;
   if(kind==='ot'){
-    var curLabel=periodLabel(currentPeriod);
-    var kpiBonusPct=getKpiBonusPct(curLabel);
-    if(isNaN(kpiBonusPct))kpiBonusPct=0;
-    var rate=getHourlyRate(kpiBonusPct);
+    var kpiBonusPct=num(settings(entryPeriod).kpiBonusValue);
+    var rate=getHourlyRate(kpiBonusPct,entryPeriod);
     
     var ratesArr = [];
     var totalH = 0;
     var hasHolidayMultiplier = false;
     var rows = document.querySelectorAll('#rateRowsContainer .rate-row');
-    rows.forEach(function(row) {
-       var idx = row.getAttribute('data-rate-index');
-       var h = num(row.querySelector('.rateHours').value);
-       var m = num(document.querySelector('input[name="multiplier_'+idx+'"]:checked').value);
-       var pt = document.querySelector('input[name="payType_'+idx+'"]:checked').value;
-       
+    for(var row of rows){
+       var timing=readRateTiming(row);
+       var h=rateHoursFromRow(row,timing);
+       if(!Number.isFinite(h) || h<0){
+         alert(timing ? row.querySelector('.rate-time-result').textContent : 'กรอกจำนวนชั่วโมงให้ถูกต้อง');
+         row.querySelector(timing ? '.rate-start' : '.rateHours').focus();
+         return;
+       }
+       var m = num(row.querySelector('input[name^="multiplier_"]:checked').value);
+       var pt = row.querySelector('input[name^="payType_"]:checked').value;
        if (h > 0) {
          if (m === 1 || m === 3) hasHolidayMultiplier = true;
-         ratesArr.push({
+         var savedRate={
             hours: h,
             multiplier: m,
             payType: pt,
@@ -238,12 +316,14 @@ function saveEntry(){
             total: pt === 'money' ? (rate * h * m) : 0,
             credit: pt === 'leave' ? h : 0,
             kpiBonusPctAtSave: kpiBonusPct
-         });
+         };
+         if(timing) savedRate.timing=timing;
+         ratesArr.push(savedRate);
          totalH += h;
        }
-    });
-    
-    if (hasHolidayMultiplier) {
+    }
+
+    if (hasHolidayMultiplier && !isHolidayKey(activeKey)) {
       var hList = getHolidays();
       if (!hList.find(function(x) { return x.date === activeKey; })) {
         hList.push({ date: activeKey, name: 'วันหยุดนักขัตฤกษ์' });
@@ -277,21 +357,76 @@ function deleteEntry(){
 }
 
 /* ── Settings ── */
-function openSettings(){
+var settingsDirty = false;
+var settingsOpener = null;
+
+function showSettingsPanel(name) {
+  var menu = $('settingsMenu');
+  var button = Array.from(menu.querySelectorAll('[data-settings-target]')).find(function(item) {
+    return item.dataset.settingsTarget === name;
+  });
+  var previous = menu.querySelector('[aria-current="page"]');
+  if (previous) previous.removeAttribute('aria-current');
+  if (button) button.setAttribute('aria-current', 'page');
+  var editable = ['pay', 'earn', 'welfare'].includes(name);
+  menu.hidden = !!button;
+  $('settingsBackBtn').hidden = !button;
+  $('settingsTitle').textContent = button ? button.firstElementChild.firstChild.textContent : 'ตั้งค่า';
+  $('settingsPeriodBadge').hidden = !editable;
+  $('settingsSaveBar').hidden = !editable && !settingsDirty;
+  $('settingsOverlay').querySelectorAll('[data-settings-panel]').forEach(function(panel) {
+    panel.hidden = !button || panel.dataset.settingsPanel !== name;
+    if (!panel.hidden) panel.scrollTop = 0;
+  });
+  $('settingsOverlay').querySelector('.sheet').scrollTop = 0;
+  if (!button && previous) previous.focus();
+  else $('settingsTitle').focus();
+}
+
+$('settingsMenu').onclick = function(event) {
+  var button = event.target.closest('[data-settings-target]');
+  if (button) showSettingsPanel(button.dataset.settingsTarget);
+};
+$('settingsBackBtn').onclick = function() { showSettingsPanel(); };
+$('settingsOverlay').addEventListener('input', function(event) {
+  if (event.target.closest('[data-settings-panel="pay"], [data-settings-panel="earn"], [data-settings-panel="welfare"]')) {
+    settingsDirty = true;
+  }
+});
+function dismissSettings() {
+  if (settingsDirty && !confirm('ปิดโดยทิ้งการตั้งค่าที่ยังไม่ได้บันทึก?')) return;
+  closeSettings();
+}
+$('settingsOverlay').addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    if ($('settingsMenu').hidden) showSettingsPanel();
+    else dismissSettings();
+  } else if (event.key === 'Tab') {
+    var visible = Array.from(this.querySelectorAll('button, input, select, summary, [tabindex="0"]'))
+      .filter(function(el) { return !el.disabled && el.getClientRects().length; });
+    var first = visible[0], last = visible[visible.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+});
+
+function openSettings(panel){
+  settingsOpener = document.activeElement;
+  settingsDirty = false;
   var curPeriodRef = (typeof currentPeriod !== 'undefined' ? currentPeriod : null);
   var st = settings(curPeriodRef);
   
   var curLabel = periodLabel(curPeriodRef);
   var badge = $('settingsPeriodBadge');
   if (badge) {
-    badge.innerText = '📅 ตั้งค่าสำหรับรอบบิล: ' + curLabel + ' (สืบทอดไปอนาคต)';
+    badge.innerText = 'ใช้ตั้งแต่รอบ ' + curLabel + ' เป็นต้นไป';
   }
   
   $('setSalaryBase').value = st.salaryBase || '';
   $('setStartDate').value = st.startDate || '';
   $('setCutoff').value = st.cutoff || '';
   $('setPayday').value = st.payday || '';
-  if ($('setCalcMode')) $('setCalcMode').value = st.calcMode || 'realtime';
   $('setHousing').value = st.housing || '';
   $('setDiligence').value = st.diligence || '';
   
@@ -320,13 +455,19 @@ function openSettings(){
   renderHolidayList();
   renderKpiInfo();
   $('settingsOverlay').classList.add('show');
+  showSettingsPanel(panel);
 }
 
-function closeSettings(){$('settingsOverlay').classList.remove('show')}
+function closeSettings(){
+  $('settingsOverlay').classList.remove('show');
+  settingsDirty = false;
+  if (settingsOpener) settingsOpener.focus();
+}
 
 function saveSettings(force){
   if(!force && localStorage.getItem('settings_tutorial')!=='1'){
     $('settingsTutorialOverlay').classList.add('show');
+    $('settingsTutorialAckBtn').focus();
     return;
   }
   
@@ -339,7 +480,6 @@ function saveSettings(force){
     startDate: sd || null,
     cutoff: getValidDay($('setCutoff').value) || 15,
     payday: getValidDay($('setPayday').value) || 25,
-    calcMode: $('setCalcMode') ? $('setCalcMode').value : 'realtime',
     housing: num($('setHousing').value),
     diligence: num($('setDiligence').value),
     serviceAward: num($('setServiceAward').value),
@@ -357,7 +497,7 @@ function saveSettings(force){
   
   savePeriodSettings(curPeriodRef, newSt);
   closeSettings();
-  currentPeriod = periodFor(today);
+  currentPeriod = periodFor(new Date(curPeriodRef.end.getFullYear(), curPeriodRef.end.getMonth(), 1), curPeriodRef);
   renderAll();
 }
 
@@ -509,6 +649,7 @@ if($('openLeaveSettingsBtn')) {
   $('openLeaveSettingsBtn').onclick = function() {
     renderLeaveSettings();
     $('leaveSettingsOverlay').classList.add('show');
+    $('closeLeaveSettingsTopBtn').focus();
   };
 }
 if($('closeLeaveSettingsBtn')) $('closeLeaveSettingsBtn').onclick = function() { $('leaveSettingsOverlay').classList.remove('show'); };

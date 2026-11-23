@@ -64,11 +64,11 @@ payrolls/
 **ไฟล์:** `calc.js` → `periodStats()`
 
 ```javascript
-var isWorkingDay = (cur.getDay()!==0 && !isHolidayKey(k));
+var isWorkingDay = isScheduledWorkday(k, shifts, holidays);
 if ((isWorkingDay || hasOt) && isEmployed && countForRealtime) autoDays++;
 ```
 
-**กฎ:** นับเมื่อ `วันทำงานปกติ` **หรือ** `มีบันทึก OT`
+**กฎ:** ใช้กะเช้าและกะดึกเป็นวันทำงาน วันที่ไม่มีตารางกะใช้กฎเดิม โดยวันอาทิตย์และวันหยุดบริษัทเป็นวันหยุด ถ้ามาทำ OT ในวันหยุดให้นับวันนั้นด้วย
 
 > **❌ ห้าม:** เปลี่ยน `||` เป็น `&&` — จะทำให้วันหยุดที่ทำ OT ไม่ได้สวัสดิการ
 > **❌ ห้าม:** รวม `isWorkingDay` กับ `hasOt` เป็นเงื่อนไขเดียว
@@ -158,6 +158,8 @@ utils.js → calc.js → ui.js → settings.js → data.js
 | Key | ค่า | หมายเหตุ |
 |-----|-----|---------|
 | `ot_cal` | JSON string | ข้อมูล OT ทั้งหมด (key = YYYY-MM-DD) |
+| `shift_schedule` | JSON object | ตารางกะรายวันที่เก็บค่า `day`, `night` หรือ `off` |
+| `pp_payslip:YYYY-MM-DD~YYYY-MM-DD` | JSON object | ยอดจริงจากสลิปของรอบนั้น เก็บ `ot` และ `net` ช่องที่เว้นว่างเป็น `null` |
 | `ot_salary` | number | เงินเดือนหลัก |
 | `ot_cutoff` | 1-31 | วันตัดรอบ |
 | `payday` | 1-31 | วันเงินออก |

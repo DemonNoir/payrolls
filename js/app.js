@@ -35,14 +35,14 @@ $('settingsBtn').onclick = function() {
 if ($('shiftPatternBtn')) $('shiftPatternBtn').onclick = function() {
   animateIcon(this, 'icon-anim-spin');
   openShiftPatternModal();
+  $('closeShiftPatternTopBtn').focus();
 };
-if($('topRateInfo')) $('topRateInfo').onclick=openSettings;
+if($('topRateInfo')) $('topRateInfo').onclick=function(){openSettings('pay')};
 
 if($('calcModeSelect')) {
   $('calcModeSelect').value = settings().calcMode || 'realtime';
   $('calcModeSelect').onchange = function() {
     setLS('calc_mode', this.value);
-    if($('setCalcMode')) $('setCalcMode').value = this.value;
     renderAll();
   };
 }
@@ -57,6 +57,7 @@ $('themeBtn').onclick = function() {
 if($('docsBtn')) $('docsBtn').onclick = function() {
   animateIcon(this, 'icon-anim-bounce');
   openDocsOverlay();
+  $('docsCloseBtn').focus();
 };
 
 /* Tabs */
@@ -70,7 +71,7 @@ $('annualPrevBtn').onclick=function(){annualYear--;renderAnnual()};
 $('annualNextBtn').onclick=function(){annualYear++;renderAnnual()};
 $('annualPdfBtn').onclick=function(){window.print()};
 
-/* ── Offline comparison: approved OT requests vs calendar (read-only) ── */
+/* ── Approved OT requests and calendar reconciliation ── */
 function parseApprovedOtRequests(rawText){
   var text=String(rawText||'');
   var periodMatch=text.match(/(\d{4}-\d{2}-\d{2})\s*[~～–—-]\s*(\d{4}-\d{2}-\d{2})/);
@@ -87,7 +88,7 @@ function parseApprovedOtRequests(rawText){
       (block.indexOf('วิธีการคิดค่าล่วงเวลา')>=0?'money':null);
     if(!dateMatch||!hoursMatch||!payType)return;
     var day=dateMatch[1],amount=num(hoursMatch[1].replace(',','.'));
-    if(day<period.start||day>period.end||amount<=0)return;
+    if(day<period.start||day>period.end||dateKey(parseDateKey(day))!==day||!Number.isFinite(amount)||amount<=0)return;
     entries.push({date:day,hours:amount,payType:payType});
   });
   return {period:period,entries:entries,detected:starts.length};
@@ -119,6 +120,20 @@ function compareOtWithCalendar(parsed){
   return {requested:requested,calendar:calendar,rows:rows,matched:matched};
 }
 
+function otComparisonAmounts(row){
+  function line(name,amount){
+    return name+' · รับเงิน '+hours(amount.money)+' ชม. / สลับหยุด '+hours(amount.leave)+' ชม.';
+  }
+  return line('คำขอที่อนุมัติ',row.req)+'\n'+line('ปฏิทิน',row.cal);
+}
+
+function matchingBillingPeriod(range){
+  if(dateKey(currentPeriod.start)===range.start && dateKey(currentPeriod.end)===range.end) return currentPeriod;
+  var end=parseDateKey(range.end);
+  var period=periodFor(end,range.end.slice(0,7));
+  return dateKey(period.start)===range.start && dateKey(period.end)===range.end ? period : null;
+}
+
 function renderOtComparison(){
   var output=$('compareOtResults');
   if(!output)return;
@@ -129,6 +144,7 @@ function renderOtComparison(){
     empty.innerText='ยังไม่พบรายการอนุมัติที่อ่านได้ ตรวจว่าข้อความมีวันที่เริ่มต้น จำนวนชั่วโมง และวิธีรับ OT';
     output.appendChild(empty);return;
   }
+  var reportPeriod=matchingBillingPeriod(parsed.period);
   var result=compareOtWithCalendar(parsed),reqMoney=0,reqLeave=0,calMoney=0,calLeave=0;
   Object.keys(result.requested).forEach(function(d){reqMoney+=result.requested[d].money;reqLeave+=result.requested[d].leave});
   Object.keys(result.calendar).forEach(function(d){calMoney+=result.calendar[d].money;calLeave+=result.calendar[d].leave});
@@ -143,7 +159,7 @@ function renderOtComparison(){
   }
   if(!result.rows.length){
     var allMatch=document.createElement('div');allMatch.className='compare-ot-row match';
-    allMatch.innerText='✓ ชั่วโมงและวิธีรับ OT ตรงกันครบ '+result.matched+' วัน';output.appendChild(allMatch);return;
+    allMatch.innerText='✓ ชั่วโมงและวิธีรับ OT ตรงกันครบ '+result.matched+' วัน';output.appendChild(allMatch);
   }
   result.rows.forEach(function(row){
     var el=document.createElement('div');el.className='compare-ot-row mismatch';
@@ -151,10 +167,26 @@ function renderOtComparison(){
     var hasShortage=row.moneyDiff>0||row.leaveDiff>0,hasExcess=row.moneyDiff<0||row.leaveDiff<0;
     title.innerText=hasShortage&&hasExcess?'ชั่วโมงหรือประเภทไม่ตรง':(hasShortage?'มีคำขอที่ยังไม่ลงปฏิทิน':'มีรายการในปฏิทินที่ไม่พบในคำขอ');
     var detail=document.createElement('div');detail.className='compare-ot-detail';
-    detail.innerText=row.date+' · เงิน ยื่น '+hours(row.req.money)+' / ปฏิทิน '+hours(row.cal.money)+' ชม. · สลับหยุด ยื่น '+hours(row.req.leave)+' / ปฏิทิน '+hours(row.cal.leave)+' ชม.';
-    el.appendChild(title);el.appendChild(detail);output.appendChild(el);
+    detail.textContent=row.date+'\n'+otComparisonAmounts(row);
+    var edit=document.createElement('button');
+    edit.className='btn soft compare-ot-open';
+    edit.type='button';
+    edit.textContent='เปิดวันที่นี้';
+    edit.setAttribute('aria-label','เปิดวันที่ '+row.date);
+    edit.dataset.editDate=row.date;
+    edit.onclick=function(){ openEntry(row.date,row,reportPeriod); };
+    el.append(title,detail,edit);
+    output.appendChild(el);
   });
-  if(result.matched){var matched=document.createElement('div');matched.className='compare-ot-empty';matched.innerText='ตรงกัน '+result.matched+' วัน';output.appendChild(matched)}
+  if(result.rows.length && result.matched){var matched=document.createElement('div');matched.className='compare-ot-empty';matched.innerText='ตรงกัน '+result.matched+' วัน';output.appendChild(matched)}
+  if(reportPeriod){
+    var slip=document.createElement('button');
+    slip.className='btn soft';
+    slip.type='button';
+    slip.textContent='ตรวจสลิปของรอบนี้';
+    slip.onclick=function(){closeOtComparison();openPayslipForPeriod(reportPeriod);};
+    output.appendChild(slip);
+  }
 }
 
 function closeOtComparison(){
@@ -172,7 +204,7 @@ if($('compareOtOverlay'))$('compareOtOverlay').onclick=function(e){if(e.target==
 
 /* Backup warning */
 
-$('backupWarnBtn').onclick=openSettings;
+$('backupWarnBtn').onclick=function(){openSettings('backup')};
 
 function openLeaveSettingsFromSummary(){
   renderLeaveSettings();
@@ -199,23 +231,20 @@ $('leaveType').onchange=previewEntry;$('useHours').oninput=previewEntry;
 
 /* Quick Entry — ซ้ำจากวัน OT ล่าสุด */
 $('repeatLastBtn').onclick=function(){
-  var data=getCal(), keys=Object.keys(data).sort();
-  var lastEntry=null;
-  for(var i=keys.length-1;i>=0;i--){
-    var k=keys[i], en=data[k];
-    if(en&&en.kind==='ot'){var dt=parseDateKey(k);if(inRangeDate(dt,currentPeriod.start,currentPeriod.end)){lastEntry=en;break;}}
-  }
-  if(!lastEntry){alert('ยังไม่มี OT ในรอบบิลนี้ที่จะซ้ำ');return;}
-  $('entryHours').value=lastEntry.hours||'';
-  setRad('multiplier',num(lastEntry.multiplier)||1.5);
-  setRad('payType',lastEntry.payType||'money');
+  var data=getCal(), dates=Object.keys(data).sort().reverse();
+  var key=dates.find(function(date){
+    var d=parseDateKey(date);
+    return inRangeDate(d,entryPeriod.start,entryPeriod.end) && data[date].kind==='ot' && totalOtHours(data[date])>0;
+  });
+  if(!key){alert('ยังไม่มี OT ในรอบบิลนี้ที่จะซ้ำ');return;}
+  fillEntryRates(data[key],true);
   previewEntry();
 };
 
 /* Settings */
-$('closeSettingsBtn').onclick=closeSettings;
+$('closeSettingsBtn').onclick=dismissSettings;
 $('saveSettingsBtn').onclick=function(){saveSettings(false)};
-$('settingsOverlay').onclick=function(e){if(e.target===this)closeSettings()};
+$('settingsOverlay').onclick=function(e){if(e.target===this)dismissSettings()};
 $('settingsTutorialAckBtn').onclick=function(){
   localStorage.setItem('settings_tutorial','1');
   $('settingsTutorialOverlay').classList.remove('show');
@@ -238,20 +267,11 @@ $('pdfBtn').onclick=function(){window.print()};
 
 Array.prototype.forEach.call(document.getElementsByName('entryKind'),function(el){el.onchange=function(){toggleEntryFields();previewEntry()}});
 wireInputEvents($('entryOverlay'),previewEntry);
-wireInputEvents($('settingsOverlay'),function(){renderKpiInfo();renderDashboard()});
-
-/* KPI Bonus per period */
-$('setKpiBonus').addEventListener('input',function(){
-  var label=periodLabel(currentPeriod);
-  var val=num(this.value);
-  if(isNaN(val))val=0;
-  saveKpiBonusPct(label,val);
-  renderKpiInfo();renderDashboard();
-});
+wireInputEvents($('settingsOverlay'),renderKpiInfo);
 
 /* Enter key handler */
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.target.form) {
     e.preventDefault();
     if (e.target.id === 'holidayDate') {
       if ($('holidayDateEnd')) $('holidayDateEnd').focus();
@@ -262,14 +282,6 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
-$('setKpiBonus').addEventListener('change',function(){
-  var label=periodLabel(currentPeriod);
-  var val=num(this.value);
-  if(isNaN(val))val=0;
-  saveKpiBonusPct(label,val);
-  renderKpiInfo();renderDashboard();
-});
-
 /* ══════════════════════════════════════════════════════════════
  * Profile Avatar System
  * ══════════════════════════════════════════════════════════════ */
@@ -526,5 +538,5 @@ checkForcedBackupReminder();
 if(typeof initCloudEvents === 'function') initCloudEvents();
 
 /* Tutorial */
-if($('showTutorialBtn')) $('showTutorialBtn').onclick = function(){ closeSettings(); showTutorial(); };
+if($('showTutorialBtn')) $('showTutorialBtn').onclick = function(){ showTutorial(); $('tutNextBtn').focus(); };
 if(shouldShowTutorial()) setTimeout(showTutorial, 600);

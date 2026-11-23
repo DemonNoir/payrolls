@@ -26,74 +26,9 @@ function clearCloudConfig(){
   localStorage.removeItem('gist_user');
 }
 
-function buildBackupData(){
-  var extraKeys = {};
-  for(var i = 0; i < localStorage.length; i++){
-    var k = localStorage.key(i);
-    if(k && (k.indexOf('kpi_bonus_pct:') === 0 || k.indexOf('work_days:') === 0 || k.indexOf('pp_') === 0 || k.indexOf('period_settings:') === 0)){
-      extraKeys[k] = getLS(k);
-    }
-  }
-  var keys = ['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
-  var payload = {
-    version: 3,
-    exported_at: new Date().toISOString(),
-    client: 'Payroll PWA Cloud Sync',
-    data: {},
-    extra: extraKeys
-  };
-  keys.forEach(function(k){ payload.data[k] = getLS(k); });
-  return payload;
-}
-
 function applyBackupData(obj){
-  var incoming = {}, cal = null, hol = null, extraData = {};
-  if(obj && obj.version === 3 && obj.data){
-    incoming = obj.data;
-    extraData = obj.extra || {};
-    var required = ['ot_cal','ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','holidays','social_security','tax','other_deduction','payday','cutoff_day','service_award'];
-    var missing = required.filter(function(k){ return !(k in incoming); });
-    if(missing.length) throw new Error('ข้อมูลขาดฟิลด์: ' + missing.join(', '));
-    cal = JSON.parse(incoming.ot_cal || '{}');
-    hol = JSON.parse(incoming.holidays || '[]');
-  } else if(obj && obj.version === 2 && obj.data){
-    incoming = obj.data;
-    cal = JSON.parse(incoming.ot_cal || '{}');
-    hol = JSON.parse(incoming.holidays || '[]');
-  } else if(obj && obj.cal){
-    cal = obj.cal;
-    incoming = { ot_salary: 0, ot_cutoff: obj.cutoff, ot_bank_adj: obj.bankAdj };
-    hol = [];
-  } else if(obj && obj.ot_cal){
-    incoming = obj;
-    cal = obj.ot_cal;
-    hol = obj.holidays || [];
-  } else {
-    throw new Error('ไม่พบโครงสร้างข้อมูลที่ถูกต้อง');
-  }
-
-  var err = validateCal(cal) || validateHolidays(hol);
-  if(err) throw new Error(err);
-
-  setCal(cal);
-  setHolidays(hol);
-
-  var allowedKeys = ['ot_salary','ot_cutoff','ot_bank_adj','salary','housing','diligence','diligence_enabled','kpi_percent','transport_rate','food_rate','ot_food_rate','night_shift_rate','sick_leave','personal_leave','absent_days','social_security','tax','other_deduction','payday','cutoff_day','service_award','start_date','calc_mode'];
-  Object.keys(incoming).forEach(function(k){
-    if(k === 'ot_cal' || k === 'holidays' || typeof incoming[k] === 'undefined' || incoming[k] === null) return;
-    if(allowedKeys.indexOf(k) >= 0) setLS(k, incoming[k]);
-  });
-
-  Object.keys(extraData).forEach(function(k){
-    if((k.indexOf('kpi_bonus_pct:') === 0 || k.indexOf('work_days:') === 0 || k.indexOf('pp_') === 0 || k.indexOf('period_settings:') === 0) && extraData[k] !== null){
-      setLS(k, extraData[k]);
-    }
-  });
-
-  if(incoming.social_security !== undefined) setLS('ot_ss', incoming.social_security);
-  if(incoming.tax !== undefined) setLS('ot_tax', incoming.tax);
-  if(incoming.other_deduction !== undefined) setLS('ot_other', incoming.other_deduction);
-
+  var backup = preparePayrollRestore(obj);
+  restorePayrollBackup(backup.changes);
   markExported();
   checkBackupWarning();
   closeForcedBackupReminder();
@@ -169,7 +104,7 @@ async function cloudBackup(silent){
   if(btn && !silent) { btn.disabled = true; btn.innerText = '⏳ กำลังอัปโหลด...'; }
 
   try {
-    var payload = buildBackupData();
+    var payload = buildBackupData('Payroll PWA Cloud Sync');
     var gistBody = {
       description: 'Payroll OT Calendar Backup [Private]',
       public: false,

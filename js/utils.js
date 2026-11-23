@@ -10,7 +10,19 @@ function parseDateKey(k){var p=String(k).split('-');return new Date(num(p[0]),nu
 function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)}
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
 function money(v){return num(v).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท'}
-function hours(v){return num(v).toLocaleString('th-TH',{maximumFractionDigits:1})}
+function hours(v){return num(v).toLocaleString('th-TH',{maximumFractionDigits:2})}
+
+// A clock interval belongs to the selected entry date, even when it crosses midnight.
+function otClockDuration(start,end,breakMinutes){
+  var clock=/^([01]\d|2[0-3]):[0-5]\d$/;
+  if(typeof start!=='string' || typeof end!=='string' || !clock.test(start) || !clock.test(end)) return null;
+  var duration=(Number(end.slice(0,2))-Number(start.slice(0,2)))*60 +
+               Number(end.slice(3))-Number(start.slice(3));
+  if(duration<0) duration+=24*60;
+  var rest=Number(breakMinutes);
+  if(!Number.isInteger(rest) || rest<0 || rest>=duration) return null;
+  return duration-rest;
+}
 
 function getLS(k){
   try {
@@ -41,15 +53,36 @@ function setHolidays(h){localStorage.setItem('holidays',JSON.stringify((h||[]).s
 function radVal(n){var r=document.getElementsByName(n);for(var i=0;i<r.length;i++)if(r[i].checked)return r[i].value;return null}
 function setRad(n,v){var r=document.getElementsByName(n);for(var i=0;i<r.length;i++)r[i].checked=String(r[i].value)===String(v)}
 
-function isHolidayKey(k){
-  if(parseDateKey(k).getDay()===0)return true;
-  return getHolidays().some(function(h){return h.date===k});
+function getShiftSchedule(){
+  try {
+    var shifts = JSON.parse(getLS('shift_schedule') || '{}');
+    return shifts && typeof shifts === 'object' && !Array.isArray(shifts) ? shifts : {};
+  } catch(e) { return {}; }
 }
-function holidayName(k){
-  var h=getHolidays().find(function(x){return x.date===k});
-  if(h)return h.name;
-  if(parseDateKey(k).getDay()===0)return 'วันหยุดประจำสัปดาห์';
+
+function holidayName(k, shifts, holidays){
+  var declared = (holidays || getHolidays()).find(function(h){return h.date===k});
+  if(declared) return declared.name;
+  var shift = (shifts || getShiftSchedule())[k];
+  if(shift === 'off') return 'วันหยุดตามกะ';
+  if(shift !== 'day' && shift !== 'night' && parseDateKey(k).getDay()===0) return 'วันหยุดประจำสัปดาห์';
   return '';
+}
+
+function isHolidayKey(k, shifts, holidays){
+  return !!holidayName(k, shifts, holidays);
+}
+
+function isScheduledWorkday(k, shifts, holidays){
+  var shift = shifts[k];
+  if(shift === 'day' || shift === 'night') return true;
+  return shift !== 'off' && !isHolidayKey(k, shifts, holidays);
+}
+
+function isNightAttendance(entry, shift){
+  if(!entry) return shift === 'night';
+  if(shift && (entry.kind === 'use' || entry.kind === 'leave')) return false;
+  return typeof entry.isNight === 'boolean' ? entry.isNight : shift === 'night';
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 

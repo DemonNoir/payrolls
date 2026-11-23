@@ -11,6 +11,8 @@ Every key the app uses is listed here. **Do not add new localStorage keys withou
 | Key | Value type | Description |
 | :--- | :--- | :--- |
 | `ot_cal` | JSON string | OT records. Object with `YYYY-MM-DD` string keys. Each value holds hours, rate, leave type, night shift flag, etc. |
+| `shift_schedule` | JSON object | Maps each scheduled date to `day`, `night` or `off`. Stored separately from attendance and included in local and cloud backups. |
+| `pp_payslip:YYYY-MM-DD~YYYY-MM-DD` | JSON object | Actual OT and net amounts for the exact billing period. Each amount can be null when only the other is entered. Included in backup extras. |
 | `ot_salary` | number string | Base monthly salary (฿) |
 | `ot_cutoff` | number string (1–31) | Billing cycle cutoff day |
 | `payday` | number string (1–31) | Nominal payday (before weekend-shift adjustment) |

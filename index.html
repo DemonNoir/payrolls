@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="css/style.css?v=175">
+<link rel="stylesheet" href="css/style.css?v=176">
 
 </head>
 <body>
@@ -58,7 +58,7 @@
   </select>
 </div>
 <div id="backupWarn" class="strip alert hide noPrint">
-⚠️ ยังไม่ได้สำรองข้อมูลนาน 7 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">กด⚙ → สำรองข้อมูลเดี๋ยวนี้</b>
+⚠️ ยังไม่ได้สำรองข้อมูลนาน 7 วันแล้ว — <b id="backupWarnBtn" style="cursor:pointer;text-decoration:underline">เปิดเมนูสำรองข้อมูล</b>
 </div>
 <div id="migrationNotice" class="migration-notice hide">
 ⚠️ ระบบเปลี่ยนวิธีคำนวณค่าแรง — กรุณากรอก <b>เงินเดือน (บาท/เดือน)</b> ใหม่ในเมนูตั้งค่า
@@ -176,6 +176,35 @@
 <div class="summary-header">
   <span class="summary-header-icon">📋</span> สรุปรายรอบบิล
 </div>
+<section class="payslip-card" id="payslipCard" aria-labelledby="payslipTitle">
+  <header class="payslip-header">
+    <h2 id="payslipTitle" tabindex="-1">ตรวจสลิปเงินเดือน</h2>
+    <button class="payslip-link" id="payslipCompareOt" type="button">เทียบคำขอ OT</button>
+  </header>
+  <p class="payslip-period" id="payslipPeriod"></p>
+  <form id="payslipForm">
+    <div class="payslip-fields">
+      <div class="group">
+        <label for="payslipOt">ค่า OT ในสลิป (บาท)</label>
+        <input id="payslipOt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="ระบุยอด" aria-describedby="payslipOtEstimate payslipOtDiff">
+        <small id="payslipOtEstimate"></small>
+        <strong id="payslipOtDiff"></strong>
+      </div>
+      <div class="group">
+        <label for="payslipNet">เงินสุทธิในสลิป (บาท)</label>
+        <input id="payslipNet" type="number" inputmode="decimal" step="0.01" placeholder="ระบุยอด" aria-describedby="payslipNetEstimate payslipNetDiff">
+        <small id="payslipNetEstimate"></small>
+        <strong id="payslipNetDiff"></strong>
+      </div>
+    </div>
+    <p class="payslip-note" id="payslipNote" aria-live="polite"></p>
+    <div class="payslip-actions">
+      <button class="btn primary" id="payslipSave" type="submit">บันทึกยอดจากสลิป</button>
+      <button class="payslip-link" id="payslipClear" type="button" hidden>ลบยอดรอบนี้</button>
+      <span class="payslip-feedback" id="payslipStatus" role="status"></span>
+    </div>
+  </form>
+</section>
 <div class="summaryList" id="monthlySummary"></div>
 </section>
 
@@ -265,7 +294,7 @@
 <div class="overlay" id="compareOtOverlay" aria-hidden="true">
   <div class="sheet compare-ot-sheet" role="dialog" aria-modal="true" aria-labelledby="compareOtTitle">
     <h2 id="compareOtTitle">เทียบคำขอ OT</h2>
-    <p class="compare-ot-help">วางข้อความจากหน้าประวัติคำขอ ระบบจะแยกวันที่ ชั่วโมง และวิธีรับ OT เพื่อเทียบกับปฏิทินในรอบที่ระบุ ข้อมูลประมวลผลในเครื่องและไม่แก้รายการเดิม</p>
+    <p class="compare-ot-help">วางข้อความจากหน้าประวัติคำขอ ระบบจะแยกวันที่ ชั่วโมง และวิธีรับ OT เพื่อเทียบกับปฏิทินในรอบที่ระบุ เลือกวันที่ที่ต้องการตรวจและบันทึกการแก้ไขได้ในเครื่อง</p>
     <label class="compare-ot-label" for="compareOtText">ข้อความหลักฐาน</label>
     <textarea id="compareOtText" class="compare-ot-text" rows="7" placeholder="วางข้อความที่คัดลอกมาได้เลย"></textarea>
     <div class="actions compare-ot-actions">
@@ -279,29 +308,27 @@
 
 <!-- Entry Overlay -->
 <div class="overlay" id="entryOverlay"><div class="sheet">
-<h2 id="entryTitle"></h2>
+<h2 id="entryTitle" tabindex="-1"></h2>
+<p class="entry-comparison-note" id="entryComparisonNote" hidden></p>
 <div class="group"><div class="choice">
 <label><input type="radio" name="entryKind" value="ot" checked> ทำ OT</label>
 <label><input type="radio" name="entryKind" value="use"> ใช้วันหยุด/ลางาน</label>
 </div></div>
 <div id="otFields">
-<div id="rateRowsContainer">
-  <div class="rate-row" data-rate-index="0">
-    <div class="rate-row-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-      <span style="font-size:12px; font-weight:600; color:var(--muted);">อัตราที่ 1</span>
+<div id="rateRowsContainer"></div>
+<template id="rateTimeTemplate">
+  <div class="rate-time">
+    <label class="rate-time-toggle"><input type="checkbox" class="use-rate-time"> กรอกเวลาเริ่ม–เลิก</label>
+    <div class="rate-time-fields" hidden>
+      <div class="rate-time-grid">
+        <label>เริ่ม OT<input type="time" class="rate-start"></label>
+        <label>เลิก OT<input type="time" class="rate-end"></label>
+        <label>พัก (นาที)<input type="number" class="rate-break" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+      </div>
+      <output class="rate-time-result" aria-live="polite"></output>
     </div>
-    <div class="group"><label>ชม. OT</label><input type="number" class="rateHours" step="0.1" inputmode="decimal" id="entryHours"></div>
-    <div class="group"><div class="choice">
-      <label><input type="radio" name="multiplier_0" value="1" checked> 1.0x</label>
-      <label class="mult15Label"><input type="radio" name="multiplier_0" value="1.5"> 1.5x</label>
-      <label><input type="radio" name="multiplier_0" value="3"> 3.0x</label>
-    </div></div>
-    <div class="group"><label>รับเป็น</label><div class="choice">
-      <label><input type="radio" name="payType_0" value="money" checked> เงิน</label>
-      <label><input type="radio" name="payType_0" value="leave"> วันหยุด</label>
-    </div></div>
   </div>
-</div>
+</template>
 <button class="btn soft" id="addRateBtn" style="margin-bottom:8px; font-size:12px;">➕ เพิ่มอัตรา (เช่น 1x + 3x)</button>
 <button class="btn soft" id="repeatLastBtn" style="margin-bottom:8px">📋 ซ้ำจากวัน OT ล่าสุด</button>
 </div>
@@ -321,45 +348,36 @@
 </div></div>
 
 <!-- Settings Overlay -->
-<div class="overlay" id="settingsOverlay"><div class="sheet">
-<h2>⚙️ ตั้งค่า</h2>
-<div class="settings-quick-row">
-  <button class="settings-quick-btn" id="docsBtn" title="เอกสาร & อัปเดต">📋<span>รายงาน</span></button>
-  <button class="settings-quick-btn" id="shiftPatternBtn" title="สร้างตารางกะวนลูปอัตโนมัติ">🔁<span>กะวนลูป</span></button>
-</div>
-<div id="settingsPeriodBadge" style="font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; background:rgba(45,156,219,0.15); border:1px solid rgba(45,156,219,0.3); color:var(--blue); margin-bottom:15px; display:inline-block;">📅 มีผลกับรอบบิลปัจจุบันเป็นต้นไป</div>
+<div class="overlay" id="settingsOverlay"><div class="sheet settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="settings-header">
+    <button type="button" id="settingsBackBtn" aria-label="กลับเมนูตั้งค่า" hidden>‹</button>
+    <h2 id="settingsTitle" tabindex="-1">ตั้งค่า</h2>
+    <button type="button" id="closeSettingsBtn">ปิด</button>
+  </div>
+  <p id="settingsPeriodBadge" hidden></p>
+  <nav id="settingsMenu" class="settings-options" aria-label="หมวดการตั้งค่า">
+  <button type="button" data-settings-target="pay"><span>เงินเดือนและรอบบิล<small>เงินเดือน · วันตัดรอบ · วันเงินออก</small></span></button>
+  <button type="button" data-settings-target="earn"><span>รายได้ประจำและ KPI<small>ค่าบ้าน · เบี้ยขยัน · ฐานค่าแรง OT</small></span></button>
+  <button type="button" data-settings-target="welfare"><span>สวัสดิการและรายการหัก<small>ค่าอาหาร · ค่าเดินทาง · ภาษี</small></span></button>
+  <button type="button" data-settings-target="shifts"><span>ตารางกะและวันลา<small>กะวนลูป · โควตาลา · วันหยุด</small></span></button>
+  <button type="button" data-settings-target="backup"><span>สำรองและกู้คืนข้อมูล<small>ไฟล์สำรองในเครื่อง</small></span></button>
+  <button type="button" data-settings-target="help"><span>คู่มือและอัปเดต<small>วิธีใช้งาน · เอกสารการอัปเดต</small></span></button>
+  </nav>
+<section data-settings-panel="pay" aria-labelledby="settingsTitle" hidden>
 <div class="settingsGrid">
-<div class="group"><label>เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="เงินเดือนหลัก"></div>
-<div class="group"><label>วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
-<div class="group"><label>วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
-<div class="group"><label>วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div>
-<div class="subhead" id="leaveSettingsHeading" style="margin: 15px 0 10px;">วันหยุด & การลา</div>
-<div class="group" style="grid-column:1/-1;">
-  <button id="openLeaveSettingsBtn" class="leave-settings-btn">
-    <span class="leave-settings-btn-left">
-      <span class="leave-settings-btn-icon">🗂️</span>
-      <span class="leave-settings-btn-text">
-        <strong>ตั้งค่าประเภทวันหยุด &amp; โควตา</strong>
-        <small>กำหนดประเภทการลา, วันหยุดพักร้อน, โควตา</small>
-      </span>
-    </span>
-    <span class="leave-settings-btn-arrow">›</span>
-  </button>
-</div>
-<div class="group"><label>โหมดการคำนวณ</label>
-<select id="setCalcMode">
-  <option value="realtime">เรียลไทม์ (คำนวณรายได้ถึงวันปัจจุบัน)</option>
-  <option value="overall">โดยรวม (ประเมินรายได้เต็มรอบบิล)</option>
-</select></div>
-</div>
-<div class="subhead">รายได้ประจำ</div>
+<div class="group"><label for="setSalaryBase">เงินเดือน (บาท/เดือน)</label><input type="number" id="setSalaryBase" inputmode="decimal" placeholder="เงินเดือนหลัก"></div>
+<div class="group"><label for="setStartDate">วันที่เริ่มงาน (ถ้ามี)</label><input type="date" id="setStartDate"></div>
+<div class="group"><label for="setCutoff">วันตัดรอบ (1-31)</label><input type="number" id="setCutoff" min="1" max="31" inputmode="numeric"></div>
+<div class="group"><label for="setPayday">วันเงินออก (1-31)</label><input type="number" id="setPayday" min="1" max="31" inputmode="numeric"></div></div>
+</section>
+<section data-settings-panel="earn" aria-labelledby="settingsTitle" hidden>
 <div class="settingsGrid">
-<div class="group"><label>ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
-<div class="group"><label>เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
-<div class="group"><label>รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
+<div class="group"><label for="setHousing">ค่าเช่าบ้าน</label><input type="number" id="setHousing" inputmode="decimal"></div>
+<div class="group"><label for="setDiligence">เบี้ยขยัน</label><input type="number" id="setDiligence" inputmode="decimal"></div>
+<div class="group"><label for="setServiceAward">รางวัลอายุงาน</label><input type="number" id="setServiceAward" inputmode="decimal"></div>
 <div class="group">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <label style="margin:0;">KPI Daily</label>
+    <label for="setKpi" style="margin:0;">KPI Daily</label>
     <div style="display:flex; gap:6px; font-size:11px;">
       <label style="cursor:pointer;"><input type="radio" name="kpiType" value="percent" checked> %</label>
       <label style="cursor:pointer;"><input type="radio" name="kpiType" value="amount"> ฿</label>
@@ -369,7 +387,7 @@
 </div>
 <div class="group">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <label id="kpiBonusLabel" style="margin:0;">KPI Bonus รอบนี้</label>
+    <label for="setKpiBonus" id="kpiBonusLabel" style="margin:0;">KPI Bonus รอบนี้</label>
     <div style="display:flex; gap:6px; font-size:11px;">
       <label style="cursor:pointer;"><input type="radio" name="kpiBonusType" value="percent" checked> %</label>
       <label style="cursor:pointer;"><input type="radio" name="kpiBonusType" value="amount"> ฿</label>
@@ -378,45 +396,56 @@
   <input type="number" id="setKpiBonus" step="0.1" inputmode="decimal" placeholder="0">
 </div>
 </div>
-<!-- KPI Info Box: แสดงที่มาค่าแรง/ชม. -->
-<div class="kpi-info-box" id="kpiInfoBox">
-<div class="kpi-title">📊 รายละเอียดอัตราค่าแรง OT</div>
-<div class="kpi-row"><span>KPI Daily (%)</span><b id="infoKpiDaily">0%</b></div>
-<div class="kpi-row"><span>KPI Bonus รอบนี้ (%)</span><b id="infoKpiBonus">0%</b></div>
-<div class="kpi-row"><span>KPI รวม (%)</span><b id="infoKpiTotal">0%</b></div>
-<div class="kpi-row"><span>KPI รวม (บาท)</span><b id="infoKpiMoney">0 บาท</b></div>
+<details class="kpi-info-box settings-kpi" id="kpiInfoBox">
+<summary>วิธีคำนวณค่าแรง OT</summary>
+<div class="kpi-row"><span>KPI Daily</span><b id="infoKpiDaily">0%</b></div>
+<div class="kpi-row"><span>KPI Bonus รอบนี้</span><b id="infoKpiBonus">0%</b></div>
+<div class="kpi-row"><span>KPI รวม</span><b id="infoKpiTotal">0%</b></div>
 <div class="kpi-row"><span>ฐานคำนวณ (เงินเดือน + KPI)</span><b id="infoBase">0 บาท</b></div>
 <div class="kpi-row"><span>ค่าแรง/ชม. (อัตโนมัติ)</span><b id="infoHourlyRate">0 บาท/ชม.</b></div>
-</div>
-<div class="subhead">สวัสดิการ</div>
+</details>
+</section>
+<section data-settings-panel="welfare" aria-labelledby="settingsTitle" hidden>
 <div class="settingsGrid">
-<div class="group"><label>ค่าเดินทาง (บาท/วัน)</label><input type="number" id="setTransport" inputmode="decimal"></div>
-<div class="group"><label>ค่าอาหาร (บาท/วัน)</label><input type="number" id="setFood" inputmode="decimal"></div>
-<div class="group"><label>ค่าอาหาร OT (บาท/วัน)</label><input type="number" id="setOtFood" inputmode="decimal"></div>
-<div class="group"><label>ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
+<div class="group"><label for="setTransport">ค่าเดินทาง (บาท/วัน)</label><input type="number" id="setTransport" inputmode="decimal"></div>
+<div class="group"><label for="setFood">ค่าอาหาร (บาท/วัน)</label><input type="number" id="setFood" inputmode="decimal"></div>
+<div class="group"><label for="setOtFood">ค่าอาหาร OT (บาท/วัน)</label><input type="number" id="setOtFood" inputmode="decimal"></div>
+<div class="group"><label for="setNightRate">ค่ากะดึก (บาท/วัน)</label><input type="number" id="setNightRate" inputmode="decimal"></div>
 </div>
 <div class="subhead" id="deductSubhead">รายการหัก — รอบนี้</div>
 <div class="settingsGrid">
-<div class="group"><label>ประกันสังคม</label><input type="text" id="setSocial" value="อัตโนมัติ (5%)" disabled style="background: transparent; border: none; color: var(--muted); text-align: right; padding-right: 0;"></div>
-<div class="group"><label>ภาษี</label><input type="number" id="setTax" inputmode="decimal"></div>
-<div class="group"><label>หักอื่นๆ</label><input type="number" id="setOther" inputmode="decimal"></div>
+<div class="group"><label for="setTax">ภาษี</label><input type="number" id="setTax" inputmode="decimal"></div>
+<div class="group"><label for="setOther">หักอื่นๆ</label><input type="number" id="setOther" inputmode="decimal"></div>
+</div>
+</section>
+<section data-settings-panel="shifts" aria-labelledby="settingsTitle" hidden>
+<div class="settings-options">
+  <button type="button" id="shiftPatternBtn">สร้างตารางกะวนลูป</button>
+  <button type="button" id="openLeaveSettingsBtn">ประเภทการลาและโควตา</button>
 </div>
 <div class="subhead">จัดการวันหยุด</div>
 <div class="settingsGrid">
-<div class="group"><label>วันที่เริ่ม</label><input type="date" id="holidayDate" enterkeyhint="next"></div>
-<div class="group"><label>ถึงวันที่ (ถ้ามี)</label><input type="date" id="holidayDateEnd" enterkeyhint="next"></div>
-<div class="group" style="grid-column: 1 / -1;"><label>ชื่อวันหยุด</label><input type="text" id="holidayName" enterkeyhint="done"></div>
+<div class="group"><label for="holidayDate">วันที่เริ่ม</label><input type="date" id="holidayDate" enterkeyhint="next"></div>
+<div class="group"><label for="holidayDateEnd">ถึงวันที่ (ถ้ามี)</label><input type="date" id="holidayDateEnd" enterkeyhint="next"></div>
+<div class="group" style="grid-column: 1 / -1;"><label for="holidayName">ชื่อวันหยุด</label><input type="text" id="holidayName" enterkeyhint="done"></div>
 </div>
 <div class="actions"><button class="btn soft" id="clearHolidayBtn">ล้างฟอร์ม</button><button class="btn primary" id="saveHolidayBtn">บันทึกวันหยุด</button></div>
 <div class="holidayList" id="holidayList"></div>
+</section>
+<section data-settings-panel="backup" aria-labelledby="settingsTitle" hidden>
 <div class="actions">
 <button class="btn primary" id="exportBtn">📤 สำรองข้อมูล</button>
 <button class="btn primary" id="importBtn">📥 กู้คืนข้อมูล</button>
 </div>
 <input type="file" id="importFile" accept="application/json,.json" class="hide">
-<div class="actions"><button class="btn primary" id="saveSettingsBtn">บันทึก</button></div>
-<div class="actions" style="margin-top:6px"><button class="btn soft" id="showTutorialBtn">📖 ดูคู่มือการใช้งาน</button></div>
-<button class="ghost" id="closeSettingsBtn">ปิด</button>
+</section>
+<section data-settings-panel="help" aria-labelledby="settingsTitle" hidden>
+<div class="settings-options">
+  <button type="button" id="showTutorialBtn">คู่มือการใช้งาน</button>
+  <button type="button" id="docsBtn">เอกสารและประวัติการอัปเดต</button>
+</div>
+</section>
+  <div id="settingsSaveBar" hidden><button type="button" class="btn primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button></div>
 </div></div>
 
 <!-- Annual Leave Tutorial Overlay -->
@@ -778,14 +807,15 @@
 <!-- Tutorial Overlay -->
 <div class="tut-overlay" id="tutorialOverlay"></div>
 
-<script src="js/utils.js?v=45"></script>
-<script src="js/calc.js?v=50"></script>
-<script src="js/ui.js?v=61"></script>
-<script src="js/settings.js?v=45"></script>
-<script src="js/data.js?v=47"></script>
-<script src="js/cloud.js?v=4"></script>
-<script src="js/tutorial.js?v=44"></script>
-<script src="js/app.js?v=53"></script>
+<script src="js/utils.js?v=46"></script>
+<script src="js/calc.js?v=51"></script>
+<script src="js/ui.js?v=62"></script>
+<script src="js/settings.js?v=46"></script>
+<script src="js/data.js?v=48"></script>
+<script src="js/cloud.js?v=5"></script>
+<script src="js/tutorial.js?v=45"></script>
+<script src="js/payslip.js?v=1"></script>
+<script src="js/app.js?v=54"></script>
 <script src="js/docs.js?v=44"></script>
 <script>
 if('serviceWorker' in navigator){

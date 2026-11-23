@@ -61,8 +61,8 @@ function getHourlyRate(kpiBonusOverride, periodRef){
   return Math.round(base / 30 / 8 * 100) / 100; /* ← ใช้ round ตามสลิปบริษัท */
 }
 
-function periodFor(ref){
-  var s=settings(), cutoff=s.cutoff;
+function periodFor(ref, settingsPeriod){
+  var s=settings(settingsPeriod), cutoff=s.cutoff;
   if(!cutoff){return {start:new Date(ref.getFullYear(),ref.getMonth(),1),end:new Date(ref.getFullYear(),ref.getMonth()+1,0)}}
   var y=ref.getFullYear(),m=ref.getMonth(),d=ref.getDate(),ey=y,em=m;
   if(d>Math.min(cutoff,daysInMonth(y,m))){em++;if(em>11){em=0;ey++}}
@@ -133,8 +133,9 @@ function getBanks(excludeKey){
   return res;
 }
 
-function periodStats(p,kpiBonusPctOverride){
+function periodStats(p,kpiBonusPctOverride,calcMode){
   var data=getCal(), st=settings(p), th=0,tp=0,otDays=0,otFoodDays=0,leaveUse=0,nightShiftDays=0,byDay={}, start=p.start,end=p.end;
+  if (calcMode) st.calcMode = calcMode;
   var label=periodLabel(p);
   var kpiBonusVal=(kpiBonusPctOverride!==undefined)?num(kpiBonusPctOverride):num(st.kpiBonusValue);
   var hourlyRate=getHourlyRate(kpiBonusVal, p);
@@ -148,6 +149,8 @@ function periodStats(p,kpiBonusPctOverride){
   var ppOther=getPerPeriod('pp_other',label);
 
   var todayDt = new Date(); todayDt.setHours(0,0,0,0);
+  var shifts = getShiftSchedule(), holidays = getHolidays();
+  var leaveOnScheduledDaysOff = 0;
 
   /* นับการลาจากปฏิทินแบบ Dynamic */
   var leaveTypesConfig = typeof getLeaveTypes === 'function' ? getLeaveTypes() : [];
@@ -163,7 +166,6 @@ function periodStats(p,kpiBonusPctOverride){
     var dStartLoop = st.startDate ? parseDateKey(st.startDate) : null;
     if(dStartLoop && dt < dStartLoop) return;
     byDay[k]=en;
-    if(en.isNight) nightShiftDays++;
     if(en.kind==='ot'){
       var ne = normalizeEntry(en);
       var dayHours = 0;
@@ -171,8 +173,9 @@ function periodStats(p,kpiBonusPctOverride){
         dayHours += num(r.hours);
         if(r.payType==='money') tp += Math.round(num(r.hours) * num(r.multiplier) * hourlyRate * 100) / 100;
       });
-      th += dayHours; otDays++;
-      var isDayHoliday = typeof isHolidayKey === 'function' ? isHolidayKey(k) : false;
+      th += dayHours;
+      if(dayHours > 0) otDays++;
+      var isDayHoliday = isHolidayKey(k, shifts, holidays);
       var foodThreshold = isDayHoliday ? 10 : 2;
       if(dayHours >= foodThreshold) otFoodDays++;
     }
@@ -183,11 +186,13 @@ function periodStats(p,kpiBonusPctOverride){
       var isDays = tConf && tConf.unit === 'days';
       var daysValue = isDays ? hrs : (hrs/8);
       leaveUse += daysValue;
+      if(shifts[k] === 'off' && lt in calLeave) leaveOnScheduledDaysOff += daysValue;
       if(lt in calLeave) calLeave[lt] += daysValue;
     }
     if(en.kind==='leave'){
       var ld=num(en.days)||1;
       var olt=en.leaveType||'sick';
+      if(shifts[k] === 'off' && olt in calLeave) leaveOnScheduledDaysOff += ld;
       if(olt in calLeave) calLeave[olt]+=ld;
       leaveUse+=ld;
     }
@@ -213,8 +218,9 @@ function periodStats(p,kpiBonusPctOverride){
     var isEmployed = !dStart || cur >= dStart;
     if (isEmployed && countForRealtime) employedDaysInPeriod++;
     var k=dateKey(cur), hasOt=byDay[k]&&byDay[k].kind==='ot';
-    var isWorkingDay = (cur.getDay()!==0 && !isHolidayKey(k));
+    var isWorkingDay = isScheduledWorkday(k, shifts, holidays);
     if((isWorkingDay || hasOt) && isEmployed && countForRealtime) autoDays++;
+    if(isEmployed && countForRealtime && isNightAttendance(byDay[k], shifts[k])) nightShiftDays++;
     cur=addDays(cur,1);
   }
 
@@ -226,7 +232,8 @@ function periodStats(p,kpiBonusPctOverride){
       leaveDays += calLeave[t.id];
     }
   });
-  var actual=Math.max(0,autoDays-leaveDays);
+  /* A scheduled rest day was already excluded from autoDays. */
+  var actual=Math.max(0,autoDays-(leaveDays-leaveOnScheduledDaysOff));
   var welfare={transport:st.transport*actual,food:st.food*actual,otFood:st.otFood*otFoodDays,night:st.nightRate*nightShiftDays};
   welfare.total=welfare.transport+welfare.food+welfare.otFood+welfare.night;
 
